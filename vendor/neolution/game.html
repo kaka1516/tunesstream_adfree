@@ -1,0 +1,1214 @@
+<!doctype html>
+<!--
+  Neo-VECTR's Neolution — neon rhythm game on a TRON grid.
+  Upstream: https://github.com/GareBear99/Neolution (commit 2aa6f0e, index.html) — MIT License, Copyright (c) 2026 GareBear99.
+  Full licence text: /vendor/neolution/LICENSE-neolution.txt (must stay with this file).
+  Modified for Music Stream (ms-v80), all changes marked "MS:":
+   - "hosted" mode: plays along with the song already playing in the Music Stream player (parent window) instead of its
+     own <audio>; uses the player's AudioContext + AnalyserNode; the chart is built from the SAME track, fetched from this
+     server and decoded at 22.05 kHz mono with OfflineAudioContext (lighter on phones).
+   - 4-lane mode (default on touch screens) + touch/click lanes; D F J K keys; compact HUD; Close button.
+   - removed the bundled demo-song list and file picker (not shipped).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Neolution — rhythm game (Music Stream)</title>
+<style>
+  :root{--bg:#000;--hud:rgba(0,0,0,.42);--b:rgba(73,230,255,.18);--fg:rgba(220,240,255,.92)}
+  html,body{margin:0;height:100%;background:var(--bg);overflow:hidden}
+  canvas{position:fixed;inset:0;width:100vw;height:100vh;display:block}
+  #hud{position:fixed;left:12px;top:12px;z-index:5;font:12px/1.35 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;color:var(--fg);background:var(--hud);border:1px solid var(--b);border-radius:14px;padding:10px 12px;backdrop-filter:blur(5px);max-width:min(900px,calc(100vw - 24px))}
+  #hud .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  #hud b{font-weight:900;letter-spacing:.2px}
+  #hud select,#hud button,#hud input[type=range]{background:rgba(9,7,18,.65);border:1px solid rgba(73,230,255,.18);color:rgba(234,230,255,.95);border-radius:10px;padding:4px 8px;font:inherit}
+  #hud button{cursor:pointer}
+  #hud .small{opacity:.9}
+  #hud #status{margin-top:8px;white-space:pre-wrap;opacity:.92}
+  #score{position:fixed;right:14px;top:10px;z-index:5;color:rgba(230,245,255,.92);font:12px/1.35 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;text-align:right;text-shadow:0 0 12px rgba(120,240,255,.22)}
+  #filePick{display:inline-flex;gap:8px;align-items:center}
+  #sidePanel{position:fixed;right:0;top:0;height:100vh;width:320px;background:var(--hud);border-left:1px solid var(--b);z-index:4;font:12px/1.35 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;color:var(--fg);overflow-y:auto;backdrop-filter:blur(5px);transition:transform 0.3s ease;transform:translateX(0)}
+  #sidePanel.minimized{transform:translateX(100%)}
+  #sidePanelToggle{position:fixed;right:320px;top:12px;z-index:6;width:24px;height:40px;background:rgba(9,7,18,.65);border:1px solid rgba(73,230,255,.18);border-right:none;border-radius:10px 0 0 10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(73,230,255,.85);font-weight:bold;user-select:none;transition:right 0.3s ease}
+  #sidePanelToggle:hover{background:rgba(9,7,18,.85)}
+  #sidePanel.minimized ~ #sidePanelToggle{right:0}
+  #sidePanelContent{padding:16px;white-space:pre-wrap;opacity:.92}
+  /* MS: hosted mode */
+  #sidePanel,#sidePanelToggle{display:none}
+  #hud{max-width:calc(100vw - 24px)}
+  #hud button,#hud select{min-height:34px}
+  #close{position:fixed;right:10px;top:10px;z-index:7;min-width:44px;min-height:44px;border-radius:50%;border:1px solid rgba(73,230,255,.3);background:rgba(9,7,18,.75);color:#fff;font:700 18px system-ui;cursor:pointer}
+  #score{top:auto;bottom:12px;right:14px}
+  #songLbl{max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom}
+  canvas{touch-action:none}
+  @media (max-width:600px){#hud{font-size:11px;padding:6px 52px 6px 8px;top:6px;left:6px}#hud .hint{display:none}#score{top:auto;bottom:10px;right:10px}}
+</style>
+</head>
+<body>
+<canvas id="sim" aria-label="Neo-VECTR's Neolution rhythm grid"></canvas>
+<div id="hud">
+<div class="row" style="margin-bottom:6px"><b>Neolution</b> <span class="small">· notes from</span> <span id="songLbl" class="small">this song</span></div>
+  <div class="row">
+    <label class="small">Difficulty
+      <select id="diffSel">
+        <option value="0">0 - Beginner</option>
+        <option value="1" selected>1 - Easy</option>
+        <option value="2">2 - Normal</option>
+        <option value="3">3 - Hard</option>
+        <option value="4">4 - Expert</option>
+      </select>
+    </label>
+    <label class="small">Lanes
+      <select id="laneSel"><option value="4">4</option><option value="8">8</option></select>
+    </label>
+    <button id="btnStart">Start</button>
+    <button id="btnPause">Pause</button>
+    <button id="btnRestart">From top</button>
+    <button id="btnNewSeed">New lanes</button>
+    <label class="small">Offset (ms)
+      <input id="offset" type="range" min="-250" max="250" value="0" step="1"/>
+    </label>
+    <span class="small" id="offsetLbl">0</span>
+  </div>
+  <div class="small hint" style="margin-top:6px">
+    Tap the lanes (or ← ↓ ↑ → / D F J K; 8 lanes add W A S D). Notes are placed on the onsets of the song that is playing. <b>Esc</b> close · <b>Space</b> start/pause · <b>H</b> hide this panel
+  </div>
+  <div id="status"></div>
+</div>
+<div id="score"><div>Score <span id="scoreVal">0</span></div><div>Combo x<span id="comboVal">0</span></div></div>
+<div id="sidePanel">
+  <div id="sidePanelContent">DEBUG PANEL</div>
+</div>
+<div id="sidePanelToggle">▶</div>
+<button id="close" aria-label="Close game">✕</button>
+
+<script>
+(() => {
+  'use strict';
+
+  const canvas = document.getElementById('sim');
+  const ctx = canvas.getContext('2d', { alpha:false, desynchronized:true });
+
+  const ui = {
+    diffSel: document.getElementById('diffSel'),
+    start: document.getElementById('btnStart'),
+    pause: document.getElementById('btnPause'),
+    restart: document.getElementById('btnRestart'),
+    newSeed: document.getElementById('btnNewSeed'),
+    laneSel: document.getElementById('laneSel'),
+    songLbl: document.getElementById('songLbl'),
+    offset: document.getElementById('offset'),
+    offsetLbl: document.getElementById('offsetLbl'),
+    status: document.getElementById('status'),
+    scoreVal: document.getElementById('scoreVal'),
+    comboVal: document.getElementById('comboVal'),
+    hud: document.getElementById('hud'),
+    sidePanel: document.getElementById('sidePanel'),
+    sidePanelToggle: document.getElementById('sidePanelToggle'),
+    sidePanelContent: document.getElementById('sidePanelContent')
+  };
+
+  // Side panel toggle
+  let sidePanelMinimized = false;
+  ui.sidePanelToggle.addEventListener('click', () => {
+    sidePanelMinimized = !sidePanelMinimized;
+    ui.sidePanel.classList.toggle('minimized', sidePanelMinimized);
+    ui.sidePanelToggle.textContent = sidePanelMinimized ? '◀' : '▶';
+  });
+
+  let loopEnabled = false; // MS: host player handles repeat/next
+
+  // Seed regeneration function - regenerates chart at current song position
+  // MS: "New lanes" re-deals lanes over the SAME detected onsets (upstream re-seeded a time grid)
+  async function regenerateChart(useRandom = false){
+    if (!chartReady || !lastPeaks) return;
+    const seedStr = songLabel + '|' + Math.random();
+    notes = buildDeterministicChart(lastPeaks, lastDur, seedStr);
+    skipPast();
+    setStatus(`New lanes: ${notes.length} notes`);
+  }
+
+  // Seed buttons
+  ui.newSeed.addEventListener('click', () => regenerateChart(false));
+
+  // --- resize ---
+  let DPR = 1; const TOUCH_DPR_CAP = (matchMedia('(pointer:coarse)').matches || innerWidth < 700) ? 1.5 : 2;
+  function resize(){
+    const dpr = Math.min(TOUCH_DPR_CAP, Math.max(1, window.devicePixelRatio || 1)); DPR = dpr; // MS: cap on phones
+    canvas.width = Math.max(320, Math.floor(innerWidth * dpr));
+    canvas.height = Math.max(180, Math.floor(innerHeight * dpr));
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // --- helpers ---
+  const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+  const lerp = (a,b,t) => a + (b-a)*t;
+
+  // --- input ---
+  const keys = new Set();
+  let hudVisible = true;
+  let capsLockActive = false;
+
+  // Lane press feedback (yellow ring). Decays over time.
+  const lanePress = new Float32Array(8);
+  function markLanePressed(lane){
+    if (lane >= 0 && lane < lanePress.length) lanePress[lane] = 1.0;
+  }
+  window.addEventListener('keydown', (e) => {
+    keys.add(e.code);
+    // Detect caps lock state
+    capsLockActive = e.getModifierState && e.getModifierState('CapsLock');
+    if (e.code === 'KeyH'){
+      hudVisible = !hudVisible;
+      ui.hud.style.display = hudVisible ? 'block' : 'none';
+    }
+    // Tab toggles HUD when caps lock is active
+    if (e.code === 'Tab' && capsLockActive) {
+      e.preventDefault();
+      hudVisible = !hudVisible;
+      ui.hud.style.display = hudVisible ? 'block' : 'none';
+    }
+    if (e.code === 'Space') toggleStartStop();
+    if (e.code === 'Escape') { if (HOST) HOST.close(); else hardReset(); }
+    if (e.code === 'Space') e.preventDefault();
+  });
+  window.addEventListener('keyup', (e) => keys.delete(e.code));
+
+  // --- hit tones (arrows vs symbols) ---
+  function playHitTone(lane, strength){
+    // strength: 0..1
+    try{
+      if (!audioCtx) return;
+      const t0 = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      // Different timbres so WASD feels distinct.
+      const isSymbol = lane >= 4;
+      o.type = isSymbol ? 'triangle' : 'square';
+      const base = isSymbol ? 330 : 660;
+      o.frequency.setValueAtTime(base, t0);
+      o.frequency.exponentialRampToValueAtTime(base * 1.35, t0 + 0.04);
+      const a = 0.0001;
+      const peak = clamp(0.06 + 0.12 * (strength || 0), 0.03, 0.18);
+      g.gain.setValueAtTime(a, t0);
+      g.gain.exponentialRampToValueAtTime(peak, t0 + 0.005);
+      g.gain.exponentialRampToValueAtTime(a, t0 + 0.07);
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.start(t0);
+      o.stop(t0 + 0.09);
+    } catch(_){ /* never throw from UX */ }
+  }
+
+  // --- audio ---
+  let audioCtx = null;
+  let analyser = null;
+  let mediaSrc = null;
+  // MS: hosted inside Music Stream — use the player's own <audio>, AudioContext and AnalyserNode
+  let HOST = null;
+  try { HOST = (window.parent && window.parent !== window && window.parent.__msGameHost) || null; } catch (_) { HOST = null; }
+  let audioEl = HOST ? HOST.audio() : new Audio();
+  audioEl.preload = 'auto';
+  // crossOrigin can break file:// playback in some browsers; only set it on http(s).
+  try{
+    if (location && (location.protocol === 'http:' || location.protocol === 'https:')){
+      audioEl.crossOrigin = 'anonymous';
+    }
+  } catch(_){}
+
+  let waveform = new Uint8Array(1024);
+  let freqData = null;
+  let spectrumBinsStep = 3; // draw every Nth bin (perf)
+  let spectrumInfo = { on:false, peakHz:0, peakMag:0, err:'' };
+
+  function ensureAudioGraph(){
+    if (HOST){ // MS
+      if (!audioCtx) audioCtx = HOST.ctx();
+      if (!analyser){ analyser = HOST.analyser(); if (analyser){ freqData = new Uint8Array(analyser.frequencyBinCount); waveform = new Uint8Array(analyser.fftSize); spectrumInfo.on = true; } }
+      return;
+    }
+    if (!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
+    }
+    if (!analyser){
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.65;
+      try{
+        freqData = new Uint8Array(analyser.frequencyBinCount);
+        spectrumInfo.on = true;
+        spectrumInfo.err = '';
+      } catch(e){
+        spectrumInfo.on = false;
+        spectrumInfo.err = String(e && e.message ? e.message : e);
+      }
+    }
+    if (!mediaSrc){
+      mediaSrc = audioCtx.createMediaElementSource(audioEl);
+      mediaSrc.connect(analyser);
+      analyser.connect(audioCtx.destination);
+    }
+  }
+
+  // Deterministic chart build from decoded audio when possible.
+  // We prefer decoding from File input (reliable). For dropdown songs under file://,
+  // browsers sometimes block fetch/decode; playback still works, but charting may fall back.
+
+  function fnv1a(str){
+    let h = 2166136261 >>> 0;
+    for (let i=0;i<str.length;i++){
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function mulberry32(seed){
+    let t = seed >>> 0;
+    return function(){
+      t += 0x6D2B79F5;
+      let x = Math.imul(t ^ (t >>> 15), 1 | t);
+      x ^= x + Math.imul(x ^ (x >>> 7), 61 | x);
+      return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  async function decodeForChartFromFile(file){
+    const ab = await file.arrayBuffer();
+    ensureAudioGraph();
+    // decode in AudioContext (not Offline) for widest support
+    const buf = await audioCtx.decodeAudioData(ab.slice(0));
+    return buf;
+  }
+
+  // Cheap onset-like peak detection (time-domain energy + local maxima)
+  function buildPeaksFromBuffer(buf){
+    const ch = buf.getChannelData(0);
+    const sr = buf.sampleRate;
+    const win = 1024;
+    const hop = 512;
+    const energies = [];
+    for (let i=0;i+win<ch.length;i+=hop){
+      let e = 0;
+      for (let j=0;j<win;j++) e += Math.abs(ch[i+j]);
+      energies.push(e / win);
+    }
+    // adaptive threshold
+    let mean = 0;
+    for (const e of energies) mean += e;
+    mean /= Math.max(1, energies.length);
+    // MS: threshold follows the LOCAL loudness (±1.5 s) so quiet intros / breakdowns still get notes
+    const pre = new Float64Array(energies.length + 1);
+    for (let i = 0; i < energies.length; i++) pre[i + 1] = pre[i] + energies[i];
+    const LW = Math.round(1.5 * sr / hop);
+    const local = (i) => { const a = Math.max(0, i - LW), b = Math.min(energies.length, i + LW + 1); return (pre[b] - pre[a]) / (b - a); };
+    const peaks = [];
+    for (let i=2;i<energies.length-2;i++){
+      const e = energies[i];
+      const thresh = Math.max(mean * 0.25, local(i) * 1.25);
+      if (e > thresh && e > energies[i-1] && e >= energies[i+1] && e > energies[i-2] && e >= energies[i+2]){
+        peaks.push({ t: (i * hop) / sr, e });
+      }
+    }
+    return peaks;
+  }
+
+  // --- rhythm state ---
+  const LANES = 8;
+  const TOUCH = matchMedia('(pointer:coarse)').matches || innerWidth < 700;
+  let NL = TOUCH ? 4 : 8; // MS: active lane count
+  // lane groups: 0..3 arrows, 4..7 symbols
+  const laneLabel = [
+    { type:'arrow', code:'ArrowLeft', glyph:'←' },
+    { type:'arrow', code:'ArrowDown', glyph:'↓' },
+    { type:'arrow', code:'ArrowUp',   glyph:'↑' },
+    { type:'arrow', code:'ArrowRight',glyph:'→' },
+    { type:'sym',   code:'KeyA', glyph:'□' }, // square
+    { type:'sym',   code:'KeyS', glyph:'×' }, // cross
+    { type:'sym',   code:'KeyD', glyph:'○' }, // circle
+    { type:'sym',   code:'KeyW', glyph:'△' }, // triangle
+  ];
+
+  // controller mapping (standard mapping; best-effort)
+  const padMap = {
+    arrows: { left: 14, down: 13, up: 12, right: 15 },
+    ps: { square: 2, cross: 0, circle: 1, triangle: 3 }
+  };
+
+  let songId = 'SpeedDemon.wav';
+  let songLabel = 'SpeedDemon.wav';
+  let customObjectUrl = null;
+
+  let playing = false;
+  let paused = false;
+  let chartReady = false;
+  let chartBuilding = false; // Lock to prevent concurrent builds
+
+  let chartSeed = 123456;
+  let lastPeaks = null, lastDur = 0, chartFromAudio = false, trackKey = '', builtFor = ''; // MS
+  let notes = []; // {t,lane,hit:false,miss:false}
+
+  let score = 0;
+  let combo = 0;
+
+  // hit feedback
+  let hitFlash = 0;
+  let missFlash = 0;
+
+  // difficulty params
+  const diffParams = [
+    { name:'Beginner', keep:0.35, minGap:0.42, travel:2.6, hitWin:0.135 },
+    { name:'Easy',     keep:0.50, minGap:0.34, travel:2.45, hitWin:0.120 },
+    { name:'Normal',   keep:0.65, minGap:0.28, travel:2.30, hitWin:0.105 },
+    { name:'Hard',     keep:0.78, minGap:0.24, travel:2.15, hitWin:0.095 },
+    { name:'Expert',   keep:0.88, minGap:0.20, travel:2.00, hitWin:0.085 },
+  ];
+
+  function currentDiff(){
+    return diffParams[clamp(parseInt(ui.diffSel.value,10)||1,0,4)];
+  }
+
+  let lastError = '';
+  function setStatus(msg){
+    ui.status.textContent = msg;
+  }
+  function setError(err){
+    if (!err){ lastError = ''; return; }
+    // Normalize Event / MediaError into something readable.
+    try{
+      if (err instanceof Event){
+        const me = audioEl && audioEl.error;
+        if (me){
+          const code = me.code;
+          const msg = (me.message || '') + (code ? (' (code ' + code + ')') : '');
+          lastError = 'audio element error' + (msg ? (': ' + msg) : '');
+          return;
+        }
+        lastError = 'audio event: ' + (err.type || 'unknown');
+        return;
+      }
+    } catch(_){}
+    lastError = String(err && err.message ? err.message : err);
+  }
+
+  function updateScoreUI(){
+    ui.scoreVal.textContent = String(score);
+    ui.comboVal.textContent = String(combo);
+  }
+
+  // --- chart building ---
+  function buildDeterministicChart(peaks, durationSec, seedStr){
+    const d = currentDiff();
+    const seed = fnv1a(seedStr);
+    chartSeed = seed;
+    const rng = mulberry32(seed);
+
+    // Filter peaks by spacing and difficulty keep ratio
+    const kept = [];
+    let lastT = -999;
+    for (const p of peaks){
+      if ((p.t - lastT) < d.minGap) continue;
+      if (rng() > d.keep) continue;
+      kept.push(p.t);
+      lastT = p.t;
+    }
+
+    // MS: sparse songs — keep MORE of the real onsets instead of switching to a fixed time grid (the grid is not on the music)
+    if (kept.length < 80 && peaks.length >= 20){
+      kept.length = 0; lastT = -999;
+      for (const p of peaks){ if ((p.t - lastT) < d.minGap * 0.6) continue; kept.push(p.t); lastT = p.t; }
+    }
+    // If decoding gave too few peaks, fall back to a fixed grid (still deterministic)
+    if (kept.length < 20){
+      kept.length = 0;
+      const step = lerp(0.55, 0.22, (parseInt(ui.diffSel.value,10)||1) / 4);
+      for (let t=1.0; t<durationSec-1.0; t += step){
+        if (rng() < 0.85) kept.push(t);
+      }
+    }
+
+    // Lane selection: keep it readable; alternate groups
+    const out = [];
+    let mode = 0;
+    for (const t of kept){
+      const swing = rng();
+      if (swing > 0.82) mode = 1-mode;
+      const base = (NL === 4 || mode===0) ? 0 : 4; // MS: 4-lane mode uses lanes 0..3 only
+      const lane = base + Math.floor(rng()*4);
+      out.push({ t, lane, hit:false, miss:false });
+      // occasional chord on higher diffs
+      if (parseInt(ui.diffSel.value,10) >= 3 && rng() < 0.14){
+        let lane2 = base + Math.floor(rng()*4);
+        if (lane2 === lane) lane2 = base + ((lane2+1)%4);
+        out.push({ t, lane: lane2, hit:false, miss:false });
+      }
+    }
+
+    // Sort & return
+    out.sort((a,b)=>a.t-b.t || a.lane-b.lane);
+    return out;
+  }
+
+  async function rebuildChartUsingDecodeIfPossible(sourceLabel, fromFile){
+    if (chartBuilding) return; // Skip if already building
+    chartBuilding = true;
+    chartReady = false;
+    setStatus('building chart...');
+
+    try{
+      let buf = null;
+      if (fromFile){
+        buf = await decodeForChartFromFile(fromFile);
+      } else {
+        // Try fetch+decode for dropdown songs. This may fail under file://.
+        ensureAudioGraph();
+        const res = await fetch(sourceLabel, { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('fetch ' + res.status);
+        const ab = await res.arrayBuffer();
+        // MS: decode mono at 22.05 kHz (≈4x less memory than a stereo 44.1 kHz AudioContext decode)
+        let dec = null;
+        try { const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext; dec = new OAC(1, 22050, 22050); } catch (_) { dec = null; }
+        buf = await (dec || audioCtx).decodeAudioData(ab);
+      }
+
+      const peaks = buildPeaksFromBuffer(buf);
+      lastPeaks = peaks; lastDur = buf.duration; // MS
+      notes = buildDeterministicChart(peaks, buf.duration, songLabel + '|' + buf.length + '|' + buf.sampleRate);
+      chartReady = true; chartFromAudio = true; skipPast();
+      window.__neoChart = { notes: notes.length, peaks: peaks.length, duration: +buf.duration.toFixed(2), sampleRate: buf.sampleRate, fromAudio: true };
+      setStatus(`chart ready: ${notes.length} notes  |  ${currentDiff().name}\n(If timing feels off, adjust Offset.)`);
+    } catch (err){
+      // Fallback: deterministic, duration-based.
+      const dur = isFinite(audioEl.duration) ? audioEl.duration : 180;
+      const seedStr = sourceLabel + '|' + String(dur.toFixed(3));
+      const pseudoPeaks = [];
+      const rng = mulberry32(fnv1a(seedStr));
+      // pseudo-peaks (not sound-based, but stable)
+      const step = lerp(0.52, 0.20, (parseInt(ui.diffSel.value,10)||1) / 4);
+      for (let t=1.0; t<dur-1.0; t += step){
+        if (rng() < 0.92) pseudoPeaks.push({ t, e: 1 });
+      }
+      notes = buildDeterministicChart(pseudoPeaks, dur, seedStr);
+      chartReady = true; chartFromAudio = false; skipPast();
+      window.__neoChart = { notes: notes.length, fromAudio: false, err: String(err && err.message || err) };
+      setStatus(
+        'audio analysis blocked (likely file://).\n' +
+        'Playback is fine, chart is deterministic fallback.\n' +
+        'For true soundwave charting: use Choose File OR run a local server.\n' +
+        `notes: ${notes.length}`
+      );
+      console.warn('Chart decode failed:', err);
+    } finally {
+      chartBuilding = false;
+    }
+  }
+
+  function clearNotesState(){
+    for (const n of notes){ n.hit=false; n.miss=false; }
+    score = 0; combo = 0;
+    hitFlash = 0; missFlash = 0;
+    updateScoreUI();
+  }
+
+  // --- transport ---
+  function audioTime(){
+    // Offset is ms added to judgement so user can calibrate
+    const off = (parseInt(ui.offset.value,10)||0) / 1000;
+    return (audioEl.currentTime || 0) + off;
+  }
+
+  async function loadSongFromDropdown(){
+    songId = ui.songSel.value;
+    songLabel = songId;
+    if (customObjectUrl){
+      URL.revokeObjectURL(customObjectUrl);
+      customObjectUrl = null;
+    }
+    audioEl.src = songId;
+    audioEl.load();
+    clearNotesState();
+    setError('');
+    await waitMetadata();
+    await rebuildChartUsingDecodeIfPossible(songId, null);
+  }
+
+  async function loadSongFromFile(file){
+    songId = 'custom';
+    songLabel = file.name;
+    if (customObjectUrl) URL.revokeObjectURL(customObjectUrl);
+    customObjectUrl = URL.createObjectURL(file);
+    audioEl.src = customObjectUrl;
+    audioEl.load();
+    clearNotesState();
+    setError('');
+    await waitMetadata();
+    await rebuildChartUsingDecodeIfPossible(file.name, file);
+  }
+
+  function waitMetadata(){
+    return new Promise((resolve, reject) => {
+      if (isFinite(audioEl.duration) && audioEl.duration > 0) return resolve();
+      const onOk = () => { cleanup(); resolve(); };
+      const onErr = (e) => { cleanup(); reject(e); };
+      const cleanup = () => {
+        audioEl.removeEventListener('loadedmetadata', onOk);
+        audioEl.removeEventListener('error', onErr);
+      };
+      audioEl.addEventListener('loadedmetadata', onOk);
+      audioEl.addEventListener('error', onErr);
+    });
+  }
+
+  function waitCanPlay(){
+    return new Promise((resolve, reject) => {
+      if (audioEl.readyState >= 2) return resolve();
+      const onOk = () => { cleanup(); resolve(); };
+      const onErr = () => { cleanup(); reject(audioEl.error || new Error('audio element error')); };
+      const cleanup = () => {
+        audioEl.removeEventListener('canplay', onOk);
+        audioEl.removeEventListener('canplaythrough', onOk);
+        audioEl.removeEventListener('error', onErr);
+      };
+      audioEl.addEventListener('canplay', onOk);
+      audioEl.addEventListener('canplaythrough', onOk);
+      audioEl.addEventListener('error', onErr);
+    });
+  }
+
+  // MS: notes already behind the playhead when you join mid-song are skipped, not counted as misses
+  function skipPast(){ const tn = audioTime(); for (const n of notes){ n.skip = n.t < tn + 0.6 && !n.hit; } }
+  function hostSync(){
+    const a = HOST.audio(); if (a && a !== audioEl) audioEl = a;
+    const key = HOST.trackKey();
+    if (key && key !== trackKey){
+      trackKey = key; builtFor = ''; songLabel = HOST.title() || 'this song'; ui.songLbl.textContent = songLabel;
+      chartReady = false; notes = []; lastPeaks = null; clearNotesState();
+    }
+    const src = audioEl.currentSrc || audioEl.src;
+    if (trackKey && builtFor !== trackKey && src && !chartBuilding){
+      builtFor = trackKey; const k = trackKey;
+      rebuildChartUsingDecodeIfPossible(src, null).then(() => { if (k !== trackKey){ chartReady = false; notes = []; } });
+    }
+  }
+  async function startPlayback(){
+    ensureAudioGraph();
+    if (HOST){ // MS: never restart or reload the host's song; just make sure it is playing
+      if (audioCtx && audioCtx.state === 'suspended') try { await audioCtx.resume(); } catch (_) {}
+      if (audioEl.paused) HOST.toggle();
+      skipPast(); playing = true; paused = false; setError(''); return;
+    }
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+    // Ensure the media element has data buffered before play() to reduce NotSupported/Abort errors.
+    await waitCanPlay();
+    try{
+      await audioEl.play();
+    } catch(e){
+      // Surface useful diagnostics
+      const src = audioEl.currentSrc || audioEl.src || '(no src)';
+      const code = audioEl.error && audioEl.error.code ? audioEl.error.code : '';
+      const extra = code ? ` (mediaErrCode ${code})` : '';
+      throw new Error(`play() failed: ${e && e.name ? e.name : e}${extra} | src: ${src}`);
+    }
+    setError('');
+    playing = true;
+    paused = false;
+  }
+
+  // Audio end handler for looping
+  audioEl.addEventListener('ended', () => {
+    if (loopEnabled && playing) {
+      // Reset to start and loop seamlessly
+      audioEl.currentTime = 0;
+      clearNotesState();
+      audioEl.play().catch(e => console.error('Loop playback failed:', e));
+    }
+  });
+
+  function pausePlayback(){
+    if (HOST){ if (!audioEl.paused) HOST.toggle(); paused = true; playing = false; return; } // MS
+    audioEl.pause();
+    paused = true;
+    playing = false;
+  }
+
+  async function restartPlayback(){
+    audioEl.currentTime = 0;
+    clearNotesState(); for (const n of notes) n.skip = false;
+    await startPlayback();
+  }
+
+  function hardReset(){
+    pausePlayback();
+    audioEl.currentTime = 0;
+    clearNotesState();
+  }
+
+  async function toggleStartStop(){
+    if (!playing) {
+      // Guard: if audio failed to load/decode, don't look "dead".
+      if (audioEl && audioEl.error){
+        const code = audioEl.error.code;
+        const hint = (location && location.protocol === 'file:')
+          ? 'If you opened via file://, built-in songs may fail. Use Choose File to guarantee playback + charting.'
+          : 'Ensure the audio file exists and your browser supports it.';
+        setError(`Audio load failed (MediaError code ${code}). ${hint}`);
+        return;
+      }
+      if (!chartReady){
+        setError('Chart is still building. Wait for it to finish (or choose a file for guaranteed analysis).');
+        return;
+      }
+      // MS: Start joins the song where it is (upstream restarted from the top)
+      try{ clearNotesState(); await startPlayback(); }
+      catch(e){
+        setError(e && e.message ? e.message : e);
+        console.error(e);
+      }
+    } else {
+      pausePlayback();
+    }
+  }
+
+  // --- gameplay judgement ---
+  function tryHitLane(lane){
+    if (!chartReady) return;
+    const tNow = audioTime();
+    const d = currentDiff();
+
+    // Find nearest unhit note in this lane within window
+    let best = null;
+    let bestIdx = -1;
+    let bestAbs = 9e9;
+    for (let i=0;i<notes.length;i++){
+      const n = notes[i];
+      if (n.lane !== lane || n.hit || n.miss || n.skip) continue;
+      const dt = n.t - tNow;
+      const adt = Math.abs(dt);
+      if (adt < bestAbs){
+        bestAbs = adt;
+        best = n;
+        bestIdx = i;
+      }
+      if (n.t > tNow + d.hitWin) break;
+    }
+    if (best && bestAbs <= d.hitWin){
+      best.hit = true;
+      // Audible confirmation: arrows vs symbols have different tones.
+      const strength = 1 - clamp(bestAbs / d.hitWin, 0, 1);
+      playHitTone(lane, strength);
+      combo += 1;
+      score += 100 + Math.min(900, combo * 5);
+      hitFlash = 1.0;
+      updateScoreUI();
+      return true;
+    }
+
+    // No note: treat as miss input (small penalty)
+    combo = 0;
+    missFlash = 1.0;
+    updateScoreUI();
+    return false;
+  }
+
+  function markMisses(){
+    if (!chartReady) return;
+    const tNow = audioTime();
+    const d = currentDiff();
+    for (const n of notes){
+      if (n.hit || n.miss || n.skip) continue;
+      if (n.t < tNow - d.hitWin){
+        n.miss = true;
+        combo = 0;
+        missFlash = 1.0;
+        updateScoreUI();
+      } else {
+        break;
+      }
+    }
+  }
+
+  // --- controller polling (edge-triggered) ---
+  const lastPad = { axes:[], btn:[] };
+  function pollGamepadEdges(){
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const gp = pads && pads[0];
+    if (!gp) return;
+
+    // buttons
+    for (let i=0;i<gp.buttons.length;i++){
+      const v = gp.buttons[i] && gp.buttons[i].pressed ? 1 : 0;
+      const prev = lastPad.btn[i] || 0;
+      if (v && !prev){
+        // rising edge
+        if (i === padMap.arrows.left)  { markLanePressed(0); tryHitLane(0); }
+        if (i === padMap.arrows.down)  { markLanePressed(1); tryHitLane(1); }
+        if (i === padMap.arrows.up)    { markLanePressed(2); tryHitLane(2); }
+        if (i === padMap.arrows.right) { markLanePressed(3); tryHitLane(3); }
+
+        if (i === padMap.ps.square)   { markLanePressed(4); tryHitLane(4); }
+        if (i === padMap.ps.cross)    { markLanePressed(5); tryHitLane(5); }
+        if (i === padMap.ps.circle)   { markLanePressed(6); tryHitLane(6); }
+        if (i === padMap.ps.triangle) { markLanePressed(7); tryHitLane(7); }
+      }
+      lastPad.btn[i] = v;
+    }
+  }
+
+  // --- visuals: TRON grid ---
+  let gridN = 28; // density
+  let pitch = 0.28; // perspective strength
+
+  function cellPxNear(){
+    return clamp(140 - gridN * 1.4, 26, 140);
+  }
+
+  function drawNeonLine(x1,y1,x2,y2,w,glow,a1,a2,color){
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = a1;
+    ctx.lineWidth = w;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+
+    ctx.globalAlpha = a2;
+    ctx.lineWidth = w + glow;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function drawGrid3D(){
+    const W = canvas.width;
+    const H = canvas.height;
+    const cx = W*0.5;
+    const horizon = H * 0.23;
+    const nearY = H * 0.88;
+
+    // subtle floor vignette
+    ctx.globalCompositeOperation = 'source-over';
+    const grad = ctx.createRadialGradient(cx, nearY, H*0.05, cx, nearY, H*0.60);
+    grad.addColorStop(0, 'rgba(20,22,40,0.55)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,W,H);
+
+    const cellNear = cellPxNear();
+    const halfSpan = W * 0.55;
+
+    const lanesFar = 46;
+    const lanesNear = 120;
+
+    // perspective helper: for a given depth z in [0,1], return y, scale
+    function proj(z){
+      const y = lerp(nearY, horizon, z);
+      const k = lerp(1.0, 0.10, z);
+      return { y, k };
+    }
+
+    // horizontal lines
+    for (let i=0;i<lanesFar;i++){
+      const z = i/(lanesFar-1);
+      const p = proj(z);
+      const y = p.y;
+      const k = p.k;
+      const span = halfSpan * k;
+      const major = (i % 4 === 0);
+      const col = major ? 'rgba(255,184,77,0.80)' : 'rgba(73,230,255,0.30)';
+      const a1 = major ? 0.34 : 0.22;
+      const a2 = major ? 0.10 : 0.06;
+      drawNeonLine(cx - span, y, cx + span, y, major?1.4:1.0, major?6.8:5.2, a1, a2, col);
+    }
+
+    // vertical rays
+    const n = Math.min(lanesNear, Math.floor(W / (cellNear*0.55)));
+    for (let i=-n;i<=n;i++){
+      const xNear = cx + i * cellNear;
+      const xFar = cx + i * cellNear * 0.06;
+      const major = (i % 6 === 0);
+      const col = major ? 'rgba(255,184,77,0.65)' : 'rgba(73,230,255,0.22)';
+      const a1 = major ? 0.30 : 0.18;
+      const a2 = major ? 0.10 : 0.06;
+      drawNeonLine(xNear, nearY, xFar, horizon, major?1.25:0.95, major?7.2:5.2, a1, a2, col);
+    }
+
+    // vanishing point glow
+    ctx.globalCompositeOperation = 'lighter';
+    const g2 = ctx.createRadialGradient(cx, horizon, 0, cx, horizon, H*0.08);
+    g2.addColorStop(0,'rgba(200,240,255,0.55)');
+    g2.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = g2;
+    ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation = 'source-over';
+
+    return { cx, horizon, nearY };
+  }
+
+  // --- rhythm overlay in perspective ---
+  function laneXNear(idx, W){
+    // 8 lanes spread across a centered band
+    const band = W * (NL === 4 ? (TOUCH ? 0.86 : 0.5) : (TOUCH ? 0.92 : 0.56));
+    const left = (W - band) * 0.5;
+    const w = band / NL;
+    return left + w*(idx + 0.5);
+  }
+
+  function laneXFar(idx, W, vpX){
+    // converge towards VP
+    const bandFar = W * 0.05;
+    const left = vpX - bandFar*0.5;
+    const w = bandFar / NL;
+    return left + w*(idx + 0.5);
+  }
+
+  function notePos(tNow, noteT, travel, geom){
+    const { cx, horizon, nearY } = geom;
+    const dt = noteT - tNow;
+    const u = clamp(1 - (dt / travel), 0, 1); // 0 far, 1 near
+    const z = clamp(1 - u, 0, 1);
+    const y = lerp(nearY, horizon, z);
+    const k = lerp(1.0, 0.10, z);
+    return { u, z, y, k };
+  }
+
+  function drawWaveform(geom){
+    if (!analyser) return;
+    analyser.getByteTimeDomainData(waveform);
+    const W = canvas.width;
+    const H = canvas.height;
+    const yBase = geom.horizon - H*0.06;
+    const x0 = W*0.15;
+    const x1 = W*0.85;
+
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    // thin wave
+    ctx.strokeStyle = 'rgba(255,90,90,0.28)';
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    for (let i=0;i<waveform.length;i++){
+      const v = (waveform[i] - 128) / 128;
+      const x = lerp(x0, x1, i/(waveform.length-1));
+      const y = yBase + v * H*0.015;
+      if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+
+    // glow
+    ctx.strokeStyle = 'rgba(255,90,90,0.12)';
+    ctx.lineWidth = 4.6;
+    ctx.stroke();
+
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+
+  function drawSpectrum(geom){
+    if (!analyser || !freqData) return;
+    try{
+      analyser.getByteFrequencyData(freqData);
+      const W = canvas.width;
+      const H = canvas.height;
+      // place spectrum near top (above playfield), away from HUD.
+      const yTop = Math.floor(H * 0.12);
+      const barH = Math.max(28, Math.floor(H * 0.055));
+      const x0 = Math.floor(W * 0.10);
+      const x1 = Math.floor(W * 0.90);
+      const n = freqData.length;
+      const step = Math.max(1, spectrumBinsStep|0);
+
+      // peak tracking (for debugger)
+      let peakI = 0;
+      let peakV = 0;
+      for (let i=0;i<n;i+=step){
+        const v = freqData[i];
+        if (v > peakV){ peakV = v; peakI = i; }
+      }
+      const nyq = (audioCtx ? audioCtx.sampleRate : 48000) / 2;
+      const peakHz = nyq * (peakI / Math.max(1, n-1));
+      spectrumInfo.on = true;
+      spectrumInfo.peakHz = peakHz;
+      spectrumInfo.peakMag = peakV;
+      spectrumInfo.err = '';
+
+      // draw background strip
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.fillRect(x0-6, yTop-6, (x1-x0)+12, barH+12);
+
+      // draw bars (frequency -> hue)
+      ctx.globalCompositeOperation = 'lighter';
+      const bars = Math.floor((x1-x0) / 3);
+      const stride = Math.max(step, Math.floor(n / Math.max(1, bars)));
+      let x = x0;
+      for (let i=0;i<n && x < x1; i += stride){
+        const v = freqData[i] / 255;
+        const h = 210 + (i / n) * 120; // blue->pink/orange
+        const a = 0.10 + v * 0.75;
+        const hh = v * barH;
+        ctx.fillStyle = `hsla(${h.toFixed(1)}, 100%, 65%, ${a.toFixed(3)})`;
+        ctx.fillRect(x, yTop + (barH-hh), 2, hh);
+        x += 3;
+      }
+
+      // subtle glow line
+      ctx.fillStyle = 'rgba(255,90,90,0.20)';
+      ctx.fillRect(x0, yTop + barH + 2, (x1-x0), 1);
+      ctx.globalCompositeOperation = 'source-over';
+    } catch(e){
+      spectrumInfo.on = false;
+      spectrumInfo.err = String(e && e.message ? e.message : e);
+    }
+  }
+
+  function drawReceptors(geom){
+    const W = canvas.width;
+    const { cx, horizon, nearY } = geom;
+    const hitY = nearY - canvas.height * 0.035;
+
+    // RED HIT LINE (requested)
+    const baseA = 0.22;
+    const a = baseA + 0.35*hitFlash + 0.45*missFlash;
+    const glow = 10 + 16*hitFlash + 22*missFlash;
+    drawNeonLine(W*0.22, hitY-10, W*0.78, hitY-10, 2.2, glow, a, a*0.35, 'rgba(255,60,60,0.90)');
+
+    // circles + glyphs
+    for (let i=0;i<NL;i++){
+      const x = laneXNear(i, W);
+      const r = 10.5 * DPR;
+      ctx.globalCompositeOperation = 'lighter';
+
+      // ring
+      ctx.strokeStyle = 'rgba(255,90,230,0.85)';
+      ctx.lineWidth = 2.6;
+      ctx.beginPath(); ctx.arc(x, hitY, r, 0, Math.PI*2); ctx.stroke();
+
+      // pressed feedback ring (yellow, reactive)
+      const p = lanePress[i] || 0;
+      if (p > 0){
+        const pa = clamp(p, 0, 1);
+        ctx.strokeStyle = `rgba(255, 220, 60, ${0.15 + 0.55*pa})`;
+        ctx.lineWidth = 2.2 + 2.2*pa;
+        ctx.beginPath(); ctx.arc(x, hitY, r + 3 + 2*pa, 0, Math.PI*2); ctx.stroke();
+        ctx.strokeStyle = `rgba(255, 220, 60, ${0.06 + 0.18*pa})`;
+        ctx.lineWidth = 8.0 + 4.0*pa;
+        ctx.beginPath(); ctx.arc(x, hitY, r + 3 + 2*pa, 0, Math.PI*2); ctx.stroke();
+      }
+      ctx.strokeStyle = 'rgba(255,90,230,0.18)';
+      ctx.lineWidth = 8.5;
+      ctx.beginPath(); ctx.arc(x, hitY, r, 0, Math.PI*2); ctx.stroke();
+
+      // glyph
+      ctx.fillStyle = 'rgba(225,240,255,0.92)';
+      ctx.font = Math.round(14*DPR) + 'px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(laneLabel[i].glyph, x, hitY);
+
+      // On-screen clarification: WASD also triggers the symbol lanes.
+      if (i >= 4 && !TOUCH){
+        const key = (i===4?'A':i===5?'S':i===6?'D':'W');
+        ctx.fillStyle = 'rgba(235,245,255,0.55)';
+        ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+        ctx.fillText(key, x, hitY + 18);
+      }
+
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    return { hitY };
+  }
+
+  function drawNotes(geom){
+    if (!chartReady) return;
+    const W = canvas.width;
+    const tNow = audioTime();
+    const d = currentDiff();
+
+    for (const n of notes){
+      if (n.hit || n.miss || n.skip) continue;
+      const pos = notePos(tNow, n.t, d.travel, geom);
+      if (pos.u <= 0) continue; // not yet spawned
+      if (pos.u >= 1.15) continue;
+
+      const xN = laneXNear(n.lane, W);
+      const xF = laneXFar(n.lane, W, geom.cx);
+      const x = lerp(xF, xN, pos.u);
+      const y = pos.y;
+
+      const r = lerp(4.2, 11.0, pos.u) * DPR;
+      const alpha = lerp(0.10, 0.95, pos.u);
+
+      const isArrow = (n.lane < 4);
+      const col = isArrow ? 'rgba(73,230,255,1)' : 'rgba(255,184,77,1)';
+
+      // note body
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = col;
+      ctx.globalAlpha = alpha * 0.22;
+      ctx.beginPath(); ctx.arc(x,y,r*1.55,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha = alpha * 0.85;
+      ctx.beginPath(); ctx.arc(x,y,r*0.80,0,Math.PI*2); ctx.fill();
+
+      // glyph
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = 'rgba(235,245,255,0.92)';
+      ctx.font = `${Math.floor(r*1.45)}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(laneLabel[n.lane].glyph, x, y+0.5);
+
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  }
+
+  // --- main loop ---
+  let last = performance.now();
+  let acc = 0;
+  const dtFixed = 1/120;
+
+  function step(dt){
+    // decay flashes
+    hitFlash = Math.max(0, hitFlash - dt*3.2);
+    missFlash = Math.max(0, missFlash - dt*2.4);
+
+    // decay lane press rings
+    for (let i=0;i<lanePress.length;i++){
+      lanePress[i] = Math.max(0, lanePress[i] - dt*8.5);
+    }
+
+    // inputs: keyboard hits (edge-ish)
+    // We use keydown edges by checking a latch per frame.
+  }
+
+  const keyLatch = new Map();
+  function consumePress(code){
+    const down = keys.has(code);
+    const was = keyLatch.get(code) || false;
+    keyLatch.set(code, down);
+    return down && !was;
+  }
+
+  function handleInputs(){
+    // arrows
+    if (consumePress('ArrowLeft')) { markLanePressed(0); tryHitLane(0); }
+    if (consumePress('ArrowDown')) { markLanePressed(1); tryHitLane(1); }
+    if (consumePress('ArrowUp'))   { markLanePressed(2); tryHitLane(2); }
+    if (consumePress('ArrowRight')){ markLanePressed(3); tryHitLane(3); }
+
+    if (NL === 4 && consumePress('KeyD')) { markLanePressed(0); tryHitLane(0); } // MS: D F J K = lanes 1-4 in 4-lane mode
+    if (consumePress('KeyF')) { markLanePressed(1); tryHitLane(1); }
+    if (consumePress('KeyJ')) { markLanePressed(2); tryHitLane(2); }
+    if (consumePress('KeyK')) { markLanePressed(3); tryHitLane(3); }
+    if (NL === 4) { pollGamepadEdges(); return; }
+    // WASD symbols
+    if (consumePress('KeyA')) { markLanePressed(4); tryHitLane(4); }
+    if (consumePress('KeyS')) { markLanePressed(5); tryHitLane(5); }
+    if (consumePress('KeyD')) { markLanePressed(6); tryHitLane(6); }
+    if (consumePress('KeyW')) { markLanePressed(7); tryHitLane(7); }
+
+    pollGamepadEdges();
+  }
+
+  function draw(){
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    const geom = drawGrid3D();
+
+    // spectrum + waveform (cosmetic only)
+    drawSpectrum(geom);
+    drawWaveform(geom);
+
+    // notes and receptors
+    drawNotes(geom);
+    drawReceptors(geom);
+
+    // status
+    const t = audioEl.currentTime || 0;
+    const dur = isFinite(audioEl.duration) ? audioEl.duration : 0;
+    const d = currentDiff();
+    const mode = playing ? (audioEl.paused ? 'paused' : 'playing') : 'press Start';
+    const errLine = lastError ? (`ERROR: ${lastError}\n`) : '';
+    setStatus(errLine + (chartBuilding ? 'Reading the song to place notes…' : chartReady ? `${mode} · ${t.toFixed(1)}/${dur?dur.toFixed(0):'--'}s · ${notes.length} notes ${chartFromAudio ? 'from this song' : '(fallback grid)'} · ${d.name}` : 'waiting for the song…'));
+  }
+
+  function frame(){
+    const now = performance.now();
+    let dt = (now - last) / 1000;
+    last = now;
+    dt = Math.min(dt, 0.05);
+    acc += dt;
+
+    while (acc >= dtFixed){
+      step(dtFixed);
+      acc -= dtFixed;
+    }
+
+    if (HOST) hostSync(); // MS
+    handleInputs();
+    if (playing && !audioEl.paused) markMisses();
+    draw();
+
+    requestAnimationFrame(frame);
+  }
+
+  // --- UI wiring ---
+  ui.offset.addEventListener('input', () => ui.offsetLbl.textContent = ui.offset.value);
+  ui.offsetLbl.textContent = ui.offset.value;
+
+  // MS: difficulty / lane count re-deal the chart from the already-detected onsets (no re-download)
+  function rechart(){ if (!lastPeaks) return; notes = buildDeterministicChart(lastPeaks, lastDur, songLabel + '|' + chartSeed); clearNotesState(); skipPast(); }
+  ui.diffSel.addEventListener('change', rechart);
+  ui.laneSel.value = String(NL);
+  ui.laneSel.addEventListener('change', () => { NL = parseInt(ui.laneSel.value, 10) === 8 ? 8 : 4; rechart(); });
+  document.getElementById('close').addEventListener('click', () => { if (HOST) HOST.close(); });
+  // MS: touch / mouse lanes — tap anywhere in a lane's column
+  canvas.addEventListener('pointerdown', (e) => {
+    const r = canvas.getBoundingClientRect(), x = (e.clientX - r.left) * (canvas.width / r.width), W = canvas.width;
+    let best = 0, bd = 1e9; for (let i = 0; i < NL; i++){ const d = Math.abs(laneXNear(i, W) - x); if (d < bd){ bd = d; best = i; } }
+    if (!playing && chartReady) { toggleStartStop(); return; }
+    markLanePressed(best); tryHitLane(best); e.preventDefault();
+  });
+  window.__neo = { stats: () => ({ playing, chartReady, chartFromAudio, notes: notes.length, hit: notes.filter(n=>n.hit).length, miss: notes.filter(n=>n.miss).length, skipped: notes.filter(n=>n.skip).length, score, combo, lanes: NL, t: audioEl.currentTime, offsetMs: parseInt(ui.offset.value,10)||0 }), notes: () => notes.map(n => ({ t: +n.t.toFixed(3), lane: n.lane })) };
+
+  ui.start.addEventListener('click', async () => {
+    try{ await toggleStartStop(); }
+    catch(e){ setError('audio error — ' + (e && e.message ? e.message : 'see console')); console.error(e); }
+  });
+  ui.pause.addEventListener('click', async () => {
+    if (playing) {
+      pausePlayback();
+    } else if (paused) {
+      // Resume from pause
+      try{ await startPlayback(); }
+      catch(e){ setError('audio error — ' + (e && e.message ? e.message : 'see console')); console.error(e); }
+    }
+  });
+  ui.restart.addEventListener('click', async () => {
+    try{ await restartPlayback(); }
+    catch(e){ setError('audio error — ' + (e && e.message ? e.message : 'see console')); console.error(e); }
+  });
+
+  // --- init ---
+  if (HOST){ // MS
+    ensureAudioGraph();
+    try { const lat = ((audioCtx && (audioCtx.outputLatency || 0)) + (audioCtx && (audioCtx.baseLatency || 0))) * 1000; const v = Math.round(-Math.min(200, lat)); ui.offset.value = String(v); ui.offsetLbl.textContent = String(v); } catch (_) {}
+    updateScoreUI(); hostSync();
+  } else {
+    setStatus('Open this from the Music Stream player (Rhythm game button).');
+  }
+  window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data === 'ms-neo-start' && !playing) toggleStartStop(); });
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+{
+ "id": "idle_sway",
+ "name": "Idle sway (fallback groove)",
+ "style": "any",
+ "beats": 4,
+ "loop": true,
+ "oneShot": false,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": -3,
+   "head": 2,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 12,
+   "larmR": -8,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "rootX": -3,
+   "t": 0,
+   "ease": "inOut"
+  },
+  {
+   "torso": 3,
+   "head": -2,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 12,
+   "larmR": -8,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "rootX": 3,
+   "t": 0.5,
+   "ease": "inOut"
+  },
+  {
+   "torso": -3,
+   "head": 2,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 12,
+   "larmR": -8,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "rootX": -3,
+   "t": 1,
+   "ease": "inOut"
+  }
+ ]
+}

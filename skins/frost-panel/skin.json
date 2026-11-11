@@ -1,0 +1,9 @@
+{
+  "id": "frost-panel",
+  "name": "Frost Panel",
+  "description": "Cool nordic frosted panels and soft cyan.",
+  "npLayout": "art-hero",
+  "art": "square",
+  "themeColor": "#eceff4",
+  "sideLabel": "FROST PANEL \u2014 NOW SPINNING"
+}

@@ -1,0 +1,19 @@
+{
+  "last_run": "2026-11-11T10:33:41.932595+05:30",
+  "last_ok": "2026-11-11T10:33:41.932628+05:30",
+  "owned": [
+    "assets/dance/cmu_90_36.motion.json",
+    "assets/dance/cmu_90_36.vrma"
+  ],
+  "last_added": [
+    {
+      "id": "cmu_90_36",
+      "license": "LicenseRef-CMU-Mocap",
+      "kind": "clip",
+      "bytes": 42408,
+      "label": "wide leg roll"
+    }
+  ],
+  "last_rev": "vizupd-202611111033",
+  "butterchurn_presets_version_seen": "2.4.7"
+}

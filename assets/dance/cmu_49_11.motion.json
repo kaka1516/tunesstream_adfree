@@ -1,0 +1,138 @@
+{
+ "specVersion": "0.1",
+ "id": "cmu_49_11",
+ "name": "49_11",
+ "description": "dance - fold in from side arabesque, curl inwards",
+ "duration": 9.93,
+ "sourceFps": 120,
+ "license": {
+  "spdx": "LicenseRef-CMU-Mocap",
+  "url": "http://mocap.cs.cmu.edu/faqs.php",
+  "attribution": "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.",
+  "authors": [
+   {
+    "name": "Carnegie Mellon University Graphics Lab",
+    "url": "http://mocap.cs.cmu.edu/"
+   },
+   {
+    "name": "Bruce Hahne (BVH conversion, cgspeed)"
+   }
+  ],
+  "source": {
+   "kind": "mocap",
+   "url": "http://mocap.cs.cmu.edu/",
+   "originalId": "49_11",
+   "originalFormat": "bvh",
+   "converter": "open-vrma/cmu2vrma@0.1"
+  }
+ },
+ "tags": {
+  "kind": "dance",
+  "genre": [
+   "modern"
+  ],
+  "energy": 1,
+  "bodyParts": [
+   "full"
+  ],
+  "locomotion": "stepping",
+  "facing": "side",
+  "floorWork": false,
+  "airborne": false,
+  "fingers": false,
+  "expressions": false,
+  "lookAt": false,
+  "rootMotion": true,
+  "keywords": [
+   "Modern dance, gymnastics"
+  ]
+ },
+ "tempo": {
+  "bpm": 180,
+  "beatsPerBar": 4,
+  "firstBeat": 0.333,
+  "confidence": 0.82,
+  "basis": "motion",
+  "alternatives": [
+   90
+  ]
+ },
+ "allow": {
+  "stretch": {
+   "mode": "beats"
+  }
+ },
+ "events": [
+  {
+   "t": 1.933,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 3.133,
+   "type": "lift",
+   "side": "right"
+  }
+ ],
+ "ranges": [
+  {
+   "from": 0,
+   "to": 9.93,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 1.933,
+   "to": 3.133,
+   "type": "footLock",
+   "side": "right"
+  }
+ ],
+ "root": {
+  "netTravel": 0.15,
+  "maxTravel": 0.15,
+  "netTurnDeg": 34,
+  "turnRangeDeg": 47,
+  "hipsBounce": 0.12
+ },
+ "poses": {
+  "start": "stand",
+  "end": "stand",
+  "startSupport": "left",
+  "endSupport": "both",
+  "startArms": "up",
+  "endArms": "hips"
+ },
+ "retarget": {
+  "restPose": "T",
+  "sourceHipHeight": 0.98,
+  "floorAligned": true
+ },
+ "provenance": {
+  "tags": "auto",
+  "tempo": "auto",
+  "events": "auto",
+  "ranges": "auto"
+ },
+ "x": {
+  "openVrma": {
+   "pathTravel": 0.44,
+   "angularSpeed": {
+    "legs": 0.27,
+    "arms": 0.43,
+    "torso": 0.33
+   },
+   "bodyShare": {
+    "head": 0.24,
+    "torso": 0.12,
+    "arms": 0.15,
+    "hands": 0.15,
+    "hips": 0.14,
+    "legs": 0.19
+   },
+   "energy": 0.12,
+   "airborne": 0,
+   "lowHips": 0
+  }
+ }
+}

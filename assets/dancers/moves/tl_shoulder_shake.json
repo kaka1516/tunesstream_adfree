@@ -1,0 +1,69 @@
+{
+ "id": "tl_shoulder_shake",
+ "name": "Shoulder shake",
+ "style": "tollywood",
+ "beats": 1,
+ "loop": true,
+ "oneShot": false,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": -5,
+   "head": 0,
+   "uarmL": 28,
+   "larmL": -8,
+   "uarmR": 4,
+   "larmR": -8,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "rootY": 2,
+   "t": 0,
+   "ease": "snap"
+  },
+  {
+   "torso": 5,
+   "head": 0,
+   "uarmL": 4,
+   "larmL": -8,
+   "uarmR": 28,
+   "larmR": -8,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "t": 0.25,
+   "ease": "snap"
+  },
+  {
+   "torso": -5,
+   "head": 0,
+   "uarmL": 28,
+   "larmL": -8,
+   "uarmR": 4,
+   "larmR": -8,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "rootY": 2,
+   "t": 0.5,
+   "ease": "snap"
+  },
+  {
+   "torso": 5,
+   "head": 0,
+   "uarmL": 4,
+   "larmL": -8,
+   "uarmR": 28,
+   "larmR": -8,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "t": 0.75,
+   "ease": "snap"
+  }
+ ]
+}

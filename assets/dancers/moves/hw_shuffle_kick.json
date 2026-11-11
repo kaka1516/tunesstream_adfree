@@ -1,0 +1,41 @@
+{
+ "id": "hw_shuffle_kick",
+ "name": "Shuffle kick",
+ "style": "hollywood",
+ "beats": 1,
+ "loop": true,
+ "oneShot": false,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 30,
+   "larmL": -8,
+   "uarmR": 30,
+   "larmR": -8,
+   "thighL": 30,
+   "shinL": -10,
+   "thighR": -6,
+   "shinR": -2,
+   "rootX": -3,
+   "t": 0,
+   "ease": "snap"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 30,
+   "larmL": -8,
+   "uarmR": 30,
+   "larmR": -8,
+   "thighL": -6,
+   "shinL": -2,
+   "thighR": 30,
+   "shinR": -10,
+   "rootX": 3,
+   "t": 0.5,
+   "ease": "snap"
+  }
+ ]
+}

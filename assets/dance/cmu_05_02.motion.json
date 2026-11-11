@@ -1,0 +1,215 @@
+{
+ "specVersion": "0.1",
+ "id": "cmu_05_02",
+ "name": "05_02",
+ "description": "dance - expressive arms, pirouette",
+ "duration": 9.33,
+ "sourceFps": 120,
+ "license": {
+  "spdx": "LicenseRef-CMU-Mocap",
+  "url": "http://mocap.cs.cmu.edu/faqs.php",
+  "attribution": "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.",
+  "authors": [
+   {
+    "name": "Carnegie Mellon University Graphics Lab",
+    "url": "http://mocap.cs.cmu.edu/"
+   },
+   {
+    "name": "Bruce Hahne (BVH conversion, cgspeed)"
+   }
+  ],
+  "source": {
+   "kind": "mocap",
+   "url": "http://mocap.cs.cmu.edu/",
+   "originalId": "05_02",
+   "originalFormat": "bvh",
+   "converter": "open-vrma/cmu2vrma@0.1"
+  }
+ },
+ "tags": {
+  "kind": "dance",
+  "genre": [
+   "modern"
+  ],
+  "energy": 3,
+  "bodyParts": [
+   "hands"
+  ],
+  "locomotion": "traveling",
+  "facing": "turning",
+  "floorWork": false,
+  "airborne": false,
+  "fingers": false,
+  "expressions": false,
+  "lookAt": false,
+  "rootMotion": true,
+  "keywords": [
+   "Modern dance"
+  ]
+ },
+ "tempo": {
+  "bpm": 171.4,
+  "beatsPerBar": 4,
+  "firstBeat": 0.267,
+  "confidence": 0.67,
+  "basis": "steps",
+  "alternatives": [
+   85.7
+  ]
+ },
+ "allow": {
+  "stretch": {
+   "mode": "beats"
+  }
+ },
+ "events": [
+  {
+   "t": 4.7,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 5.1,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 5.167,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 5.5,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 5.633,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 5.833,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 6.3,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 6.633,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 6.667,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 8.9,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 9.2,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 9.233,
+   "type": "lift",
+   "side": "left"
+  }
+ ],
+ "ranges": [
+  {
+   "from": 0,
+   "to": 4.7,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 5.167,
+   "to": 5.633,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 6.3,
+   "to": 6.633,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 0,
+   "to": 5.1,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 5.5,
+   "to": 5.833,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 6.667,
+   "to": 8.9,
+   "type": "footLock",
+   "side": "right"
+  }
+ ],
+ "root": {
+  "netTravel": 1.39,
+  "maxTravel": 1.39,
+  "netTurnDeg": 318,
+  "turnRangeDeg": 374,
+  "hipsBounce": 0.12
+ },
+ "poses": {
+  "start": "stand",
+  "end": "stand",
+  "startSupport": "both",
+  "endSupport": "both",
+  "startArms": "other",
+  "endArms": "down"
+ },
+ "retarget": {
+  "restPose": "T",
+  "sourceHipHeight": 0.95,
+  "floorAligned": true,
+  "checkedOn": [
+   "vrm1-sample"
+  ]
+ },
+ "provenance": {
+  "tags": "auto",
+  "tempo": "auto",
+  "events": "auto",
+  "ranges": "auto"
+ },
+ "x": {
+  "openVrma": {
+   "pathTravel": 1.97,
+   "angularSpeed": {
+    "legs": 0.68,
+    "arms": 2.32,
+    "torso": 0.68
+   },
+   "bodyShare": {
+    "head": 0.14,
+    "torso": 0.07,
+    "arms": 0.22,
+    "hands": 0.27,
+    "hips": 0.15,
+    "legs": 0.15
+   },
+   "energy": 0.58,
+   "airborne": 0,
+   "lowHips": 0
+  }
+ }
+}

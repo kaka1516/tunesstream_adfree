@@ -1,0 +1,416 @@
+{
+ "specVersion": "0.1",
+ "id": "cmu_05_18",
+ "name": "05_18",
+ "description": "dance - attitude/arabesque, jete en tourant, bending back",
+ "duration": 15.2,
+ "sourceFps": 120,
+ "license": {
+  "spdx": "LicenseRef-CMU-Mocap",
+  "url": "http://mocap.cs.cmu.edu/faqs.php",
+  "attribution": "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.",
+  "authors": [
+   {
+    "name": "Carnegie Mellon University Graphics Lab",
+    "url": "http://mocap.cs.cmu.edu/"
+   },
+   {
+    "name": "Bruce Hahne (BVH conversion, cgspeed)"
+   }
+  ],
+  "source": {
+   "kind": "mocap",
+   "url": "http://mocap.cs.cmu.edu/",
+   "originalId": "05_18",
+   "originalFormat": "bvh",
+   "converter": "open-vrma/cmu2vrma@0.1"
+  }
+ },
+ "tags": {
+  "kind": "dance",
+  "genre": [
+   "modern"
+  ],
+  "energy": 3,
+  "bodyParts": [
+   "hands"
+  ],
+  "locomotion": "traveling",
+  "facing": "turning",
+  "floorWork": false,
+  "airborne": false,
+  "fingers": false,
+  "expressions": false,
+  "lookAt": false,
+  "rootMotion": true,
+  "keywords": [
+   "Modern dance"
+  ]
+ },
+ "tempo": {
+  "bpm": 100,
+  "beatsPerBar": 4,
+  "firstBeat": 0.6,
+  "confidence": 0.81,
+  "basis": "motion",
+  "alternatives": [
+   200,
+   50
+  ]
+ },
+ "allow": {
+  "stretch": {
+   "mode": "beats"
+  }
+ },
+ "events": [
+  {
+   "t": 0.2,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 0.233,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 0.667,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 1.5,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 2.2,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 2.833,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 2.967,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 3.2,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 3.4,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 3.533,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 3.6,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 4.5,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 4.6,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 4.9,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 5.033,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 5.367,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 5.6,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 5.667,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 5.833,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 5.967,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 6.467,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 7.7,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 7.867,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 8.2,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 8.333,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 8.667,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 8.8,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 9.633,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 9.733,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 10.133,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 10.333,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 11.667,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 11.733,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 12,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 12.067,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 14.933,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 15,
+   "type": "lift",
+   "side": "right"
+  }
+ ],
+ "ranges": [
+  {
+   "from": 0,
+   "to": 0.233,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 0.667,
+   "to": 3.2,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 4.6,
+   "to": 4.9,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 5.033,
+   "to": 5.367,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 5.667,
+   "to": 5.967,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 6.467,
+   "to": 7.7,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 7.867,
+   "to": 8.2,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 8.333,
+   "to": 8.667,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 8.8,
+   "to": 9.733,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 12,
+   "to": 12.067,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 0.2,
+   "to": 1.5,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 2.2,
+   "to": 2.833,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 2.967,
+   "to": 3.4,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 3.533,
+   "to": 3.6,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 4.5,
+   "to": 5.6,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 5.833,
+   "to": 9.633,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 10.133,
+   "to": 10.333,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 11.667,
+   "to": 11.733,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 14.933,
+   "to": 15,
+   "type": "footLock",
+   "side": "right"
+  }
+ ],
+ "root": {
+  "netTravel": 1.64,
+  "maxTravel": 1.86,
+  "netTurnDeg": 393,
+  "turnRangeDeg": 419,
+  "hipsBounce": 0.14
+ },
+ "poses": {
+  "start": "stand",
+  "end": "stand",
+  "startSupport": "left",
+  "endSupport": "left",
+  "startArms": "down",
+  "endArms": "hips"
+ },
+ "retarget": {
+  "restPose": "T",
+  "sourceHipHeight": 0.95,
+  "floorAligned": true
+ },
+ "provenance": {
+  "tags": "auto",
+  "tempo": "auto",
+  "events": "auto",
+  "ranges": "auto"
+ },
+ "x": {
+  "openVrma": {
+   "pathTravel": 4.25,
+   "angularSpeed": {
+    "legs": 1.03,
+    "arms": 1.79,
+    "torso": 0.65
+   },
+   "bodyShare": {
+    "head": 0.12,
+    "torso": 0.08,
+    "arms": 0.18,
+    "hands": 0.27,
+    "hips": 0.15,
+    "legs": 0.21
+   },
+   "energy": 0.65,
+   "airborne": 0.08,
+   "lowHips": 0
+  }
+ }
+}

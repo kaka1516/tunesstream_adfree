@@ -1,0 +1,62 @@
+{
+ "id": "tl_victory_v",
+ "name": "Victory V hit (one-shot)",
+ "style": "tollywood",
+ "beats": 2,
+ "loop": true,
+ "oneShot": true,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 12,
+   "larmR": -8,
+   "thighL": 14,
+   "shinL": -22,
+   "thighR": 14,
+   "shinR": -22,
+   "rootY": 8,
+   "face": "closed",
+   "t": 0,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 150,
+   "larmL": 10,
+   "uarmR": 150,
+   "larmR": 10,
+   "thighL": 20,
+   "shinL": -2,
+   "thighR": 20,
+   "shinR": -2,
+   "gripL": "fist",
+   "gripR": "fist",
+   "rootY": 0,
+   "face": "grin",
+   "t": 0.25,
+   "ease": "snap"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 150,
+   "larmL": 10,
+   "uarmR": 150,
+   "larmR": 10,
+   "thighL": 20,
+   "shinL": -2,
+   "thighR": 20,
+   "shinR": -2,
+   "gripL": "fist",
+   "gripR": "fist",
+   "face": "grin",
+   "t": 1,
+   "ease": "inOut"
+  }
+ ]
+}

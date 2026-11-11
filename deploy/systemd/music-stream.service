@@ -1,0 +1,19 @@
+# systemd USER unit template (ms-v75) for Linux / Raspberry Pi. install.sh --autostart fills @DIR@/@PY@ and enables it
+# with `systemctl --user`; nothing is installed system-wide. Manual: copy to ~/.config/systemd/user/ then
+#   systemctl --user daemon-reload && systemctl --user enable --now music-stream
+[Unit]
+Description=Music Stream server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=@DIR@
+ExecStart="@PY@" "@DIR@/music_server.py"
+Restart=on-failure
+RestartSec=10
+# small boards: keep the server modest
+Nice=5
+MemoryMax=400M
+
+[Install]
+WantedBy=default.target

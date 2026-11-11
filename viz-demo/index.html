@@ -1,0 +1,16 @@
+<!doctype html><html><body style="background:#111;color:#eee;font-family:sans-serif">
+<h3>Audio-reactive demo (wavesurfer.js 7.12.12, BSD-3) — tones: 200Hz,1kHz,5kHz x2 (3s each)</h3>
+<button id="pp">Play / Pause</button> <span id="st">paused</span> | peak bin: <b id="pk">-</b>
+<div id="wf"></div><div id="sp"></div>
+<h4>Live AnalyserNode bars (real FFT of playing audio)</h4><canvas id="c" width="800" height="200" style="width:100%;max-width:800px;background:#000"></canvas>
+<script src="package/dist/wavesurfer.min.js"></script><script src="package/dist/plugins/spectrogram.min.js"></script>
+<script>
+const ws=WaveSurfer.create({container:'#wf',url:'test-tones.wav',waveColor:'#4af',progressColor:'#f84',plugins:[WaveSurfer.Spectrogram.create({labels:true,height:150})]});
+let ctx,an,buf,raf;const c=document.getElementById('c'),g=c.getContext('2d');
+function draw(){an.getByteFrequencyData(buf);g.clearRect(0,0,800,200);let m=0,mi=0;const n=256;
+for(let i=0;i<n;i++){const v=buf[i];if(v>m){m=v;mi=i}g.fillStyle='hsl('+i+',80%,55%)';g.fillRect(i*800/n,200-v*200/255,800/n-1,v*200/255)}
+pk.textContent=mi+' (~'+Math.round(mi*ctx.sampleRate/an.fftSize)+' Hz)';raf=requestAnimationFrame(draw)}
+pp.onclick=()=>{if(!ctx){ctx=new AudioContext();an=ctx.createAnalyser();an.fftSize=1024;buf=new Uint8Array(an.frequencyBinCount);
+ctx.createMediaElementSource(ws.getMediaElement()).connect(an);an.connect(ctx.destination)}ctx.resume();ws.playPause()};
+ws.on('play',()=>{st.textContent='playing';cancelAnimationFrame(raf);draw()});ws.on('pause',()=>{st.textContent='paused';cancelAnimationFrame(raf)});
+</script></body></html>

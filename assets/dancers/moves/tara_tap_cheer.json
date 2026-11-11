@@ -1,0 +1,61 @@
+{
+ "id": "tara_tap_cheer",
+ "name": "Tara tap cheer: hop + both-hand flick wave (one-shot)",
+ "style": "tollywood",
+ "beats": 1,
+ "loop": true,
+ "oneShot": true,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 12,
+   "larmR": -8,
+   "thighL": 14,
+   "shinL": -22,
+   "thighR": 14,
+   "shinR": -22,
+   "rootY": 6,
+   "face": "closed",
+   "t": 0,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 140,
+   "larmL": 40,
+   "uarmR": 140,
+   "larmR": 40,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "rootY": -10,
+   "gripL": "flick",
+   "gripR": "flick",
+   "face": "grin",
+   "t": 0.35,
+   "ease": "snap"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 120,
+   "larmL": 60,
+   "uarmR": 120,
+   "larmR": 60,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "rootY": 0,
+   "face": "grin",
+   "t": 1,
+   "ease": "inOut"
+  }
+ ]
+}

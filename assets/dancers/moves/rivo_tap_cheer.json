@@ -1,0 +1,59 @@
+{
+ "id": "rivo_tap_cheer",
+ "name": "Rivo tap cheer: headphone-tap nod + thumbs-up style fist (one-shot)",
+ "style": "hollywood",
+ "beats": 1,
+ "loop": true,
+ "oneShot": true,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": 0,
+   "head": 8,
+   "uarmL": 60,
+   "larmL": 150,
+   "uarmR": 12,
+   "larmR": -8,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "gripL": "open",
+   "face": "closed",
+   "t": 0,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": -6,
+   "uarmL": 60,
+   "larmL": 150,
+   "uarmR": 70,
+   "larmR": 90,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "gripR": "fist",
+   "face": "grin",
+   "t": 0.4,
+   "ease": "snap"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 70,
+   "larmR": 90,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "gripR": "fist",
+   "face": "wink",
+   "t": 1,
+   "ease": "inOut"
+  }
+ ]
+}

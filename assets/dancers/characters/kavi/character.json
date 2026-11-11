@@ -1,0 +1,51 @@
+{
+ "id": "kavi",
+ "name": "Kavi",
+ "homeStyle": "kollywood",
+ "about": "Tamil-film kuthu dancer: curly mop, checked shirt, shoulder towel-scarf, shorts, sneakers",
+ "palette": {
+  "--d-skin": "#8d5a3b",
+  "--d-skin-sh": "#6f4329",
+  "--d-hair": "#120d0b",
+  "--d-main": "#1f8a70",
+  "--d-alt": "#f2e8cf",
+  "--d-trim": "#ff7f11",
+  "--d-line": "#140e0a",
+  "--d-eye": "#120d0b",
+  "--d-blush": "#c8705a"
+ },
+ "recolor": {
+  "fromAlbumArt": [
+   "--d-main",
+   "--d-alt",
+   "--d-trim"
+  ],
+  "mix": 0.5,
+  "neverFromArt": [
+   "--d-skin",
+   "--d-skin-sh",
+   "--d-hair"
+  ]
+ },
+ "parts": [
+  "acc_front",
+  "face_closed",
+  "face_grin",
+  "face_smile",
+  "face_wink",
+  "hair_back",
+  "hair_front",
+  "hand_fist",
+  "hand_flick",
+  "hand_open",
+  "hand_point",
+  "head",
+  "larm",
+  "shin",
+  "thigh",
+  "torso",
+  "uarm"
+ ],
+ "moveset": "moveset.json",
+ "license": "CC0-1.0 (original work for Music Stream)"
+}

@@ -1,0 +1,4 @@
+Poly Haven HDRIs (dikhololo_night_1k, studio_small_09_1k, venice_sunset_1k)
+License: CC0 1.0 Universal  https://creativecommons.org/publicdomain/zero/1.0/
+Source: https://polyhaven.com/
+No attribution required; credit "HDRIs from Poly Haven" is appreciated.

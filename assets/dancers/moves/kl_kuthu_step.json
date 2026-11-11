@@ -1,0 +1,72 @@
+{
+ "id": "kl_kuthu_step",
+ "name": "Kuthu knee-lift stomp",
+ "style": "kollywood",
+ "beats": 2,
+ "loop": true,
+ "oneShot": false,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": 4,
+   "head": 0,
+   "uarmL": 50,
+   "larmL": 70,
+   "uarmR": 30,
+   "larmR": 90,
+   "thighL": -40,
+   "shinL": 60,
+   "thighR": 4,
+   "shinR": -2,
+   "rootY": -2,
+   "face": "grin",
+   "t": 0,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 12,
+   "larmR": -8,
+   "thighL": 14,
+   "shinL": -22,
+   "thighR": 14,
+   "shinR": -22,
+   "rootY": 6,
+   "t": 0.25,
+   "ease": "snap"
+  },
+  {
+   "torso": -4,
+   "head": 0,
+   "uarmL": 30,
+   "larmL": 90,
+   "uarmR": 50,
+   "larmR": 70,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": -40,
+   "shinR": 60,
+   "rootY": -2,
+   "t": 0.5,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 12,
+   "larmR": -8,
+   "thighL": 14,
+   "shinL": -22,
+   "thighR": 14,
+   "shinR": -22,
+   "rootY": 6,
+   "t": 0.75,
+   "ease": "snap"
+  }
+ ]
+}

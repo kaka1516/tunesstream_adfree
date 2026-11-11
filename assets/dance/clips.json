@@ -1,0 +1,2786 @@
+{
+  "version": "vizupd-202611111033",
+  "clips": [
+    {
+      "id": "cmu_94_13",
+      "file": "cmu_94_13.vrma",
+      "label": "Indian dance A",
+      "energy": 3,
+      "duration": 16.6,
+      "bpm": 163.6,
+      "alts": [
+        81.8
+      ],
+      "firstBeat": 0.032,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.72)",
+      "tempoMin": 61.3,
+      "tempoMax": 217.6,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "94_13",
+      "desc": "Unknown",
+      "genre": "indian",
+      "moods": [
+        "romantic",
+        "devotional"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_94_08",
+      "file": "cmu_94_08.vrma",
+      "label": "Indian dance B",
+      "energy": 3,
+      "duration": 22.87,
+      "bpm": 231.7,
+      "alts": [
+        115.8
+      ],
+      "firstBeat": 0.005,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.61)",
+      "tempoMin": 86.8,
+      "tempoMax": 154.1,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "94_08",
+      "desc": "Unknown",
+      "genre": "indian",
+      "moods": [
+        "romantic",
+        "devotional"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_94_16",
+      "file": "cmu_94_16.vrma",
+      "label": "Indian dance C (sway)",
+      "energy": 2,
+      "duration": 16.9,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.6,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.55)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": true,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "94_16",
+      "desc": "Unknown",
+      "genre": "indian",
+      "moods": [
+        "romantic",
+        "chill",
+        "devotional"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_94_05",
+      "file": "cmu_94_05.vrma",
+      "label": "Indian dance D",
+      "energy": 4,
+      "duration": 43.9,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.3,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.44)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "94_05",
+      "desc": "Unknown",
+      "genre": "indian",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_94_10",
+      "file": "cmu_94_10.vrma",
+      "label": "Indian dance E",
+      "energy": 4,
+      "duration": 28.77,
+      "bpm": 72,
+      "alts": [
+        144
+      ],
+      "firstBeat": 0.4,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.43)",
+      "tempoMin": 54.0,
+      "tempoMax": 191.5,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "94_10",
+      "desc": "Unknown",
+      "genre": "indian",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_85_03",
+      "file": "cmu_85_03.vrma",
+      "label": "Breakdance top-rock",
+      "energy": 5,
+      "duration": 27,
+      "bpm": 138,
+      "alts": [
+        69
+      ],
+      "firstBeat": 0.267,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.72)",
+      "tempoMin": 51.8,
+      "tempoMax": 183.5,
+      "loop": true,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "85_03",
+      "desc": "UpRightSequence",
+      "genre": "breakdance",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_90_32",
+      "file": "cmu_90_32.vrma",
+      "label": "Moonwalk",
+      "energy": 3,
+      "duration": 6,
+      "bpm": 117.7,
+      "alts": [
+        235.4,
+        58.9
+      ],
+      "firstBeat": 0.262,
+      "tempoNote": "open-vrma tempo (steps, confidence 1)",
+      "tempoMin": 88.3,
+      "tempoMax": 156.7,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "90_32",
+      "desc": "moonwalk",
+      "genre": "pop",
+      "moods": [
+        "happy"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_103_05",
+      "file": "cmu_103_05.vrma",
+      "label": "Charleston",
+      "energy": 5,
+      "duration": 4.53,
+      "bpm": 101.4,
+      "alts": [
+        202.8,
+        50.7
+      ],
+      "firstBeat": 0.167,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.67)",
+      "tempoMin": 76.1,
+      "tempoMax": 134.9,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "103_05",
+      "desc": "charleston_side_by_side_male",
+      "genre": "charleston",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_103_03",
+      "file": "cmu_103_03.vrma",
+      "label": "Charleston loop",
+      "energy": 5,
+      "duration": 3.67,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0,
+      "tempoNote": "open-vrma tempo (unknown, confidence 0)",
+      "tempoMin": 70,
+      "tempoMax": 160,
+      "loop": true,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "103_03",
+      "desc": "charleston_01",
+      "genre": "charleston",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_61_12",
+      "file": "cmu_61_12.vrma",
+      "label": "Salsa A",
+      "energy": 5,
+      "duration": 14.07,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.3,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.53)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_12",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_60_12",
+      "file": "cmu_60_12.vrma",
+      "label": "Salsa spin",
+      "energy": 4,
+      "duration": 14.07,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.533,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.48)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_12",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "quaternius_ual1_Dance_Loop",
+      "file": "quaternius_ual1_Dance_Loop.vrma",
+      "label": "Groove loop",
+      "energy": 3,
+      "duration": 1,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0,
+      "tempoNote": "open-vrma tempo (unknown, confidence 0)",
+      "tempoMin": 70,
+      "tempoMax": 160,
+      "loop": true,
+      "license": "CC0-1.0",
+      "source": "Dance_Loop",
+      "desc": "Dance Loop",
+      "genre": "",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "in-place"
+    },
+    {
+      "id": "cmu_94_03",
+      "file": "cmu_94_03.vrma",
+      "label": "Indian dance F (in-place)",
+      "energy": 3,
+      "duration": 31.07,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.067,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.37)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "94_03",
+      "desc": "Unknown",
+      "genre": "indian",
+      "moods": [
+        "romantic",
+        "devotional"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_94_04",
+      "file": "cmu_94_04.vrma",
+      "label": "Indian dance G",
+      "energy": 4,
+      "duration": 26.17,
+      "bpm": 75,
+      "alts": [
+        150
+      ],
+      "firstBeat": 0.233,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.46)",
+      "tempoMin": 56.2,
+      "tempoMax": 199.5,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "94_04",
+      "desc": "Unknown",
+      "genre": "indian",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_94_09",
+      "file": "cmu_94_09.vrma",
+      "label": "Indian dance H (spin)",
+      "energy": 3,
+      "duration": 33.1,
+      "bpm": 142.8,
+      "alts": [
+        71.4
+      ],
+      "firstBeat": 0.407,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.67)",
+      "tempoMin": 53.6,
+      "tempoMax": 189.9,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "94_09",
+      "desc": "Unknown",
+      "genre": "indian",
+      "moods": [
+        "romantic",
+        "devotional"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_94_11",
+      "file": "cmu_94_11.vrma",
+      "label": "Indian dance I (spin)",
+      "energy": 4,
+      "duration": 40.03,
+      "bpm": 95,
+      "alts": [
+        190,
+        47.5
+      ],
+      "firstBeat": 0.633,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.58)",
+      "tempoMin": 71.2,
+      "tempoMax": 252.7,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "94_11",
+      "desc": "Unknown",
+      "genre": "indian",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_94_14",
+      "file": "cmu_94_14.vrma",
+      "label": "Indian dance J",
+      "energy": 4,
+      "duration": 24.93,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.167,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.51)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "94_14",
+      "desc": "Unknown",
+      "genre": "indian",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_94_01",
+      "file": "cmu_94_01.vrma",
+      "label": "Indian dance K",
+      "energy": 4,
+      "duration": 30,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.433,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.45)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "94_01",
+      "desc": "Unknown",
+      "genre": "indian",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_05_02",
+      "file": "cmu_05_02.vrma",
+      "label": "Expressive pirouette",
+      "energy": 3,
+      "duration": 9.33,
+      "bpm": 171.4,
+      "alts": [
+        85.7
+      ],
+      "firstBeat": 0.267,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.67)",
+      "tempoMin": 64.3,
+      "tempoMax": 228.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_02",
+      "desc": "dance - expressive arms, pirouette",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_05_04",
+      "file": "cmu_05_04.vrma",
+      "label": "Arabesque, bending back",
+      "energy": 3,
+      "duration": 9.97,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.367,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.81)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_04",
+      "desc": "dance - sideways arabesque, folding arms, bending back",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_05_09",
+      "file": "cmu_05_09.vrma",
+      "label": "Glissade and arabesque",
+      "energy": 3,
+      "duration": 9.5,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.4,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.53)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_09",
+      "desc": "dance - glissade devant, glissade derriere, attitude/arabesque",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_05_10",
+      "file": "cmu_05_10.vrma",
+      "label": "Glissade and arabesque B",
+      "energy": 4,
+      "duration": 6.77,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0,
+      "tempoNote": "open-vrma tempo (unknown, confidence 0.14)",
+      "tempoMin": 70,
+      "tempoMax": 160,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_10",
+      "desc": "dance - glissade devant, glissade derriere, attitude/arabesque",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_05_11",
+      "file": "cmu_05_11.vrma",
+      "label": "Sideways pirouette",
+      "energy": 5,
+      "duration": 4.9,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.133,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.73)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_11",
+      "desc": "dance - sideways steps, pirouette",
+      "genre": "modern",
+      "moods": [
+        "romantic",
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_05_12",
+      "file": "cmu_05_12.vrma",
+      "label": "Arms high, slow modern",
+      "energy": 2,
+      "duration": 11.27,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.433,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.66)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_12",
+      "desc": "dance - arms held high, pointe tendue a terre, upper body rotation",
+      "genre": "modern",
+      "moods": [
+        "romantic",
+        "chill"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_05_18",
+      "file": "cmu_05_18.vrma",
+      "label": "Arabesque, jet\u00e9, backbend",
+      "energy": 3,
+      "duration": 15.2,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.6,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.81)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_18",
+      "desc": "dance - attitude/arabesque, jete en tourant, bending back",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_49_09",
+      "file": "cmu_49_09.vrma",
+      "label": "Side arabesque, arms high",
+      "energy": 1,
+      "duration": 15.93,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.167,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.96)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "49_09",
+      "desc": "dance - arms held high, side arabesque",
+      "genre": "modern",
+      "moods": [
+        "romantic",
+        "chill"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_49_12",
+      "file": "cmu_49_12.vrma",
+      "label": "Lean and arching arms",
+      "energy": 1,
+      "duration": 9.4,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.433,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.91)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "49_12",
+      "desc": "dance - lean forward, bring back leg forward, arching arms",
+      "genre": "modern",
+      "moods": [
+        "romantic",
+        "chill"
+      ],
+      "locomotion": "in-place"
+    },
+    {
+      "id": "cmu_49_14",
+      "file": "cmu_49_14.vrma",
+      "label": "Lean and arching arms B",
+      "energy": 2,
+      "duration": 5.13,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.3,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.74)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "49_14",
+      "desc": "dance - lean forward, bring back leg forward, arching arms",
+      "genre": "modern",
+      "moods": [
+        "romantic",
+        "chill"
+      ],
+      "locomotion": "in-place"
+    },
+    {
+      "id": "cmu_49_17",
+      "file": "cmu_49_17.vrma",
+      "label": "Lean and arching arms C",
+      "energy": 2,
+      "duration": 6.23,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.533,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.89)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "49_17",
+      "desc": "dance - lean forward, bring back leg forward, arching arms",
+      "genre": "modern",
+      "moods": [
+        "romantic",
+        "chill"
+      ],
+      "locomotion": "in-place"
+    },
+    {
+      "id": "cmu_49_18",
+      "file": "cmu_49_18.vrma",
+      "label": "Balance, outstretched arms",
+      "energy": 1,
+      "duration": 9.17,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.333,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.93)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "49_18",
+      "desc": "balance on one leg, outstretched arms",
+      "genre": "modern",
+      "moods": [
+        "romantic",
+        "chill",
+        "devotional"
+      ],
+      "locomotion": "in-place"
+    },
+    {
+      "id": "cmu_49_22",
+      "file": "cmu_49_22.vrma",
+      "label": "Lean back on bent leg",
+      "energy": 1,
+      "duration": 10.7,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.5,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.88)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "49_22",
+      "desc": "dance - lean back on bent leg, balance, bend elbow by ear",
+      "genre": "modern",
+      "moods": [
+        "romantic",
+        "chill",
+        "devotional"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_60_05",
+      "file": "cmu_60_05.vrma",
+      "label": "Salsa turn",
+      "energy": 4,
+      "duration": 13.97,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.267,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.31)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_05",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_60_08",
+      "file": "cmu_60_08.vrma",
+      "label": "Salsa long phrase",
+      "energy": 5,
+      "duration": 28.47,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.533,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.36)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_08",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_60_10",
+      "file": "cmu_60_10.vrma",
+      "label": "Salsa quick spin",
+      "energy": 4,
+      "duration": 9.93,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.567,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.58)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_10",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_60_13",
+      "file": "cmu_60_13.vrma",
+      "label": "Salsa spin B",
+      "energy": 4,
+      "duration": 18.9,
+      "bpm": 164,
+      "alts": [
+        82
+      ],
+      "firstBeat": 0.167,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.43)",
+      "tempoMin": 61.5,
+      "tempoMax": 218.1,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_13",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_60_15",
+      "file": "cmu_60_15.vrma",
+      "label": "Salsa loop",
+      "energy": 4,
+      "duration": 17.8,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0,
+      "tempoNote": "open-vrma tempo (unknown, confidence 0.29)",
+      "tempoMin": 70,
+      "tempoMax": 160,
+      "loop": true,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_15",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_61_06",
+      "file": "cmu_61_06.vrma",
+      "label": "Salsa C",
+      "energy": 5,
+      "duration": 14.73,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.6,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.38)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_06",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_61_08",
+      "file": "cmu_61_08.vrma",
+      "label": "Salsa long phrase B",
+      "energy": 5,
+      "duration": 28.47,
+      "bpm": 103,
+      "alts": [
+        206,
+        51.5
+      ],
+      "firstBeat": 0.133,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.43)",
+      "tempoMin": 77.2,
+      "tempoMax": 137.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_08",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_61_11",
+      "file": "cmu_61_11.vrma",
+      "label": "Salsa spin C",
+      "energy": 5,
+      "duration": 17.53,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.367,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.46)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_11",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_61_13",
+      "file": "cmu_61_13.vrma",
+      "label": "Salsa spin D",
+      "energy": 5,
+      "duration": 18.9,
+      "bpm": 82,
+      "alts": [
+        164,
+        41
+      ],
+      "firstBeat": 0.233,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.43)",
+      "tempoMin": 61.5,
+      "tempoMax": 218.1,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_13",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_61_15",
+      "file": "cmu_61_15.vrma",
+      "label": "Salsa spin E",
+      "energy": 5,
+      "duration": 17.8,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.067,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.45)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_15",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_103_04",
+      "file": "cmu_103_04.vrma",
+      "label": "Charleston side-by-side",
+      "energy": 4,
+      "duration": 4.2,
+      "bpm": 180,
+      "alts": [
+        90
+      ],
+      "firstBeat": 0.233,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.63)",
+      "tempoMin": 67.5,
+      "tempoMax": 239.4,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "103_04",
+      "desc": "charleston_side_by_side_female",
+      "genre": "charleston",
+      "moods": [
+        "happy"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_103_06",
+      "file": "cmu_103_06.vrma",
+      "label": "Lindy hop",
+      "energy": 5,
+      "duration": 3.33,
+      "bpm": 230.8,
+      "alts": [
+        115.4
+      ],
+      "firstBeat": 0.107,
+      "tempoNote": "open-vrma tempo (steps, confidence 1)",
+      "tempoMin": 86.6,
+      "tempoMax": 153.5,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "103_06",
+      "desc": "lindyHop2",
+      "genre": "charleston",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_103_08",
+      "file": "cmu_103_08.vrma",
+      "label": "Fancy charleston",
+      "energy": 5,
+      "duration": 4.6,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0,
+      "tempoNote": "open-vrma tempo (unknown, confidence 0.29)",
+      "tempoMin": 70,
+      "tempoMax": 160,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "103_08",
+      "desc": "xtra fancY charleston",
+      "genre": "charleston",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_85_04",
+      "file": "cmu_85_04.vrma",
+      "label": "Breakdance footwork",
+      "energy": 5,
+      "duration": 21.27,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.567,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.53)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "85_04",
+      "desc": "FancyFootWork",
+      "genre": "breakdance",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_85_08",
+      "file": "cmu_85_08.vrma",
+      "label": "Breakdance helicopter",
+      "energy": 5,
+      "duration": 8.43,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.567,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.77)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "85_08",
+      "desc": "Helicopter",
+      "genre": "breakdance",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_85_10",
+      "file": "cmu_85_10.vrma",
+      "label": "Breakdance finish",
+      "energy": 4,
+      "duration": 6.43,
+      "bpm": 189.6,
+      "alts": [
+        94.8
+      ],
+      "firstBeat": 0.101,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.67)",
+      "tempoMin": 71.1,
+      "tempoMax": 252.2,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "85_10",
+      "desc": "EndofBreakDance",
+      "genre": "breakdance",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_85_11",
+      "file": "cmu_85_11.vrma",
+      "label": "Breakdance upright",
+      "energy": 4,
+      "duration": 15,
+      "bpm": 129,
+      "alts": [
+        64.5
+      ],
+      "firstBeat": 0.167,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.47)",
+      "tempoMin": 48.4,
+      "tempoMax": 171.6,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "85_11",
+      "desc": "UpRightSequence",
+      "genre": "breakdance",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_90_28",
+      "file": "cmu_90_28.vrma",
+      "label": "Breakdance spin",
+      "energy": 4,
+      "duration": 6.4,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.533,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.88)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "90_28",
+      "desc": "breakdance",
+      "genre": "breakdance",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_85_01",
+      "file": "cmu_85_01.vrma",
+      "label": "Breakdance jump-twist",
+      "energy": 5,
+      "duration": 8.3,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.267,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.83)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "85_01",
+      "desc": "JumpTwist",
+      "genre": "breakdance",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_55_02",
+      "file": "cmu_55_02.vrma",
+      "label": "Lambada",
+      "energy": 2,
+      "duration": 18.13,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0,
+      "tempoNote": "open-vrma tempo (unknown, confidence 0.27)",
+      "tempoMin": 70,
+      "tempoMax": 160,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "55_02",
+      "desc": "lambada dance",
+      "genre": "lambada",
+      "moods": [
+        "romantic",
+        "chill"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_90_30",
+      "file": "cmu_90_30.vrma",
+      "label": "Russian dance",
+      "energy": 4,
+      "duration": 11.9,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.167,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.82)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": true,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "90_30",
+      "desc": "russian dance",
+      "genre": "",
+      "moods": [
+        "happy"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_143_34",
+      "file": "cmu_143_34.vrma",
+      "label": "Chicken dance",
+      "energy": 3,
+      "duration": 6.5,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0,
+      "tempoNote": "open-vrma tempo (unknown, confidence 0.11)",
+      "tempoMin": 70,
+      "tempoMax": 160,
+      "loop": true,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "143_34",
+      "desc": "Chicken Dance",
+      "genre": "chicken-dance",
+      "moods": [
+        "happy"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_143_35",
+      "file": "cmu_143_35.vrma",
+      "label": "Macarena",
+      "energy": 3,
+      "duration": 10.63,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0,
+      "tempoNote": "open-vrma tempo (unknown, confidence 0.13)",
+      "tempoMin": 70,
+      "tempoMax": 160,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "143_35",
+      "desc": "Macarena Dance",
+      "genre": "",
+      "moods": [
+        "happy"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_141_12",
+      "file": "cmu_141_12.vrma",
+      "label": "Twist",
+      "energy": 5,
+      "duration": 4.7,
+      "bpm": 234.8,
+      "alts": [
+        117.4
+      ],
+      "firstBeat": 0,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.67)",
+      "tempoMin": 88.1,
+      "tempoMax": 156.1,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "141_12",
+      "desc": "Dance, Twist",
+      "genre": "",
+      "moods": [
+        "happy"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_111_05",
+      "file": "cmu_111_05.vrma",
+      "label": "Casual dance A",
+      "energy": 3,
+      "duration": 7.7,
+      "bpm": 95,
+      "alts": [
+        190,
+        47.5
+      ],
+      "firstBeat": 0.2,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.67)",
+      "tempoMin": 71.2,
+      "tempoMax": 252.7,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "111_05",
+      "desc": "Dance",
+      "genre": "",
+      "moods": [
+        "happy"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_113_04",
+      "file": "cmu_113_04.vrma",
+      "label": "Casual dance B",
+      "energy": 4,
+      "duration": 8.07,
+      "bpm": 87.3,
+      "alts": [
+        174.6,
+        43.6
+      ],
+      "firstBeat": 0.5,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.89)",
+      "tempoMin": 65.4,
+      "tempoMax": 232.2,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "113_04",
+      "desc": "Dance",
+      "genre": "",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_111_02",
+      "file": "cmu_111_02.vrma",
+      "label": "Bow",
+      "energy": 2,
+      "duration": 3.5,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0,
+      "tempoNote": "open-vrma tempo (unknown, confidence 0)",
+      "tempoMin": 70,
+      "tempoMax": 160,
+      "loop": true,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "111_02",
+      "desc": "Bow",
+      "genre": "",
+      "moods": [
+        "chill",
+        "devotional"
+      ],
+      "locomotion": "in-place"
+    },
+    {
+      "id": "cmu_111_38",
+      "file": "cmu_111_38.vrma",
+      "label": "Yoga flow",
+      "energy": 2,
+      "duration": 21.97,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.533,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.43)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "111_38",
+      "desc": "Yoga",
+      "genre": "",
+      "moods": [
+        "chill",
+        "devotional"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_111_32",
+      "file": "cmu_111_32.vrma",
+      "label": "Stretch and yawn",
+      "energy": 1,
+      "duration": 6.2,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.233,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.73)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "111_32",
+      "desc": "Stretch and yawn",
+      "genre": "",
+      "moods": [
+        "chill"
+      ],
+      "locomotion": "in-place"
+    },
+    {
+      "id": "cmu_82_10",
+      "file": "cmu_82_10.vrma",
+      "label": "Sad walk",
+      "energy": 3,
+      "duration": 4.67,
+      "bpm": 105.9,
+      "alts": [
+        211.8,
+        53
+      ],
+      "firstBeat": 0.033,
+      "tempoNote": "open-vrma tempo (steps, confidence 1)",
+      "tempoMin": 79.4,
+      "tempoMax": 141.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "82_10",
+      "desc": "sad walk forward",
+      "genre": "",
+      "moods": [
+        "sad"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_79_71",
+      "file": "cmu_79_71.vrma",
+      "label": "Sad gesture",
+      "energy": 2,
+      "duration": 8.97,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.6,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.46)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": true,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "79_71",
+      "desc": "sad",
+      "genre": "",
+      "moods": [
+        "sad",
+        "chill"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_105_13",
+      "file": "cmu_105_13.vrma",
+      "label": "Sad walk B",
+      "energy": 3,
+      "duration": 24.63,
+      "bpm": 65.4,
+      "alts": [
+        130.8
+      ],
+      "firstBeat": 0.011,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.88)",
+      "tempoMin": 49.1,
+      "tempoMax": 174.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "105_13",
+      "desc": "SadWalk",
+      "genre": "",
+      "moods": [
+        "sad",
+        "chill"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_142_15",
+      "file": "cmu_142_15.vrma",
+      "label": "Sad gesture B",
+      "energy": 3,
+      "duration": 44.77,
+      "bpm": 72.2,
+      "alts": [
+        144.4
+      ],
+      "firstBeat": 0.008,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.88)",
+      "tempoMin": 54.2,
+      "tempoMax": 192.1,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "142_15",
+      "desc": "Sad",
+      "genre": "",
+      "moods": [
+        "sad",
+        "chill"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_05_03",
+      "file": "cmu_05_03.vrma",
+      "label": "Sideways arabesque",
+      "energy": 4,
+      "duration": 3.6,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0.0,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.00)",
+      "tempoMin": 82.5,
+      "tempoMax": 146.3,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_03",
+      "desc": "dance - sideways arabesque, turn step, folding arms",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_05_05",
+      "file": "cmu_05_05.vrma",
+      "label": "Jet\u00e9 turn",
+      "energy": 4,
+      "duration": 7.6,
+      "bpm": 62,
+      "alts": [
+        124
+      ],
+      "firstBeat": 0.965,
+      "tempoNote": "open-vrma tempo (steps, confidence 1.00)",
+      "tempoMin": 46.5,
+      "tempoMax": 164.9,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_05",
+      "desc": "dance - quasi-cou-de-pied, raised leg above hip-height, jete en tourant",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_05_06",
+      "file": "cmu_05_06.vrma",
+      "label": "Pirouette jet\u00e9",
+      "energy": 5,
+      "duration": 7.33,
+      "bpm": 62,
+      "alts": [
+        124
+      ],
+      "firstBeat": 0.533,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.67)",
+      "tempoMin": 46.5,
+      "tempoMax": 164.9,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_06",
+      "desc": "dance - cartwheel-like start, pirouettes, jete",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_05_07",
+      "file": "cmu_05_07.vrma",
+      "label": "Attitude turns",
+      "energy": 4,
+      "duration": 9.9,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.6,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.84)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_07",
+      "desc": "dance - small jetes, attitude/arabesque, shifted-axis pirouette, turn",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_05_08",
+      "file": "cmu_05_08.vrma",
+      "label": "Rond de jambe",
+      "energy": 5,
+      "duration": 5.97,
+      "bpm": 150,
+      "alts": [
+        75
+      ],
+      "firstBeat": 0.167,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.80)",
+      "tempoMin": 56.2,
+      "tempoMax": 199.5,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_08",
+      "desc": "dance - rond de jambe in the air, jete, turn",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_05_13",
+      "file": "cmu_05_13.vrma",
+      "label": "Small jet\u00e9s",
+      "energy": 4,
+      "duration": 9.1,
+      "bpm": 171.7,
+      "alts": [
+        85.8
+      ],
+      "firstBeat": 0.237,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.67)",
+      "tempoMin": 64.3,
+      "tempoMax": 228.4,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_13",
+      "desc": "dance - small jetes, pirouette",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_05_14",
+      "file": "cmu_05_14.vrma",
+      "label": "Retir\u00e9 attitude A",
+      "energy": 5,
+      "duration": 5.33,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.433,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.45)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_14",
+      "desc": "dance - retire derriere, attitude/arabesque",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_05_15",
+      "file": "cmu_05_15.vrma",
+      "label": "Retir\u00e9 attitude B",
+      "energy": 5,
+      "duration": 4.47,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0.0,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.17)",
+      "tempoMin": 82.5,
+      "tempoMax": 146.3,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_15",
+      "desc": "dance - retire derriere, attitude/arabesque",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_05_16",
+      "file": "cmu_05_16.vrma",
+      "label": "Coupe jet\u00e9",
+      "energy": 5,
+      "duration": 4.33,
+      "bpm": 164,
+      "alts": [
+        82
+      ],
+      "firstBeat": 0.033,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.44)",
+      "tempoMin": 61.5,
+      "tempoMax": 218.1,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_16",
+      "desc": "dance - coupe dessous, jete en tourant",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_05_17",
+      "file": "cmu_05_17.vrma",
+      "label": "Grand jet\u00e9 turn",
+      "energy": 5,
+      "duration": 8.67,
+      "bpm": 97.3,
+      "alts": [
+        194.6,
+        48.6
+      ],
+      "firstBeat": 0.251,
+      "tempoNote": "open-vrma tempo (steps, confidence 1.00)",
+      "tempoMin": 36.5,
+      "tempoMax": 258.8,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_17",
+      "desc": "dance - coupe dessous, grand jete en tourant",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_05_19",
+      "file": "cmu_05_19.vrma",
+      "label": "Back-bend jet\u00e9 A",
+      "energy": 5,
+      "duration": 7.13,
+      "bpm": 125.5,
+      "alts": [
+        62.8
+      ],
+      "firstBeat": 0.199,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.60)",
+      "tempoMin": 47.1,
+      "tempoMax": 166.9,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_19",
+      "desc": "dance - attitude/arabesque, jete en tourant, bending back",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_05_20",
+      "file": "cmu_05_20.vrma",
+      "label": "Back-bend jet\u00e9 B",
+      "energy": 4,
+      "duration": 9.1,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.5,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.78)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "05_20",
+      "desc": "dance - attitude/arabesque, jete en tourant, bending back",
+      "genre": "modern",
+      "moods": [
+        "romantic"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_49_10",
+      "file": "cmu_49_10.vrma",
+      "label": "Fold-in arabesque A",
+      "energy": 1,
+      "duration": 11.83,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.067,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.90)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "49_10",
+      "desc": "dance - fold in from side arabesque, curl inwards",
+      "genre": "modern",
+      "moods": [
+        "romantic",
+        "chill"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_49_11",
+      "file": "cmu_49_11.vrma",
+      "label": "Fold-in arabesque B",
+      "energy": 1,
+      "duration": 9.93,
+      "bpm": 180,
+      "alts": [
+        90
+      ],
+      "firstBeat": 0.333,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.82)",
+      "tempoMin": 67.5,
+      "tempoMax": 239.4,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "49_11",
+      "desc": "dance - fold in from side arabesque, curl inwards",
+      "genre": "modern",
+      "moods": [
+        "romantic",
+        "chill"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_49_13",
+      "file": "cmu_49_13.vrma",
+      "label": "Fold-in arabesque C",
+      "energy": 2,
+      "duration": 4.33,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.4,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.87)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "49_13",
+      "desc": "dance - fold in from side arabesque, curl inwards",
+      "genre": "modern",
+      "moods": [
+        "romantic",
+        "chill"
+      ],
+      "locomotion": "in-place"
+    },
+    {
+      "id": "cmu_49_16",
+      "file": "cmu_49_16.vrma",
+      "label": "Curl inward",
+      "energy": 1,
+      "duration": 9.43,
+      "bpm": 164,
+      "alts": [
+        82
+      ],
+      "firstBeat": 0.333,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.61)",
+      "tempoMin": 61.5,
+      "tempoMax": 218.1,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "49_16",
+      "desc": "dance - fold in from side arabesque, curl inwards",
+      "genre": "modern",
+      "moods": [
+        "romantic",
+        "chill"
+      ],
+      "locomotion": "in-place"
+    },
+    {
+      "id": "cmu_60_01",
+      "file": "cmu_60_01.vrma",
+      "label": "Salsa A",
+      "energy": 4,
+      "duration": 18.67,
+      "bpm": 82,
+      "alts": [
+        164,
+        41
+      ],
+      "firstBeat": 0.3,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.38)",
+      "tempoMin": 30.8,
+      "tempoMax": 218.1,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_01",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_60_02",
+      "file": "cmu_60_02.vrma",
+      "label": "Salsa B",
+      "energy": 4,
+      "duration": 17.47,
+      "bpm": 86,
+      "alts": [
+        172,
+        43
+      ],
+      "firstBeat": 0.4,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.33)",
+      "tempoMin": 32.2,
+      "tempoMax": 228.8,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_02",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_60_03",
+      "file": "cmu_60_03.vrma",
+      "label": "Salsa C",
+      "energy": 4,
+      "duration": 15.23,
+      "bpm": 82,
+      "alts": [
+        164,
+        41
+      ],
+      "firstBeat": 0.367,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.50)",
+      "tempoMin": 30.8,
+      "tempoMax": 218.1,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_03",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_60_04",
+      "file": "cmu_60_04.vrma",
+      "label": "Salsa D",
+      "energy": 4,
+      "duration": 15.57,
+      "bpm": 232.3,
+      "alts": [
+        116.2
+      ],
+      "firstBeat": 0.075,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.65)",
+      "tempoMin": 87.2,
+      "tempoMax": 309.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_04",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_60_06",
+      "file": "cmu_60_06.vrma",
+      "label": "Salsa E",
+      "energy": 5,
+      "duration": 14.73,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0.0,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.29)",
+      "tempoMin": 82.5,
+      "tempoMax": 146.3,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_06",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_60_07",
+      "file": "cmu_60_07.vrma",
+      "label": "Salsa F",
+      "energy": 5,
+      "duration": 17.23,
+      "bpm": 239.4,
+      "alts": [
+        119.7
+      ],
+      "firstBeat": 0.233,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.62)",
+      "tempoMin": 89.8,
+      "tempoMax": 318.4,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_07",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_60_09",
+      "file": "cmu_60_09.vrma",
+      "label": "Salsa G",
+      "energy": 5,
+      "duration": 21.43,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.233,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.58)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_09",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_60_11",
+      "file": "cmu_60_11.vrma",
+      "label": "Salsa H",
+      "energy": 4,
+      "duration": 17.53,
+      "bpm": 258.5,
+      "alts": [
+        129.3
+      ],
+      "firstBeat": 0.04,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.73)",
+      "tempoMin": 97.0,
+      "tempoMax": 343.8,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_11",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_60_14",
+      "file": "cmu_60_14.vrma",
+      "label": "Salsa I",
+      "energy": 4,
+      "duration": 16.2,
+      "bpm": 239.3,
+      "alts": [
+        119.7
+      ],
+      "firstBeat": 0.048,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.61)",
+      "tempoMin": 89.8,
+      "tempoMax": 318.3,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_14",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_61_01",
+      "file": "cmu_61_01.vrma",
+      "label": "Salsa partner A",
+      "energy": 5,
+      "duration": 18.67,
+      "bpm": 231.5,
+      "alts": [
+        115.8
+      ],
+      "firstBeat": 0.085,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.63)",
+      "tempoMin": 86.8,
+      "tempoMax": 307.9,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_01",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_61_02",
+      "file": "cmu_61_02.vrma",
+      "label": "Salsa partner B",
+      "energy": 5,
+      "duration": 17.47,
+      "bpm": 88,
+      "alts": [
+        176,
+        44
+      ],
+      "firstBeat": 0.567,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.39)",
+      "tempoMin": 33.0,
+      "tempoMax": 234.1,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_02",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_61_03",
+      "file": "cmu_61_03.vrma",
+      "label": "Salsa partner C",
+      "energy": 5,
+      "duration": 15.23,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.367,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.51)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_03",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_61_04",
+      "file": "cmu_61_04.vrma",
+      "label": "Salsa partner D",
+      "energy": 5,
+      "duration": 15.57,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.467,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.50)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_04",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_61_05",
+      "file": "cmu_61_05.vrma",
+      "label": "Salsa partner E",
+      "energy": 5,
+      "duration": 13.97,
+      "bpm": 78,
+      "alts": [
+        156
+      ],
+      "firstBeat": 0.2,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.48)",
+      "tempoMin": 58.5,
+      "tempoMax": 207.5,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_05",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_61_07",
+      "file": "cmu_61_07.vrma",
+      "label": "Salsa partner F",
+      "energy": 5,
+      "duration": 17.23,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.567,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.37)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_07",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_61_09",
+      "file": "cmu_61_09.vrma",
+      "label": "Salsa partner G",
+      "energy": 5,
+      "duration": 21.43,
+      "bpm": 92,
+      "alts": [
+        184,
+        46
+      ],
+      "firstBeat": 0.3,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.41)",
+      "tempoMin": 34.5,
+      "tempoMax": 244.7,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_09",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_61_10",
+      "file": "cmu_61_10.vrma",
+      "label": "Salsa partner H",
+      "energy": 5,
+      "duration": 9.93,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.467,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.52)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_10",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_61_14",
+      "file": "cmu_61_14.vrma",
+      "label": "Salsa partner I",
+      "energy": 5,
+      "duration": 16.2,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.6,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.33)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_14",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_85_02",
+      "file": "cmu_85_02.vrma",
+      "label": "Breakdance jump-twist B",
+      "energy": 5,
+      "duration": 6.73,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.5,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.78)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "85_02",
+      "desc": "JumpTwist",
+      "genre": "breakdance",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_85_12",
+      "file": "cmu_85_12.vrma",
+      "label": "Breakdance long sequence",
+      "energy": 5,
+      "duration": 37.47,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.6,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.60)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "85_12",
+      "desc": "LongSequenceGood",
+      "genre": "breakdance",
+      "moods": [
+        "party"
+      ],
+      "locomotion": "spinning"
+    },
+    {
+      "id": "cmu_90_31",
+      "file": "cmu_90_31.vrma",
+      "label": "Russian dance",
+      "energy": 5,
+      "duration": 8.13,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.467,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.70)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "90_31",
+      "desc": "russian dance",
+      "genre": "folk",
+      "moods": [
+        "party",
+        "happy"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_93_03",
+      "file": "cmu_93_03.vrma",
+      "label": "Charleston loop B",
+      "energy": 5,
+      "duration": 3.67,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0.0,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.00)",
+      "tempoMin": 82.5,
+      "tempoMax": 146.3,
+      "loop": true,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "93_03",
+      "desc": "charleston_01",
+      "genre": "charleston",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_93_04",
+      "file": "cmu_93_04.vrma",
+      "label": "Charleston side-by-side F",
+      "energy": 4,
+      "duration": 4.2,
+      "bpm": 180,
+      "alts": [
+        90
+      ],
+      "firstBeat": 0.233,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.63)",
+      "tempoMin": 67.5,
+      "tempoMax": 239.4,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "93_04",
+      "desc": "charleston_side_by_side_female",
+      "genre": "charleston",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_93_05",
+      "file": "cmu_93_05.vrma",
+      "label": "Charleston side-by-side M",
+      "energy": 5,
+      "duration": 4.53,
+      "bpm": 101.4,
+      "alts": [
+        202.8,
+        50.7
+      ],
+      "firstBeat": 0.167,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.67)",
+      "tempoMin": 38.0,
+      "tempoMax": 269.7,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "93_05",
+      "desc": "charleston_side_by_side_male",
+      "genre": "charleston",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_93_06",
+      "file": "cmu_93_06.vrma",
+      "label": "Lindy hop B",
+      "energy": 5,
+      "duration": 3.33,
+      "bpm": 230.8,
+      "alts": [
+        115.4
+      ],
+      "firstBeat": 0.107,
+      "tempoNote": "open-vrma tempo (steps, confidence 1.00)",
+      "tempoMin": 86.6,
+      "tempoMax": 307.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "93_06",
+      "desc": "lindyHop2",
+      "genre": "charleston",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_93_08",
+      "file": "cmu_93_08.vrma",
+      "label": "Fancy charleston B",
+      "energy": 5,
+      "duration": 4.6,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0.0,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.29)",
+      "tempoMin": 82.5,
+      "tempoMax": 146.3,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "93_08",
+      "desc": "xtra fancY charleston",
+      "genre": "charleston",
+      "moods": [
+        "happy",
+        "party"
+      ],
+      "locomotion": "stepping"
+    },
+    {
+      "id": "cmu_94_02",
+      "file": "cmu_94_02.vrma",
+      "label": "Indian dance F",
+      "energy": 4,
+      "duration": 27.8,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.567,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.47)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "94_02",
+      "desc": "Unknown",
+      "genre": "indian",
+      "moods": [
+        "romantic",
+        "devotional"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_94_06",
+      "file": "cmu_94_06.vrma",
+      "label": "Indian dance G",
+      "energy": 4,
+      "duration": 20.93,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0.0,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.26)",
+      "tempoMin": 82.5,
+      "tempoMax": 146.3,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "94_06",
+      "desc": "Unknown",
+      "genre": "indian",
+      "moods": [
+        "romantic",
+        "devotional"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_94_07",
+      "file": "cmu_94_07.vrma",
+      "label": "Indian dance H",
+      "energy": 4,
+      "duration": 19.23,
+      "bpm": 129,
+      "alts": [
+        64.5
+      ],
+      "firstBeat": 0.333,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.49)",
+      "tempoMin": 48.4,
+      "tempoMax": 171.6,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "94_07",
+      "desc": "Unknown",
+      "genre": "indian",
+      "moods": [
+        "romantic",
+        "devotional"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_94_12",
+      "file": "cmu_94_12.vrma",
+      "label": "Indian dance I",
+      "energy": 4,
+      "duration": 37.47,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.3,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.55)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "94_12",
+      "desc": "Unknown",
+      "genre": "indian",
+      "moods": [
+        "romantic",
+        "devotional"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_94_15",
+      "file": "cmu_94_15.vrma",
+      "label": "Indian dance J",
+      "energy": 5,
+      "duration": 18.4,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.5,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.58)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "94_15",
+      "desc": "Unknown",
+      "genre": "indian",
+      "moods": [
+        "romantic",
+        "devotional"
+      ],
+      "locomotion": "traveling"
+    },
+    {
+      "id": "cmu_90_36",
+      "file": "cmu_90_36.vrma",
+      "label": "wide leg roll",
+      "energy": 4,
+      "duration": 5.43,
+      "bpm": 100.0,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.467,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.67)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "90_36",
+      "desc": "wide leg roll",
+      "genre": "",
+      "moods": [
+        "upbeat"
+      ],
+      "locomotion": "traveling"
+    }
+  ],
+  "idle": {
+    "id": "quaternius_ual1_Idle_Loop",
+    "file": "quaternius_ual1_Idle_Loop.vrma",
+    "duration": 2.5,
+    "license": "CC0-1.0"
+  },
+  "source": "https://huggingface.co/datasets/Sanami/open-vrma (converter: https://github.com/sanamiy/open-vrma)",
+  "selection": "Curated dance/mood subset of open-vrma. Skipped AIST++ (source DB forbids redistribution), Motorica (no redistribution), pixiv/VRoid sample VRMA (no redistribution of motions), Mixamo (Adobe terms), 100STYLE and Bandai Namco Research (need BVH\u2192VRMA conversion; Bandai is CC BY-NC 4.0 \u2014 noted for later personal-use conversion). Skipped franchise-named Mickey Dance, animal impersonations, and mis-tagged combat clips. Plus 47 extra CMU dance clips (modern, salsa, Indian, Charleston, breakdance, Russian) added 2026-11-11 from open-vrma; same licences. No Mixamo, AIST++, or VRoid Hub non-permissive models. Auto-update 2026-11-11: added 1 dance clips from open-vrma (same licence rules)."
+}

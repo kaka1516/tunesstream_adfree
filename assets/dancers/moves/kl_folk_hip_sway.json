@@ -1,0 +1,62 @@
+{
+ "id": "kl_folk_hip_sway",
+ "name": "Folk hip sway + wrist flourish",
+ "style": "kollywood",
+ "beats": 2,
+ "loop": true,
+ "oneShot": false,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": 8,
+   "head": 0,
+   "uarmL": 70,
+   "larmL": 60,
+   "uarmR": 20,
+   "larmR": 80,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "rootX": -7,
+   "gripL": "open",
+   "gripR": "open",
+   "face": "closed",
+   "t": 0,
+   "ease": "inOut"
+  },
+  {
+   "torso": -8,
+   "head": 0,
+   "uarmL": 20,
+   "larmL": 80,
+   "uarmR": 70,
+   "larmR": 60,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "rootX": 7,
+   "gripL": "open",
+   "gripR": "open",
+   "t": 0.5,
+   "ease": "inOut"
+  },
+  {
+   "torso": 8,
+   "head": 0,
+   "uarmL": 70,
+   "larmL": 60,
+   "uarmR": 20,
+   "larmR": 80,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "rootX": -7,
+   "face": "closed",
+   "t": 1,
+   "ease": "inOut"
+  }
+ ]
+}

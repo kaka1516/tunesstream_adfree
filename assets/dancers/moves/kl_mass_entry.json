@@ -1,0 +1,57 @@
+{
+ "id": "kl_mass_entry",
+ "name": "Mass entry stride (intro, half-time)",
+ "style": "kollywood",
+ "beats": 4,
+ "loop": true,
+ "oneShot": false,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": 0,
+   "head": -4,
+   "uarmL": 60,
+   "larmL": 10,
+   "uarmR": 60,
+   "larmR": 10,
+   "thighL": -18,
+   "shinL": -2,
+   "thighR": 14,
+   "shinR": -2,
+   "rootX": -8,
+   "face": "smile",
+   "t": 0,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": 4,
+   "uarmL": 70,
+   "larmL": 10,
+   "uarmR": 70,
+   "larmR": 10,
+   "thighL": 14,
+   "shinL": -2,
+   "thighR": -18,
+   "shinR": -2,
+   "rootX": 8,
+   "t": 0.5,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": -4,
+   "uarmL": 60,
+   "larmL": 10,
+   "uarmR": 60,
+   "larmR": 10,
+   "thighL": -18,
+   "shinL": -2,
+   "thighR": 14,
+   "shinR": -2,
+   "rootX": -8,
+   "t": 1,
+   "ease": "inOut"
+  }
+ ]
+}

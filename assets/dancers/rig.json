@@ -1,0 +1,257 @@
+{
+ "units": "px@1x, y down, hip at (0,0), ground y=+60",
+ "angleConvention": "degrees, SVG clockwise-positive for L (screen-left) joints; *R joints are mirrored: renderer uses -angle so +value always means 'away from body / outward-up'. torso/head/root.rot: +clockwise (lean screen-right).",
+ "bounds": {
+  "x": [
+   -110,
+   110
+  ],
+  "y": [
+   -178,
+   70
+  ]
+ },
+ "joints": {
+  "root": {
+   "parent": null,
+   "pivot": [
+    0,
+    0
+   ]
+  },
+  "torso": {
+   "parent": "root",
+   "pivot": [
+    0,
+    0
+   ]
+  },
+  "head": {
+   "parent": "torso",
+   "pivot": [
+    0,
+    -58
+   ]
+  },
+  "uarmL": {
+   "parent": "torso",
+   "pivot": [
+    -20,
+    -50
+   ]
+  },
+  "larmL": {
+   "parent": "uarmL",
+   "pivot": [
+    0,
+    24
+   ]
+  },
+  "handL": {
+   "parent": "larmL",
+   "pivot": [
+    0,
+    22
+   ]
+  },
+  "uarmR": {
+   "parent": "torso",
+   "pivot": [
+    20,
+    -50
+   ],
+   "mirror": true
+  },
+  "larmR": {
+   "parent": "uarmR",
+   "pivot": [
+    0,
+    24
+   ],
+   "mirror": true
+  },
+  "handR": {
+   "parent": "larmR",
+   "pivot": [
+    0,
+    22
+   ],
+   "mirror": true
+  },
+  "thighL": {
+   "parent": "root",
+   "pivot": [
+    -11,
+    0
+   ]
+  },
+  "shinL": {
+   "parent": "thighL",
+   "pivot": [
+    0,
+    26
+   ]
+  },
+  "thighR": {
+   "parent": "root",
+   "pivot": [
+    11,
+    0
+   ],
+   "mirror": true
+  },
+  "shinR": {
+   "parent": "thighR",
+   "pivot": [
+    0,
+    26
+   ],
+   "mirror": true
+  }
+ },
+ "drawOrder": [
+  "hair_back",
+  "acc_back",
+  "thighR",
+  "shinR",
+  "thighL",
+  "shinL",
+  "torso",
+  "uarmR",
+  "larmR",
+  "handR",
+  "head",
+  "face",
+  "hair_front",
+  "acc_front",
+  "uarmL",
+  "larmL",
+  "handL"
+ ],
+ "zRules": [
+  "if uarmR > 120: move uarmR/larmR/handR after acc_front (raised back arm in front of head)"
+ ],
+ "partFiles": "parts/<char>/<part>.svg; L/R share one file (R drawn with scale(-1,1) at its pivot). Each file's viewBox is in part-local coords with the pivot at (0,0).",
+ "partViewBox": {
+  "torso": [
+   -34,
+   -66,
+   68,
+   72
+  ],
+  "head": [
+   -48,
+   -86,
+   96,
+   92
+  ],
+  "face": [
+   -48,
+   -86,
+   96,
+   92
+  ],
+  "hair_back": [
+   -60,
+   -100,
+   120,
+   120
+  ],
+  "hair_front": [
+   -60,
+   -100,
+   120,
+   120
+  ],
+  "uarm": [
+   -10,
+   -8,
+   20,
+   36
+  ],
+  "larm": [
+   -9,
+   -4,
+   18,
+   30
+  ],
+  "thigh": [
+   -12,
+   -4,
+   24,
+   34
+  ],
+  "shin": [
+   -14,
+   -4,
+   30,
+   40
+  ],
+  "acc_back": [
+   -60,
+   -100,
+   120,
+   170
+  ],
+  "acc_front": [
+   -60,
+   -100,
+   120,
+   170
+  ],
+  "hand_open": [
+   -9,
+   -3,
+   18,
+   16
+  ],
+  "hand_fist": [
+   -9,
+   -3,
+   18,
+   14
+  ],
+  "hand_point": [
+   -9,
+   -3,
+   18,
+   22
+  ],
+  "hand_flick": [
+   -11,
+   -3,
+   22,
+   16
+  ]
+ },
+ "attach": {
+  "hair_back": "head",
+  "hair_front": "head",
+  "face": "head",
+  "acc_back": "torso",
+  "acc_front": "torso"
+ },
+ "hands": [
+  "open",
+  "fist",
+  "point",
+  "flick"
+ ],
+ "faces": [
+  "smile",
+  "grin",
+  "closed",
+  "wink"
+ ],
+ "paletteSlots": [
+  "--d-skin",
+  "--d-skin-sh",
+  "--d-hair",
+  "--d-main",
+  "--d-alt",
+  "--d-trim",
+  "--d-line",
+  "--d-eye",
+  "--d-blush"
+ ]
+}

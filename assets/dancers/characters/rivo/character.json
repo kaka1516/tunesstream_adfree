@@ -1,0 +1,51 @@
+{
+ "id": "rivo",
+ "name": "Rivo",
+ "homeStyle": "hollywood",
+ "about": "Western pop/hip-hop/EDM dancer: spiky hair + visor, oversized hoodie, neck headphones, joggers",
+ "palette": {
+  "--d-skin": "#f0c9a6",
+  "--d-skin-sh": "#d9a882",
+  "--d-hair": "#6c3df0",
+  "--d-main": "#20232f",
+  "--d-alt": "#3df0c2",
+  "--d-trim": "#ff3d9a",
+  "--d-line": "#0e0f14",
+  "--d-eye": "#0e0f14",
+  "--d-blush": "#f39a9a"
+ },
+ "recolor": {
+  "fromAlbumArt": [
+   "--d-main",
+   "--d-alt",
+   "--d-trim"
+  ],
+  "mix": 0.5,
+  "neverFromArt": [
+   "--d-skin",
+   "--d-skin-sh",
+   "--d-hair"
+  ]
+ },
+ "parts": [
+  "acc_front",
+  "face_closed",
+  "face_grin",
+  "face_smile",
+  "face_wink",
+  "hair_back",
+  "hair_front",
+  "hand_fist",
+  "hand_flick",
+  "hand_open",
+  "hand_point",
+  "head",
+  "larm",
+  "shin",
+  "thigh",
+  "torso",
+  "uarm"
+ ],
+ "moveset": "moveset.json",
+ "license": "CC0-1.0 (original work for Music Stream)"
+}

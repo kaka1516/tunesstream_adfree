@@ -1,0 +1,7 @@
+/* Paper Fold — recolor pack. Structure inspired by Side Cut; original CSS. */
+html[data-skin=paper-fold]{
+  --tom:#d7827e; --acc:#d7827e; --paper:#fffaf3;
+}
+html[data-skin=paper-fold] body{background:color-mix(in srgb,#fffaf3 8%, var(--ink));}
+html[data-skin=paper-fold] #bigart{box-shadow:0 0 0 3px #d7827e,0 16px 40px #0008!important;}
+html[data-skin=paper-fold] .brand h1 span{color:#d7827e}

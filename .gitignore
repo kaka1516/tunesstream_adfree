@@ -1,0 +1,68 @@
+# ---- secrets & per-install config (NEVER commit) ----
+music.env
+music.env.*
+!music.env.example
+*.env
+.env*
+tg.env*
+*.pem
+*.key
+*.p12
+*.pfx
+id_*
+*_ed25519*
+*_rsa*
+known_hosts
+authorized_keys
+.cloudflared/
+cloudflared*.json
+cert.pem
+credentials*.json
+*cookies*.txt
+cookie-jar*/
+# ---- user accounts, sessions, personal data ----
+users.json
+sessions.json
+user_data/
+data/
+tg_last.json
+public_url.txt
+.ms-standby/
+standby.on
+standby/*.key
+# ---- runtime state, caches, media, logs ----
+cache/
+lcache/
+uat/
+*.log
+*.pid
+ytdlp_version.txt
+ytdlp_heal.txt
+ytdlp_update.json
+*.stamp
+.fmt_err.txt
+*.mp3
+*.m4a
+*.webm
+*.opus
+*.mp4
+# ---- backups & local copies ----
+*.bak*
+*.pre-*
+*.pre_*
+*.lastgood
+*.orig
+*.tgz
+*.tar.gz
+*.zip
+# ---- python / tooling ----
+__pycache__/
+*.pyc
+.venv/
+venv/
+runtime/
+node_modules/
+# ---- restricted third-party assets (not redistributable; see docs/GAME_CREDITS.md) ----
+/assets/chars/vrma/
+/assets/chars/vrm/Runa_Inoue.vrm
+Readme_VRMA_MotionPack*

@@ -1,0 +1,67 @@
+{
+ "id": "hw_arm_wave",
+ "name": "Arm wave",
+ "style": "hollywood",
+ "beats": 2,
+ "loop": true,
+ "oneShot": false,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 90,
+   "larmL": 20,
+   "uarmR": 90,
+   "larmR": -20,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "t": 0,
+   "ease": "inOut"
+  },
+  {
+   "torso": -4,
+   "head": 0,
+   "uarmL": 95,
+   "larmL": -20,
+   "uarmR": 85,
+   "larmR": 20,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "t": 0.25,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 90,
+   "larmL": 20,
+   "uarmR": 90,
+   "larmR": -20,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "t": 0.5,
+   "ease": "inOut"
+  },
+  {
+   "torso": 4,
+   "head": 0,
+   "uarmL": 85,
+   "larmL": -20,
+   "uarmR": 95,
+   "larmR": 20,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "t": 0.75,
+   "ease": "inOut"
+  }
+ ]
+}

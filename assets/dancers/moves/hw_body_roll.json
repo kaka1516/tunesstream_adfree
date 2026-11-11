@@ -1,0 +1,71 @@
+{
+ "id": "hw_body_roll",
+ "name": "Body roll wave",
+ "style": "hollywood",
+ "beats": 2,
+ "loop": true,
+ "oneShot": false,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": -10,
+   "head": 6,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 12,
+   "larmR": -8,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "rootX": -4,
+   "t": 0,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": -6,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 12,
+   "larmR": -8,
+   "thighL": 14,
+   "shinL": -22,
+   "thighR": 14,
+   "shinR": -22,
+   "rootY": 4,
+   "t": 0.33,
+   "ease": "inOut"
+  },
+  {
+   "torso": 10,
+   "head": 6,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 12,
+   "larmR": -8,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "rootX": 4,
+   "t": 0.66,
+   "ease": "inOut"
+  },
+  {
+   "torso": -10,
+   "head": 6,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 12,
+   "larmR": -8,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "rootX": -4,
+   "t": 1,
+   "ease": "inOut"
+  }
+ ]
+}

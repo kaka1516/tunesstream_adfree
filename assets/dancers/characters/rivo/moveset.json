@@ -1,0 +1,58 @@
+{
+ "character": "rivo",
+ "homeStyle": "hollywood",
+ "bands": {
+  "tap": [
+   "rivo_tap_cheer"
+  ],
+  "special": [
+   "rivo_special"
+  ],
+  "idle": [
+   "idle_sway"
+  ],
+  "calm": [
+   "calm_breathe",
+   "hw_body_roll"
+  ],
+  "low": [
+   "hw_shoulder_bop",
+   "hw_bounce_step"
+  ],
+  "mid": [
+   "hw_step_clap",
+   "hw_arm_wave",
+   "hw_body_roll"
+  ],
+  "high": [
+   "hw_fist_pump",
+   "hw_shuffle_kick"
+  ],
+  "accent": [
+   "hw_drop_point"
+  ]
+ },
+ "borrowWhenStyleDiffers": {
+  "tollywood": [
+   "tl_mass_stomp",
+   "tl_hook_loop",
+   "tl_fast_footwork",
+   "tl_shoulder_shake",
+   "tl_slide_point"
+  ],
+  "kollywood": [
+   "kl_kuthu_step",
+   "kl_drum_mime",
+   "kl_folk_hip_sway",
+   "kl_wrist_flick",
+   "kl_heel_clap"
+  ],
+  "hollywood": [
+   "hw_bounce_step",
+   "hw_step_clap",
+   "hw_arm_wave",
+   "hw_fist_pump",
+   "hw_shuffle_kick"
+  ]
+ }
+}

@@ -1,0 +1,68 @@
+{
+ "id": "kl_scarf_twirl",
+ "name": "Overhead twirl (scarf/hand circle)",
+ "style": "kollywood",
+ "beats": 2,
+ "loop": true,
+ "oneShot": false,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": -4,
+   "head": 0,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 160,
+   "larmR": 0,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "gripR": "open",
+   "t": 0,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 140,
+   "larmR": 60,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "t": 0.25,
+   "ease": "inOut"
+  },
+  {
+   "torso": 4,
+   "head": 0,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 160,
+   "larmR": 0,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "t": 0.5,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 140,
+   "larmR": -50,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "t": 0.75,
+   "ease": "inOut"
+  }
+ ]
+}

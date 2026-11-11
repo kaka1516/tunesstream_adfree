@@ -1,0 +1,870 @@
+{
+ "specVersion": "0.1",
+ "id": "cmu_60_02",
+ "name": "60_02",
+ "description": "salsa dance",
+ "duration": 17.47,
+ "sourceFps": 120,
+ "license": {
+  "spdx": "LicenseRef-CMU-Mocap",
+  "url": "http://mocap.cs.cmu.edu/faqs.php",
+  "attribution": "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.",
+  "authors": [
+   {
+    "name": "Carnegie Mellon University Graphics Lab",
+    "url": "http://mocap.cs.cmu.edu/"
+   },
+   {
+    "name": "Bruce Hahne (BVH conversion, cgspeed)"
+   }
+  ],
+  "source": {
+   "kind": "mocap",
+   "url": "http://mocap.cs.cmu.edu/",
+   "originalId": "60_02",
+   "originalFormat": "bvh",
+   "converter": "open-vrma/cmu2vrma@0.1"
+  }
+ },
+ "tags": {
+  "kind": "dance",
+  "genre": [
+   "salsa"
+  ],
+  "energy": 4,
+  "bodyParts": [
+   "full"
+  ],
+  "locomotion": "traveling",
+  "facing": "turning",
+  "floorWork": false,
+  "airborne": false,
+  "fingers": false,
+  "expressions": false,
+  "lookAt": false,
+  "rootMotion": true,
+  "keywords": [
+   "Salsa"
+  ]
+ },
+ "tempo": {
+  "bpm": 86,
+  "beatsPerBar": 4,
+  "firstBeat": 0.4,
+  "confidence": 0.33,
+  "basis": "motion",
+  "alternatives": [
+   172,
+   43
+  ]
+ },
+ "events": [
+  {
+   "t": 1.267,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 1.533,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 1.6,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 1.9,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 2,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 2.233,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 2.267,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 2.4,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 2.467,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 2.633,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 2.867,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 3.067,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 3.1,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 3.333,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 3.5,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 3.733,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 3.767,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 4,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 4.2,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 4.433,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 4.5,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 4.733,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 4.933,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 5.167,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 5.233,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 5.467,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 5.5,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 5.633,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 5.667,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 5.9,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 5.9,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 6.033,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 6.467,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 6.733,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 6.767,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 7,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 7.2,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 7.5,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 7.6,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 7.733,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 7.8,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 7.933,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 7.933,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 8.167,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 8.233,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 8.4,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 8.433,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 8.567,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 8.567,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 8.8,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 9.267,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 9.433,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 9.533,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 9.733,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 9.9,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 10.067,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 10.6,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 11.133,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 11.267,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 11.767,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 12,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 12.2,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 12.233,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 12.5,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 13.1,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 13.3,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 13.333,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 13.467,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 13.5,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 13.667,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 13.733,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 13.9,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 13.9,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 14.067,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 14.1,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 14.3,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 14.3,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 14.533,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 14.7,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 14.933,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 15.033,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 15.2,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 15.233,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 15.367,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 15.433,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 15.633,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 15.7,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 15.867,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 15.9,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 16.067,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 16.1,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 16.4,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 17.467,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 17.467,
+   "type": "lift",
+   "side": "right"
+  }
+ ],
+ "ranges": [
+  {
+   "from": 0,
+   "to": 1.267,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 1.533,
+   "to": 2,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 2.233,
+   "to": 2.467,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 2.633,
+   "to": 2.867,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 3.067,
+   "to": 3.767,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 4,
+   "to": 4.2,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 4.433,
+   "to": 5.233,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 5.467,
+   "to": 5.667,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 5.9,
+   "to": 6.767,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 7,
+   "to": 7.6,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 7.733,
+   "to": 7.933,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 8.167,
+   "to": 8.433,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 8.567,
+   "to": 9.267,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 9.433,
+   "to": 10.6,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 11.133,
+   "to": 11.267,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 11.767,
+   "to": 12,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 12.2,
+   "to": 13.1,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 13.3,
+   "to": 13.467,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 13.667,
+   "to": 13.9,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 14.067,
+   "to": 14.3,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 14.533,
+   "to": 14.7,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 14.933,
+   "to": 15.233,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 15.367,
+   "to": 15.7,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 15.867,
+   "to": 16.067,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 16.4,
+   "to": 17.467,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 0,
+   "to": 1.6,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 1.9,
+   "to": 2.267,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 2.4,
+   "to": 3.1,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 3.333,
+   "to": 3.5,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 3.733,
+   "to": 4.5,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 4.733,
+   "to": 4.933,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 5.167,
+   "to": 5.5,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 5.633,
+   "to": 5.9,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 6.033,
+   "to": 6.467,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 6.733,
+   "to": 7.2,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 7.5,
+   "to": 7.8,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 7.933,
+   "to": 8.233,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 8.4,
+   "to": 8.567,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 8.8,
+   "to": 9.533,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 9.733,
+   "to": 9.9,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 10.067,
+   "to": 12.233,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 12.5,
+   "to": 13.333,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 13.5,
+   "to": 13.733,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 13.9,
+   "to": 14.1,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 14.3,
+   "to": 15.033,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 15.2,
+   "to": 15.433,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 15.633,
+   "to": 15.9,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 16.1,
+   "to": 17.467,
+   "type": "footLock",
+   "side": "right"
+  }
+ ],
+ "root": {
+  "netTravel": 1.89,
+  "maxTravel": 1.89,
+  "netTurnDeg": 208,
+  "turnRangeDeg": 740,
+  "hipsBounce": 0.15
+ },
+ "poses": {
+  "start": "stand",
+  "end": "stand",
+  "startSupport": "both",
+  "endSupport": "both",
+  "startArms": "down",
+  "endArms": "down"
+ },
+ "retarget": {
+  "restPose": "T",
+  "sourceHipHeight": 0.96,
+  "floorAligned": true
+ },
+ "provenance": {
+  "tags": "auto",
+  "tempo": "auto",
+  "events": "auto",
+  "ranges": "auto"
+ },
+ "x": {
+  "openVrma": {
+   "pathTravel": 15.21,
+   "angularSpeed": {
+    "legs": 2.85,
+    "arms": 3.08,
+    "torso": 0.87
+   },
+   "bodyShare": {
+    "head": 0.1,
+    "torso": 0.07,
+    "arms": 0.19,
+    "hands": 0.2,
+    "hips": 0.2,
+    "legs": 0.25
+   },
+   "energy": 1.26,
+   "airborne": 0,
+   "lowHips": 0.03
+  }
+ }
+}

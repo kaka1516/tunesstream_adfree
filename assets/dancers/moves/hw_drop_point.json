@@ -1,0 +1,60 @@
+{
+ "id": "hw_drop_point",
+ "name": "Drop point (one-shot)",
+ "style": "hollywood",
+ "beats": 2,
+ "loop": true,
+ "oneShot": true,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 10,
+   "larmL": -8,
+   "uarmR": 10,
+   "larmR": -8,
+   "thighL": 14,
+   "shinL": -22,
+   "thighR": 14,
+   "shinR": -22,
+   "rootY": 8,
+   "face": "closed",
+   "t": 0,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 160,
+   "larmR": 0,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "gripR": "point",
+   "rootY": -4,
+   "face": "grin",
+   "t": 0.3,
+   "ease": "snap"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 160,
+   "larmR": 0,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "gripR": "point",
+   "face": "grin",
+   "t": 1,
+   "ease": "inOut"
+  }
+ ]
+}

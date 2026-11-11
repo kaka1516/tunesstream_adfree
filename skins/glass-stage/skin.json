@@ -1,0 +1,15 @@
+{
+  "id": "glass-stage",
+  "name": "Glass Stage",
+  "version": 1,
+  "description": "Frosted panels, soft glow, large pills, roomy rows, round art. Blur is progressive; solid fallback on reduced-transparency/no-support.",
+  "preview": "preview.svg",
+  "css": "skin.css",
+  "icons": "icons.svg",
+  "npLayout": "split",
+  "art": "round",
+  "sideLabel": "GLASS STAGE — LIVE",
+  "themeColor": "#0d1020",
+  "fonts": ["fonts/Outfit-Variable.woff2"],
+  "textures": []
+}

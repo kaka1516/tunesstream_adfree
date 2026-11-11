@@ -1,0 +1,7 @@
+/* Ember Glow — recolor pack. Structure inspired by Side Cut; original CSS. */
+html[data-skin=ember-glow]{
+  --tom:#ff6b35; --acc:#ff6b35; --paper:#ffe8d6;
+}
+html[data-skin=ember-glow] body{background:color-mix(in srgb,#ffe8d6 8%, var(--ink));}
+html[data-skin=ember-glow] #bigart{box-shadow:0 0 0 3px #ff6b35,0 16px 40px #0008!important;}
+html[data-skin=ember-glow] .brand h1 span{color:#ff6b35}

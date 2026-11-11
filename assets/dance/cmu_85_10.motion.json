@@ -1,0 +1,218 @@
+{
+ "specVersion": "0.1",
+ "id": "cmu_85_10",
+ "name": "85_10",
+ "description": "EndofBreakDance",
+ "duration": 6.43,
+ "sourceFps": 120,
+ "license": {
+  "spdx": "LicenseRef-CMU-Mocap",
+  "url": "http://mocap.cs.cmu.edu/faqs.php",
+  "attribution": "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.",
+  "authors": [
+   {
+    "name": "Carnegie Mellon University Graphics Lab",
+    "url": "http://mocap.cs.cmu.edu/"
+   },
+   {
+    "name": "Bruce Hahne (BVH conversion, cgspeed)"
+   }
+  ],
+  "source": {
+   "kind": "mocap",
+   "url": "http://mocap.cs.cmu.edu/",
+   "originalId": "85_10",
+   "originalFormat": "bvh",
+   "converter": "open-vrma/cmu2vrma@0.1"
+  }
+ },
+ "tags": {
+  "kind": "dance",
+  "genre": [
+   "breakdance"
+  ],
+  "energy": 4,
+  "bodyParts": [
+   "hips"
+  ],
+  "locomotion": "spinning",
+  "facing": "turning",
+  "floorWork": true,
+  "airborne": false,
+  "fingers": false,
+  "expressions": false,
+  "lookAt": false,
+  "rootMotion": true,
+  "keywords": [
+   "Jumps; flips; breakdance"
+  ]
+ },
+ "tempo": {
+  "bpm": 189.6,
+  "beatsPerBar": 4,
+  "firstBeat": 0.101,
+  "confidence": 0.67,
+  "basis": "steps",
+  "alternatives": [
+   94.8
+  ]
+ },
+ "allow": {
+  "stretch": {
+   "mode": "beats"
+  }
+ },
+ "events": [
+  {
+   "t": 2,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 2,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 3.267,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 3.367,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 4.433,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 4.733,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 4.8,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 5.067,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 5.2,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 5.333,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 5.533,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 5.633,
+   "type": "contact",
+   "side": "left"
+  }
+ ],
+ "ranges": [
+  {
+   "from": 2,
+   "to": 3.267,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 4.733,
+   "to": 5.067,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 5.633,
+   "to": 6.43,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 2,
+   "to": 3.367,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 4.433,
+   "to": 4.8,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 5.2,
+   "to": 5.333,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 5.533,
+   "to": 6.43,
+   "type": "footLock",
+   "side": "right"
+  }
+ ],
+ "root": {
+  "netTravel": 0.66,
+  "maxTravel": 0.96,
+  "netTurnDeg": -931,
+  "turnRangeDeg": 939,
+  "hipsBounce": 0.62
+ },
+ "poses": {
+  "start": "sit",
+  "end": "stand",
+  "startSupport": "none",
+  "endSupport": "both",
+  "startArms": "other",
+  "endArms": "down"
+ },
+ "retarget": {
+  "restPose": "T",
+  "sourceHipHeight": 0.94,
+  "floorAligned": true
+ },
+ "provenance": {
+  "tags": "auto",
+  "tempo": "auto",
+  "events": "auto",
+  "ranges": "auto"
+ },
+ "x": {
+  "openVrma": {
+   "pathTravel": 2.73,
+   "angularSpeed": {
+    "legs": 2.29,
+    "arms": 2.22,
+    "torso": 0.94
+   },
+   "bodyShare": {
+    "head": 0.13,
+    "torso": 0.07,
+    "arms": 0.15,
+    "hands": 0.12,
+    "hips": 0.31,
+    "legs": 0.22
+   },
+   "energy": 1.28,
+   "airborne": 0,
+   "lowHips": 0.46
+  }
+ }
+}

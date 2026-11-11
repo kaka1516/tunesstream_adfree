@@ -1,0 +1,15 @@
+{
+  "id": "side-cut",
+  "name": "Side Cut",
+  "version": 1,
+  "description": "Record-shop risograph / offset — paper texture, editorial numbers, vinyl art option. Successor to Side B identity.",
+  "preview": "preview.svg",
+  "css": "skin.css",
+  "icons": "icons.svg",
+  "npLayout": "art-hero",
+  "art": "square",
+  "sideLabel": "SIDE CUT — NOW SPINNING",
+  "themeColor": "#17140f",
+  "fonts": ["fonts/ArchivoBlack-Regular.woff2"],
+  "textures": ["textures/paper.svg"]
+}

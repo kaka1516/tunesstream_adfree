@@ -1,0 +1,44 @@
+{
+ "id": "hw_fist_pump",
+ "name": "Fist pump",
+ "style": "hollywood",
+ "beats": 1,
+ "loop": true,
+ "oneShot": false,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 150,
+   "larmR": 10,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "gripR": "fist",
+   "rootY": 0,
+   "face": "grin",
+   "t": 0,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 120,
+   "larmR": 60,
+   "thighL": 14,
+   "shinL": -22,
+   "thighR": 14,
+   "shinR": -22,
+   "gripR": "fist",
+   "rootY": 5,
+   "t": 0.5,
+   "ease": "snap"
+  }
+ ]
+}

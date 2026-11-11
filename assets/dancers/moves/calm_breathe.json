@@ -1,0 +1,61 @@
+{
+ "id": "calm_breathe",
+ "name": "Calm breathe / folded hands",
+ "style": "any",
+ "beats": 4,
+ "loop": true,
+ "oneShot": false,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 25,
+   "larmL": 120,
+   "uarmR": 25,
+   "larmR": 120,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "gripL": "open",
+   "gripR": "open",
+   "face": "closed",
+   "rootY": 0,
+   "t": 0,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": 4,
+   "uarmL": 25,
+   "larmL": 120,
+   "uarmR": 25,
+   "larmR": 120,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "face": "closed",
+   "rootY": 2,
+   "t": 0.5,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 25,
+   "larmL": 120,
+   "uarmR": 25,
+   "larmR": 120,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "face": "closed",
+   "rootY": 0,
+   "t": 1,
+   "ease": "inOut"
+  }
+ ]
+}

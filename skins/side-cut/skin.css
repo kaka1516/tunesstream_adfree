@@ -1,0 +1,395 @@
+/* Side Cut — full skin pack (step 1). Scoped via html[data-skin=side-cut].
+   Color-only data-theme=* remains a temporary palette fallback. */
+@font-face{
+  font-family:"Archivo Black";
+  src:url("./fonts/ArchivoBlack-Regular.woff2") format("woff2");
+  font-weight:400;font-style:normal;font-display:swap;
+}
+
+html[data-skin=side-cut]{
+  /* —— color tokens (Side B hexes tokenized) —— */
+  --ink:#17140f;--ink2:#221e17;--paper:#f4ead6;
+  --tom:#ff4f2b;--mus:#f5b700;--cob:#3d5afe;
+  --acc:var(--tom);--txt:var(--paper);--sub:#b9ad95;
+  --card:#2a251c;--bg:var(--ink);
+  --c0:var(--tom);--c1:var(--mus);--c2:var(--cob);
+
+  /* previously hardcoded Side B hexes */
+  --line-chip:#4a4233;      /* chips border */
+  --line-dash:#3a3328;      /* list dashed / lib rows */
+  --muted-num:#6d6352;      /* editorial list numbers */
+  --cur-sub:#3b130a;        /* current-row sub ink */
+  --mini-sub:#6b5f49;       /* mini player subtitle */
+  --mprog-track:#d8ccb2;    /* mini progress track */
+  --tick:#ffffff22;         /* seek tick marks */
+  --dot-a:#ffffff0a;        /* body paper dots */
+  --dot-b:#ffffff0c;        /* npbg dots */
+  --impt-bg:#fffaf0;
+
+  /* —— chrome tokens (packs must set) —— */
+  --card2:#322b20;
+  --line:var(--line-dash);
+  --line2:var(--line-chip);
+  --muted-bg:var(--ink2);
+  --track:var(--mprog-track);
+  --border-w:2.5px;
+  --border-style:solid;
+  --shadow-panel:6px 6px 0 var(--ink),6px 6px 0 2px var(--tom);
+  --shadow-press:1px 2px 0 3px var(--mus);
+  --backdrop:rgba(23,20,15,.96); /* solid-ish — no mandatory heavy blur */
+  --icon-stroke:2.2;
+
+  /* —— shape —— */
+  --r-btn:10px;--r-card:4px;--r-art:4px;--r-pill:3px;--r-sheet:6px;
+  --r:var(--r-card);
+
+  /* —— type —— */
+  --font-body:"Helvetica Neue",Inter,system-ui,sans-serif;
+  --font-disp:"Archivo Black","Arial Black","Helvetica Neue",Impact,sans-serif;
+  --font-mono:ui-monospace,"JetBrains Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --font-num:var(--font-mono);
+  --disp:var(--font-disp);--mono:var(--font-mono);
+
+  /* —— density —— */
+  --row-h:56px;--art-sz:56px;
+
+  /* —— motion —— */
+  --ease:cubic-bezier(.22,1,.36,1);
+
+  /* side-label copy (wired; content set below) */
+  --side-label:"SIDE CUT \2014  NOW SPINNING";
+}
+
+/* base surface */
+html[data-skin=side-cut] body{
+  background:var(--ink);
+  color:var(--txt);
+  font-family:var(--font-body);
+  background-image:
+    radial-gradient(var(--dot-a) 1px,transparent 1.2px),
+    url("./textures/paper.svg");
+  background-size:5px 5px,64px 64px;
+  padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);
+}
+html[data-skin=side-cut] #mesh,
+html[data-skin=side-cut] #bgart{display:none!important}
+
+html[data-skin=side-cut] .ib svg,
+html[data-skin=side-cut] .pill svg,
+html[data-skin=side-cut] .mk svg{width:22px;height:22px;display:block}
+html[data-skin=side-cut] .ib{
+  border-radius:var(--r-btn);color:var(--paper)
+}
+html[data-skin=side-cut] .ib:hover{background:var(--card);color:var(--mus)}
+html[data-skin=side-cut] .ib.on{color:var(--ink);background:var(--mus)}
+
+html[data-skin=side-cut] header{
+  background:var(--ink);border-bottom:3px solid var(--paper);padding-bottom:12px;
+  padding-top:max(12px,env(safe-area-inset-top));
+}
+html[data-skin=side-cut] .brand h1{
+  display:flex;align-items:center;gap:10px;
+  font-family:var(--font-disp);font-size:28px;letter-spacing:-1px;text-transform:uppercase;
+}
+html[data-skin=side-cut] .brand h1 .mk{width:40px;height:40px}
+html[data-skin=side-cut] .brand h1 small{
+  font:700 10px var(--font-mono);letter-spacing:.18em;color:var(--ink);
+  background:var(--mus);padding:3px 6px;transform:rotate(-4deg);border-radius:2px;
+}
+html[data-skin=side-cut] .brand h1::before{display:none!important;content:none!important}
+
+html[data-skin=side-cut] #q{
+  border-radius:var(--r-card);border:var(--border-w) var(--border-style) var(--paper);
+  background:var(--ink2);font-family:var(--font-mono);font-size:15px;
+}
+html[data-skin=side-cut] #q:focus{
+  border-color:var(--tom);background:var(--ink2);box-shadow:4px 4px 0 var(--tom);
+}
+html[data-skin=side-cut] #sug{
+  background:var(--paper);color:var(--ink);border-radius:var(--r-card);
+  box-shadow:5px 5px 0 var(--tom);
+}
+html[data-skin=side-cut] #sug div:hover{background:var(--mus)}
+
+html[data-skin=side-cut] .chips button{
+  border-radius:var(--r-pill);background:transparent;
+  border:2px solid var(--line2);font:700 12px var(--font-mono);
+  text-transform:uppercase;letter-spacing:.06em;
+}
+html[data-skin=side-cut] .chips .on{
+  background:var(--paper);color:var(--ink);border-color:var(--paper);
+  box-shadow:3px 3px 0 var(--tom);transform:rotate(-1.5deg);
+}
+
+/* editorial list numbers + density */
+html[data-skin=side-cut] #list{counter-reset:tr}
+html[data-skin=side-cut] #list li{
+  counter-increment:tr;border-radius:0;border-bottom:1px dashed var(--line);
+  padding:10px 8px;min-height:var(--row-h);
+}
+html[data-skin=side-cut] #list li::before{
+  content:counter(tr,decimal-leading-zero);
+  font:700 12px var(--font-num);color:var(--muted-num);width:22px;flex:none;
+}
+html[data-skin=side-cut] #list li:hover{background:var(--ink2)}
+html[data-skin=side-cut] #list li.cur{background:var(--tom);color:var(--ink)}
+html[data-skin=side-cut] #list li.cur .t{color:var(--ink)}
+html[data-skin=side-cut] #list li.cur .s,
+html[data-skin=side-cut] #list li.cur::before{color:var(--cur-sub)}
+html[data-skin=side-cut] li .art{
+  width:var(--art-sz);height:var(--art-sz);
+  border-radius:3px;border:2px solid var(--paper);
+}
+html[data-skin=side-cut] #list li:nth-child(odd) .art{transform:rotate(-2deg)}
+html[data-skin=side-cut] #list li:nth-child(even) .art{transform:rotate(1.5deg)}
+html[data-skin=side-cut] .t{font-weight:800;letter-spacing:-.2px}
+html[data-skin=side-cut] .s{font-family:var(--font-mono);font-size:12px}
+html[data-skin=side-cut] .badge{
+  border-radius:2px;background:var(--mus);color:var(--ink);
+  font-family:var(--font-mono);transform:rotate(-3deg);display:inline-block;
+}
+html[data-skin=side-cut] .menu{
+  background:var(--paper);border-radius:var(--r-card);box-shadow:var(--shadow-panel);
+}
+html[data-skin=side-cut] .menu button,
+html[data-skin=side-cut] .menu a{color:var(--ink);font-weight:600}
+html[data-skin=side-cut] .menu button:hover,
+html[data-skin=side-cut] .menu a:hover{background:var(--mus)}
+
+/* mini = cassette label */
+html[data-skin=side-cut] #mini{
+  left:10px;right:10px;border-radius:var(--r-sheet);
+  background:var(--paper);color:var(--ink);
+  border:3px solid var(--ink);box-shadow:5px 5px 0 var(--tom);padding:8px 10px;
+  bottom:max(10px,env(safe-area-inset-bottom));
+}
+html[data-skin=side-cut] #mini .s{color:var(--mini-sub)}
+html[data-skin=side-cut] #mini img{
+  border-radius:50%;border:3px solid var(--ink);
+  animation:sc-spin 6s linear infinite;animation-play-state:paused;
+}
+html[data-skin=side-cut] body.playing #mini img,
+html[data-skin=side-cut].playing #mini img{animation-play-state:running}
+/* body.playing is on body; skin attr is on html — keep both */
+html[data-skin=side-cut] body.playing #mini img{animation-play-state:running}
+html[data-skin=side-cut] #mini .ib{color:var(--ink)}
+html[data-skin=side-cut] #mpp{
+  background:var(--tom)!important;color:var(--ink)!important;
+  border:2.5px solid var(--ink);border-radius:50%!important;
+}
+html[data-skin=side-cut] #mprog{
+  height:4px;bottom:0;left:0;right:0;border-radius:0;background:var(--track);
+}
+html[data-skin=side-cut] #mprog i{background:var(--ink)}
+@keyframes sc-spin{to{transform:rotate(360deg)}}
+
+/* now playing — art-hero default via data-np-layout */
+html[data-skin=side-cut] #np .npbg{
+  background:var(--ink);
+  background-image:
+    radial-gradient(var(--dot-b) 1px,transparent 1.3px),
+    linear-gradient(180deg,color-mix(in srgb,var(--c0) 28%,var(--ink)),var(--ink) 60%);
+  background-size:5px 5px,auto;
+}
+html[data-skin=side-cut] #np::after{
+  content:var(--side-label);
+  position:absolute;left:-58px;top:46%;transform:rotate(-90deg);
+  font:700 11px var(--font-mono);letter-spacing:.35em;color:var(--mus);
+  opacity:.8;pointer-events:none;
+}
+html[data-skin=side-cut][data-np-layout=art-hero] #stage{margin-top:8px}
+html[data-skin=side-cut][data-np-layout=split] #np.open #stage{align-self:flex-start}
+html[data-skin=side-cut][data-np-layout=compact-deck] #bigart{
+  width:min(42vw,28vh,200px);
+}
+
+html[data-skin=side-cut] .seg{
+  background:transparent;border:2px solid var(--paper);border-radius:var(--r-card);padding:2px;
+}
+html[data-skin=side-cut] .seg button{
+  border-radius:2px;font-family:var(--font-mono);text-transform:uppercase;font-size:12px;
+}
+html[data-skin=side-cut] .seg .on{background:var(--paper);color:var(--ink)}
+html[data-skin=side-cut] .pill{
+  border-radius:var(--r-pill);background:transparent;
+  border:2px solid var(--line2);font:700 12px var(--font-mono);
+  text-transform:uppercase;letter-spacing:.04em;
+}
+html[data-skin=side-cut] .pill.on{background:var(--mus);color:var(--ink);border-color:var(--mus)}
+
+/* art shape via data-art (not token-only) */
+html[data-skin=side-cut] #bigart{
+  border-radius:var(--r-art);border:4px solid var(--paper);
+  box-shadow:10px 10px 0 var(--tom),10px 10px 0 4px var(--ink);
+  transform:rotate(-1.5deg);
+}
+html[data-skin=side-cut] #stage.paused #bigart{
+  transform:rotate(1deg) scale(.94);box-shadow:4px 4px 0 var(--tom);
+}
+html[data-skin=side-cut][data-art=round] #bigart{border-radius:50%}
+html[data-skin=side-cut][data-art=square] #bigart{border-radius:var(--r-art)}
+html[data-skin=side-cut][data-art=vinyl] #bigart,
+html[data-skin=side-cut] body.vinyl #bigart,
+html[data-skin=side-cut].vinyl #bigart{
+  border-radius:50%!important;
+  box-shadow:0 0 0 6px var(--ink),0 0 0 10px var(--paper),10px 12px 0 10px var(--tom)!important;
+}
+/* vinyl spin — body.vinyl is the existing toggle */
+html[data-skin=side-cut] body.vinyl #np.open #stage:not(.paused):not(.video) #bigart{
+  animation:sc-spin 12s linear infinite!important;
+}
+html[data-skin=side-cut] #np.open #stage:not(.paused):not(.video) #bigart{animation:none!important}
+html[data-skin=side-cut] body.vinyl #np.open #stage:not(.paused):not(.video) #bigart{
+  animation:sc-spin 12s linear infinite!important;
+}
+
+html[data-skin=side-cut] .nptitle .t{
+  font-family:var(--font-disp);font-size:26px;text-transform:uppercase;
+  letter-spacing:-.5px;line-height:1.05;white-space:normal;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+}
+html[data-skin=side-cut] .nptitle .s{color:var(--mus);font-family:var(--font-mono)}
+
+/* PP / seek / vol */
+html[data-skin=side-cut] #seek{
+  height:14px;border-radius:2px;border:2px solid var(--paper);
+  background:
+    repeating-linear-gradient(90deg,transparent 0 9px,var(--tick) 9px 10px),
+    linear-gradient(to right,var(--tom) var(--p,0%),var(--ink2) var(--p,0%));
+}
+html[data-skin=side-cut] #seek::-webkit-slider-thumb{
+  width:8px;height:26px;border-radius:2px;background:var(--mus);
+  border:2px solid var(--ink);box-shadow:2px 2px 0 var(--ink);
+}
+html[data-skin=side-cut] #seek::-moz-range-thumb{
+  width:8px;height:26px;border-radius:2px;background:var(--mus);border:2px solid var(--ink);
+}
+html[data-skin=side-cut] #vol{
+  height:6px;border-radius:0;-webkit-appearance:none;appearance:none;flex:1;min-width:70px;
+  background:linear-gradient(to right,var(--paper) var(--p,100%),var(--line2) var(--p,100%));
+}
+html[data-skin=side-cut] #vol::-webkit-slider-thumb{
+  border-radius:2px;background:var(--mus);width:12px;height:18px;
+}
+html[data-skin=side-cut] .times{font-family:var(--font-mono);color:var(--sub)}
+html[data-skin=side-cut] .ctl{justify-content:center;gap:clamp(4px,3vw,18px)}
+html[data-skin=side-cut] #pp{
+  width:84px!important;height:84px!important;border-radius:50%!important;
+  background:var(--tom)!important;color:var(--ink)!important;
+  border:3px solid var(--ink);
+  box-shadow:0 0 0 3px var(--paper),6px 7px 0 3px var(--mus);
+  transition:transform .15s,box-shadow .15s;
+}
+html[data-skin=side-cut] #pp:active{
+  transform:translate(4px,4px);box-shadow:0 0 0 3px var(--paper),var(--shadow-press);
+}
+html[data-skin=side-cut] #pp svg{width:34px;height:34px}
+html[data-skin=side-cut] body.playing #pp{animation:sc-thump .9s ease-in-out infinite}
+@keyframes sc-thump{50%{box-shadow:0 0 0 3px var(--paper),8px 9px 0 3px var(--mus)}}
+html[data-skin=side-cut] #prev,#next{transform:rotate(-6deg)}
+html[data-skin=side-cut] #next{transform:rotate(6deg)}
+html[data-skin=side-cut] #prev svg,html[data-skin=side-cut] #next svg{width:28px;height:28px}
+
+html[data-skin=side-cut] .out button{
+  border-radius:var(--r-pill);background:transparent;
+  border:2px dashed var(--line2);font-family:var(--font-mono);
+}
+html[data-skin=side-cut] #toast{
+  background:var(--mus);color:var(--ink);border-radius:var(--r-pill);
+  border:2px solid var(--ink);box-shadow:4px 4px 0 var(--ink);font-family:var(--font-mono);
+  transform:translateX(-50%) translateY(-250%);
+}
+html[data-skin=side-cut] #toast.show{transform:translateX(-50%) translateY(0)}
+html[data-skin=side-cut] #lyr>div.on{color:var(--mus)}
+html[data-skin=side-cut] #lyr>div.on .w.won{color:var(--tom);text-shadow:none}
+html[data-skin=side-cut] #lyr{font-family:var(--font-disp);font-weight:400;letter-spacing:-.3px}
+html[data-skin=side-cut] #impd>div,html[data-skin=side-cut] #help>div{
+  background:var(--paper);color:var(--ink);border-radius:var(--r-card);box-shadow:8px 8px 0 var(--tom);
+}
+html[data-skin=side-cut] #impt{
+  background:var(--impt-bg);color:var(--ink);border:2px solid var(--ink);border-radius:2px;
+}
+html[data-skin=side-cut] .go{
+  border-radius:var(--r-pill);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);
+}
+
+/* library crate */
+html[data-skin=side-cut] #libb{
+  background:var(--mus)!important;color:var(--ink)!important;
+  border:3px solid var(--ink)!important;border-radius:var(--r-card)!important;
+  box-shadow:4px 4px 0 var(--tom)!important;font-family:var(--font-mono);
+  text-transform:uppercase;transform:rotate(-3deg);animation:none!important;
+}
+html[data-skin=side-cut] #lib{
+  background:var(--backdrop);backdrop-filter:none;
+}
+html[data-skin=side-cut] #lib h2{font-family:var(--font-disp);text-transform:uppercase}
+html[data-skin=side-cut] #lib .q,html[data-skin=side-cut] #lib .row{
+  background:var(--ink2);border:2px solid var(--line);border-radius:var(--r-pill);
+}
+html[data-skin=side-cut] #lib .pl{
+  background:var(--paper);color:var(--ink);border:3px solid var(--ink);
+  border-radius:var(--r-pill);box-shadow:5px 5px 0 var(--tom);
+}
+html[data-skin=side-cut] #lib .pl .h button{color:var(--ink)}
+html[data-skin=side-cut] #lib .bar{
+  border-radius:0;border:2px solid var(--paper);height:12px;
+}
+html[data-skin=side-cut] #lib .bar i{
+  background:repeating-linear-gradient(45deg,var(--tom) 0 6px,var(--mus) 6px 12px);
+}
+html[data-skin=side-cut] #lib .sec button,html[data-skin=side-cut] #lib .bt{
+  background:var(--mus);color:var(--ink);border:2px solid var(--ink);
+  border-radius:var(--r-pill);font-weight:700;
+}
+
+/* brand mark animations (require DOM-cloned i-brand, not <use>) */
+html[data-skin=side-cut] .mk .disc{
+  transform-origin:30px 34px;animation:sc-spin 2.4s linear infinite;animation-play-state:paused;
+}
+html[data-skin=side-cut] body.playing .mk .disc{animation-play-state:running}
+html[data-skin=side-cut] .mk .arm{
+  transform-origin:53px 10px;transform:rotate(-22deg);
+  transition:transform .6s cubic-bezier(.5,1.6,.4,1);
+}
+html[data-skin=side-cut] body.playing .mk .arm{transform:rotate(0)}
+html[data-skin=side-cut] .mk .eq rect{
+  transform-box:fill-box;transform-origin:bottom;
+  animation:sc-eq .7s ease-in-out infinite alternate;animation-play-state:paused;
+}
+html[data-skin=side-cut] body.playing .mk .eq rect{animation-play-state:running}
+html[data-skin=side-cut] .mk .eq rect:nth-child(2){animation-delay:-.25s}
+html[data-skin=side-cut] .mk .eq rect:nth-child(3){animation-delay:-.5s}
+@keyframes sc-eq{from{transform:scaleY(.25)}to{transform:scaleY(1)}}
+html[data-skin=side-cut] .brand h1 .mk:hover .disc{animation-play-state:running}
+
+html[data-skin=side-cut] .hrt{color:var(--ink);opacity:.9}
+html[data-skin=side-cut] .hrt.on{color:var(--tom);opacity:1}
+html[data-skin=side-cut] .hrt.on svg path{fill:var(--tom);stroke:currentColor;stroke-width:0}
+html[data-skin=side-cut] #whyl,html[data-skin=side-cut] #list .why{
+  font:700 12px var(--font-mono);color:var(--sub);letter-spacing:.02em;text-shadow:none;
+}
+html[data-skin=side-cut] #dyn .mood.on{
+  background:var(--paper);color:var(--ink);border-color:var(--paper);
+  box-shadow:3px 3px 0 var(--tom);
+}
+
+@media (min-width:900px){
+  html[data-skin=side-cut] #list{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+html[data-skin=side-cut] #list li{min-width:0}
+
+@media (prefers-reduced-motion:reduce){
+  html[data-skin=side-cut] body.playing #pp,
+  html[data-skin=side-cut] body.playing #mini img,
+  html[data-skin=side-cut] body.playing .mk .disc,
+  html[data-skin=side-cut] body.playing .mk .eq rect,
+  html[data-skin=side-cut] body.vinyl #np.open #stage:not(.paused):not(.video) #bigart{
+    animation:none!important;
+  }
+  html[data-skin=side-cut] .mk .arm{transition:none}
+  html[data-skin=side-cut] #pp{transition:none}
+}
+
+/* libb hidden globally */
+html[data-skin] #libb{display:none!important}

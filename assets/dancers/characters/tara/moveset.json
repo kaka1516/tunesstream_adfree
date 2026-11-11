@@ -1,0 +1,58 @@
+{
+ "character": "tara",
+ "homeStyle": "tollywood",
+ "bands": {
+  "tap": [
+   "tara_tap_cheer"
+  ],
+  "special": [
+   "tara_special"
+  ],
+  "idle": [
+   "idle_sway"
+  ],
+  "calm": [
+   "calm_breathe",
+   "hw_body_roll"
+  ],
+  "low": [
+   "tl_shoulder_shake",
+   "hw_bounce_step"
+  ],
+  "mid": [
+   "tl_hook_loop",
+   "tl_slide_point",
+   "tl_collar_flick"
+  ],
+  "high": [
+   "tl_mass_stomp",
+   "tl_fast_footwork"
+  ],
+  "accent": [
+   "tl_victory_v"
+  ]
+ },
+ "borrowWhenStyleDiffers": {
+  "tollywood": [
+   "tl_mass_stomp",
+   "tl_hook_loop",
+   "tl_fast_footwork",
+   "tl_shoulder_shake",
+   "tl_slide_point"
+  ],
+  "kollywood": [
+   "kl_kuthu_step",
+   "kl_drum_mime",
+   "kl_folk_hip_sway",
+   "kl_wrist_flick",
+   "kl_heel_clap"
+  ],
+  "hollywood": [
+   "hw_bounce_step",
+   "hw_step_clap",
+   "hw_arm_wave",
+   "hw_fist_pump",
+   "hw_shuffle_kick"
+  ]
+ }
+}

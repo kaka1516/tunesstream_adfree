@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="100" viewBox="0 0 160 100" role="img" aria-label="Classic Deck preview">
+  <rect width="160" height="100" fill="#23262b"/>
+  <rect x="4" y="4" width="152" height="40" rx="2" fill="#2f343a" stroke="#5d636c"/>
+  <rect x="10" y="10" width="28" height="28" rx="1" fill="#4aa3ff"/>
+  <rect x="44" y="10" width="64" height="16" rx="1" fill="#0b120d"/>
+  <text x="48" y="23" font-family="VT323,ui-monospace,monospace" font-size="14" fill="#39ff7a">01:42</text>
+  <rect x="44" y="30" width="64" height="6" fill="#0b120d"/><rect x="44" y="30" width="26" height="6" fill="#39ff7a"/>
+  <g fill="#3a3f46" stroke="#0a0b0d"><rect x="114" y="12" width="12" height="12"/><rect x="128" y="12" width="12" height="12"/><rect x="142" y="12" width="10" height="12"/></g>
+  <path d="M131 15l6 3-6 3z" fill="#39ff7a"/>
+  <rect x="4" y="48" width="152" height="48" fill="#16181c" stroke="#0a0b0d"/>
+  <g font-family="VT323,ui-monospace,monospace" font-size="10" fill="#5f9e6f">
+    <text x="8" y="60">01.</text><text x="8" y="72">02.</text><text x="8" y="84">03.</text><text x="8" y="95">04.</text></g>
+  <rect x="4" y="64" width="152" height="11" fill="#123018"/>
+  <g fill="#8d939c"><rect x="24" y="54" width="70" height="6"/><rect x="24" y="78" width="60" height="6"/><rect x="24" y="89" width="80" height="5"/></g>
+  <rect x="24" y="66" width="76" height="6" fill="#39ff7a"/>
+</svg>

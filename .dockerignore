@@ -1,0 +1,28 @@
+music.env
+*.env
+cache
+lcache
+uat
+__pycache__
+*.png
+!icon-192.png
+!icon-512.png
+*.whl
+*.log
+public_url.txt
+.venv
+# ms-v77: restricted third-party assets never go into an image (defence in depth; they are no longer in this tree):
+# - pixiv VRoid VRMA motion pack: terms forbid distributing the motions "in a way that can be rigged or extracted".
+# - Runa Inoue VRM: embedded meta allowedUserName=OnlyAuthor conflicts with its MIT GitHub release; withdrawn.
+assets/chars/vrma
+**/VRMA_MotionPack*
+assets/chars/vrm/Runa_Inoue.vrm
+# local backups / UAT copies
+*.pre-v*
+*.bak
+users.json
+sessions.json
+user_data
+.git
+*.pem
+tg.env*

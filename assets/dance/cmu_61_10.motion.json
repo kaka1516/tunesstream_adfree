@@ -1,0 +1,534 @@
+{
+ "specVersion": "0.1",
+ "id": "cmu_61_10",
+ "name": "61_10",
+ "description": "salsa dance",
+ "duration": 9.93,
+ "sourceFps": 120,
+ "license": {
+  "spdx": "LicenseRef-CMU-Mocap",
+  "url": "http://mocap.cs.cmu.edu/faqs.php",
+  "attribution": "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.",
+  "authors": [
+   {
+    "name": "Carnegie Mellon University Graphics Lab",
+    "url": "http://mocap.cs.cmu.edu/"
+   },
+   {
+    "name": "Bruce Hahne (BVH conversion, cgspeed)"
+   }
+  ],
+  "source": {
+   "kind": "mocap",
+   "url": "http://mocap.cs.cmu.edu/",
+   "originalId": "61_10",
+   "originalFormat": "bvh",
+   "converter": "open-vrma/cmu2vrma@0.1"
+  }
+ },
+ "tags": {
+  "kind": "dance",
+  "genre": [
+   "salsa"
+  ],
+  "energy": 5,
+  "bodyParts": [
+   "hips"
+  ],
+  "locomotion": "traveling",
+  "facing": "turning",
+  "floorWork": false,
+  "airborne": false,
+  "fingers": false,
+  "expressions": false,
+  "lookAt": false,
+  "rootMotion": true,
+  "keywords": [
+   "Salsa"
+  ]
+ },
+ "tempo": {
+  "bpm": 100,
+  "beatsPerBar": 4,
+  "firstBeat": 0.467,
+  "confidence": 0.52,
+  "basis": "motion",
+  "alternatives": [
+   200,
+   50
+  ]
+ },
+ "allow": {
+  "stretch": {
+   "mode": "beats"
+  }
+ },
+ "events": [
+  {
+   "t": 2,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 2.2,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 2.233,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 2.5,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 2.567,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 2.667,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 2.767,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 2.9,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 2.967,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 3.567,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 3.633,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 3.833,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 4.033,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 4.233,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 4.367,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 4.6,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 4.6,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 4.867,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 4.867,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 5.067,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 5.067,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 5.333,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 5.333,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 5.567,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 5.7,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 5.9,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 5.933,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 6.533,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 6.567,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 6.8,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 6.967,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 7.167,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 7.167,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 7.433,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 7.433,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 7.633,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 7.633,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 7.833,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 8,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 8.033,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 8.2,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 8.4,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 8.433,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 8.667,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 8.9,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 9.067,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 9.3,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 9.467,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 9.5,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 9.7,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 9.767,
+   "type": "lift",
+   "side": "left"
+  }
+ ],
+ "ranges": [
+  {
+   "from": 0,
+   "to": 2,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 2.2,
+   "to": 2.567,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 2.767,
+   "to": 2.967,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 3.567,
+   "to": 4.6,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 4.867,
+   "to": 5.067,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 5.333,
+   "to": 5.9,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 6.533,
+   "to": 7.167,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 7.433,
+   "to": 7.633,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 8,
+   "to": 8.4,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 9.467,
+   "to": 9.767,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 0,
+   "to": 2.233,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 2.5,
+   "to": 2.667,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 2.9,
+   "to": 3.633,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 3.833,
+   "to": 4.033,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 4.233,
+   "to": 4.367,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 4.6,
+   "to": 4.867,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 5.067,
+   "to": 5.333,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 5.567,
+   "to": 5.7,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 5.933,
+   "to": 6.567,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 6.8,
+   "to": 6.967,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 7.167,
+   "to": 7.433,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 7.633,
+   "to": 7.833,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 8.033,
+   "to": 8.2,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 8.433,
+   "to": 8.667,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 8.9,
+   "to": 9.067,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 9.3,
+   "to": 9.5,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 9.7,
+   "to": 9.93,
+   "type": "footLock",
+   "side": "right"
+  }
+ ],
+ "root": {
+  "netTravel": 1.63,
+  "maxTravel": 2.56,
+  "netTurnDeg": 886,
+  "turnRangeDeg": 1096,
+  "hipsBounce": 0.08
+ },
+ "poses": {
+  "start": "stand",
+  "end": "stand",
+  "startSupport": "both",
+  "endSupport": "both",
+  "startArms": "hips",
+  "endArms": "down"
+ },
+ "retarget": {
+  "restPose": "T",
+  "sourceHipHeight": 0.9,
+  "floorAligned": true
+ },
+ "provenance": {
+  "tags": "auto",
+  "tempo": "auto",
+  "events": "auto",
+  "ranges": "auto"
+ },
+ "x": {
+  "openVrma": {
+   "pathTravel": 10.46,
+   "angularSpeed": {
+    "legs": 3.21,
+    "arms": 3.18,
+    "torso": 1.32
+   },
+   "bodyShare": {
+    "head": 0.13,
+    "torso": 0.07,
+    "arms": 0.15,
+    "hands": 0.11,
+    "hips": 0.31,
+    "legs": 0.23
+   },
+   "energy": 1.46,
+   "airborne": 0,
+   "lowHips": 0
+  }
+ }
+}

@@ -1,0 +1,228 @@
+{
+ "specVersion": "0.1",
+ "id": "cmu_82_10",
+ "name": "82_10",
+ "description": "sad walk forward",
+ "duration": 4.67,
+ "sourceFps": 120,
+ "license": {
+  "spdx": "LicenseRef-CMU-Mocap",
+  "url": "http://mocap.cs.cmu.edu/faqs.php",
+  "attribution": "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.",
+  "authors": [
+   {
+    "name": "Carnegie Mellon University Graphics Lab",
+    "url": "http://mocap.cs.cmu.edu/"
+   },
+   {
+    "name": "Bruce Hahne (BVH conversion, cgspeed)"
+   }
+  ],
+  "source": {
+   "kind": "mocap",
+   "url": "http://mocap.cs.cmu.edu/",
+   "originalId": "82_10",
+   "originalFormat": "bvh",
+   "converter": "open-vrma/cmu2vrma@0.1"
+  }
+ },
+ "tags": {
+  "kind": "gesture",
+  "genre": [],
+  "energy": 3,
+  "bodyParts": [
+   "full"
+  ],
+  "locomotion": "traveling",
+  "facing": "side",
+  "floorWork": false,
+  "airborne": false,
+  "fingers": false,
+  "expressions": false,
+  "lookAt": false,
+  "rootMotion": true,
+  "keywords": [
+   "Jumping; pushing; emotional walks"
+  ]
+ },
+ "tempo": {
+  "bpm": 105.9,
+  "beatsPerBar": 4,
+  "firstBeat": 0.033,
+  "confidence": 1,
+  "basis": "steps",
+  "alternatives": [
+   211.8,
+   53
+  ]
+ },
+ "events": [
+  {
+   "t": 1.3,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 1.733,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 1.933,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 2.333,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 2.467,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 2.867,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 3.033,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 3.433,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 3.633,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 4.033,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 4.267,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 4.567,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 4.667,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 4.667,
+   "type": "lift",
+   "side": "right"
+  }
+ ],
+ "ranges": [
+  {
+   "from": 0,
+   "to": 1.3,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 1.733,
+   "to": 2.467,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 2.867,
+   "to": 3.633,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 4.033,
+   "to": 4.667,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 0,
+   "to": 1.933,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 2.333,
+   "to": 3.033,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 3.433,
+   "to": 4.267,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 4.567,
+   "to": 4.667,
+   "type": "footLock",
+   "side": "right"
+  }
+ ],
+ "root": {
+  "netTravel": 3.43,
+  "maxTravel": 3.43,
+  "netTurnDeg": -98,
+  "turnRangeDeg": 100,
+  "hipsBounce": 0.03
+ },
+ "poses": {
+  "start": "stand",
+  "end": "stand",
+  "startSupport": "both",
+  "endSupport": "both",
+  "startArms": "down",
+  "endArms": "down"
+ },
+ "retarget": {
+  "restPose": "T",
+  "sourceHipHeight": 0.92,
+  "floorAligned": true
+ },
+ "provenance": {
+  "tags": "auto",
+  "tempo": "auto",
+  "events": "auto",
+  "ranges": "auto"
+ },
+ "x": {
+  "openVrma": {
+   "pathTravel": 3.47,
+   "angularSpeed": {
+    "legs": 1.48,
+    "arms": 1.03,
+    "torso": 0.5
+   },
+   "bodyShare": {
+    "head": 0.15,
+    "torso": 0.07,
+    "arms": 0.14,
+    "hands": 0.2,
+    "hips": 0.14,
+    "legs": 0.3
+   },
+   "energy": 0.76,
+   "airborne": 0,
+   "lowHips": 0
+  }
+ }
+}

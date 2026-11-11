@@ -1,0 +1,7 @@
+/* Ink Kanagawa — recolor pack. Structure inspired by Side Cut; original CSS. */
+html[data-skin=ink-kanagawa]{
+  --tom:#e46876; --acc:#e46876; --paper:#dcd7ba;
+}
+html[data-skin=ink-kanagawa] body{background:color-mix(in srgb,#dcd7ba 8%, var(--ink));}
+html[data-skin=ink-kanagawa] #bigart{box-shadow:0 0 0 3px #e46876,0 16px 40px #0008!important;}
+html[data-skin=ink-kanagawa] .brand h1 span{color:#e46876}

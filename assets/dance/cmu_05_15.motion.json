@@ -1,0 +1,212 @@
+{
+ "specVersion": "0.1",
+ "id": "cmu_05_15",
+ "name": "05_15",
+ "description": "dance - retire derriere, attitude/arabesque",
+ "duration": 4.47,
+ "sourceFps": 120,
+ "license": {
+  "spdx": "LicenseRef-CMU-Mocap",
+  "url": "http://mocap.cs.cmu.edu/faqs.php",
+  "attribution": "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.",
+  "authors": [
+   {
+    "name": "Carnegie Mellon University Graphics Lab",
+    "url": "http://mocap.cs.cmu.edu/"
+   },
+   {
+    "name": "Bruce Hahne (BVH conversion, cgspeed)"
+   }
+  ],
+  "source": {
+   "kind": "mocap",
+   "url": "http://mocap.cs.cmu.edu/",
+   "originalId": "05_15",
+   "originalFormat": "bvh",
+   "converter": "open-vrma/cmu2vrma@0.1"
+  }
+ },
+ "tags": {
+  "kind": "dance",
+  "genre": [
+   "modern"
+  ],
+  "energy": 5,
+  "bodyParts": [
+   "hands"
+  ],
+  "locomotion": "traveling",
+  "facing": "back",
+  "floorWork": false,
+  "airborne": true,
+  "fingers": false,
+  "expressions": false,
+  "lookAt": false,
+  "rootMotion": true,
+  "keywords": [
+   "Modern dance"
+  ]
+ },
+ "tempo": {
+  "bpm": null,
+  "confidence": 0.17
+ },
+ "events": [
+  {
+   "t": 0.133,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 0.133,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 0.367,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 0.7,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 1.333,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 2.167,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 2.4,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 2.6,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 2.8,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 3.4,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 3.767,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 4.467,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 4.467,
+   "type": "lift",
+   "side": "right"
+  }
+ ],
+ "ranges": [
+  {
+   "from": 0,
+   "to": 0.133,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 2.6,
+   "to": 2.8,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 3.767,
+   "to": 4.467,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 0.133,
+   "to": 0.367,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 0.7,
+   "to": 1.333,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 2.167,
+   "to": 2.4,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 3.4,
+   "to": 4.467,
+   "type": "footLock",
+   "side": "right"
+  }
+ ],
+ "root": {
+  "netTravel": 3.63,
+  "maxTravel": 3.64,
+  "netTurnDeg": 20,
+  "turnRangeDeg": 69,
+  "hipsBounce": 0.22
+ },
+ "poses": {
+  "start": "stand",
+  "end": "stand",
+  "startSupport": "both",
+  "endSupport": "both",
+  "startArms": "hips",
+  "endArms": "other"
+ },
+ "retarget": {
+  "restPose": "T",
+  "sourceHipHeight": 0.95,
+  "floorAligned": true
+ },
+ "provenance": {
+  "tags": "auto",
+  "tempo": "auto",
+  "events": "auto",
+  "ranges": "auto"
+ },
+ "x": {
+  "openVrma": {
+   "pathTravel": 3.69,
+   "angularSpeed": {
+    "legs": 2.26,
+    "arms": 3.83,
+    "torso": 1.17
+   },
+   "bodyShare": {
+    "head": 0.12,
+    "torso": 0.07,
+    "arms": 0.19,
+    "hands": 0.29,
+    "hips": 0.11,
+    "legs": 0.22
+   },
+   "energy": 1.55,
+   "airborne": 0.17,
+   "lowHips": 0
+  }
+ }
+}

@@ -1,0 +1,268 @@
+{
+ "specVersion": "0.1",
+ "id": "cmu_05_14",
+ "name": "05_14",
+ "description": "dance - retire derriere, attitude/arabesque",
+ "duration": 5.33,
+ "sourceFps": 120,
+ "license": {
+  "spdx": "LicenseRef-CMU-Mocap",
+  "url": "http://mocap.cs.cmu.edu/faqs.php",
+  "attribution": "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.",
+  "authors": [
+   {
+    "name": "Carnegie Mellon University Graphics Lab",
+    "url": "http://mocap.cs.cmu.edu/"
+   },
+   {
+    "name": "Bruce Hahne (BVH conversion, cgspeed)"
+   }
+  ],
+  "source": {
+   "kind": "mocap",
+   "url": "http://mocap.cs.cmu.edu/",
+   "originalId": "05_14",
+   "originalFormat": "bvh",
+   "converter": "open-vrma/cmu2vrma@0.1"
+  }
+ },
+ "tags": {
+  "kind": "dance",
+  "genre": [
+   "modern"
+  ],
+  "energy": 5,
+  "bodyParts": [
+   "hands"
+  ],
+  "locomotion": "traveling",
+  "facing": "back",
+  "floorWork": false,
+  "airborne": true,
+  "fingers": false,
+  "expressions": false,
+  "lookAt": false,
+  "rootMotion": true,
+  "keywords": [
+   "Modern dance"
+  ]
+ },
+ "tempo": {
+  "bpm": 100,
+  "beatsPerBar": 4,
+  "firstBeat": 0.433,
+  "confidence": 0.45,
+  "basis": "motion",
+  "alternatives": [
+   200,
+   50
+  ]
+ },
+ "events": [
+  {
+   "t": 0.533,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 0.933,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 1.1,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 1.433,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 1.467,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 1.667,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 1.933,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 2.467,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 2.8,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 3.067,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 3.2,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 3.267,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 3.3,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 3.533,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 3.767,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 4,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 4.567,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 4.933,
+   "type": "contact",
+   "side": "left"
+  }
+ ],
+ "ranges": [
+  {
+   "from": 0,
+   "to": 0.533,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 0.933,
+   "to": 1.467,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 2.8,
+   "to": 3.067,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 3.2,
+   "to": 3.267,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 3.767,
+   "to": 4,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 4.933,
+   "to": 5.33,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 0,
+   "to": 1.1,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 1.433,
+   "to": 1.667,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 1.933,
+   "to": 2.467,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 3.3,
+   "to": 3.533,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 4.567,
+   "to": 5.33,
+   "type": "footLock",
+   "side": "right"
+  }
+ ],
+ "root": {
+  "netTravel": 4.45,
+  "maxTravel": 4.45,
+  "netTurnDeg": -1,
+  "turnRangeDeg": 60,
+  "hipsBounce": 0.29
+ },
+ "poses": {
+  "start": "stand",
+  "end": "crouch",
+  "startSupport": "both",
+  "endSupport": "both",
+  "startArms": "down",
+  "endArms": "other"
+ },
+ "retarget": {
+  "restPose": "T",
+  "sourceHipHeight": 0.95,
+  "floorAligned": true
+ },
+ "provenance": {
+  "tags": "auto",
+  "tempo": "auto",
+  "events": "auto",
+  "ranges": "auto"
+ },
+ "x": {
+  "openVrma": {
+   "pathTravel": 4.54,
+   "angularSpeed": {
+    "legs": 1.91,
+    "arms": 3.4,
+    "torso": 1.01
+   },
+   "bodyShare": {
+    "head": 0.11,
+    "torso": 0.08,
+    "arms": 0.2,
+    "hands": 0.29,
+    "hips": 0.11,
+    "legs": 0.22
+   },
+   "energy": 1.45,
+   "airborne": 0.11,
+   "lowHips": 0
+  }
+ }
+}

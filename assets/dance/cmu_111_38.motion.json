@@ -1,0 +1,381 @@
+{
+ "specVersion": "0.1",
+ "id": "cmu_111_38",
+ "name": "111_38",
+ "description": "Yoga",
+ "duration": 21.97,
+ "sourceFps": 120,
+ "license": {
+  "spdx": "LicenseRef-CMU-Mocap",
+  "url": "http://mocap.cs.cmu.edu/faqs.php",
+  "attribution": "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.",
+  "authors": [
+   {
+    "name": "Carnegie Mellon University Graphics Lab",
+    "url": "http://mocap.cs.cmu.edu/"
+   },
+   {
+    "name": "Bruce Hahne (BVH conversion, cgspeed)"
+   }
+  ],
+  "source": {
+   "kind": "mocap",
+   "url": "http://mocap.cs.cmu.edu/",
+   "originalId": "111_38",
+   "originalFormat": "bvh",
+   "converter": "open-vrma/cmu2vrma@0.1"
+  }
+ },
+ "tags": {
+  "kind": "sports",
+  "genre": [],
+  "energy": 2,
+  "bodyParts": [
+   "full"
+  ],
+  "locomotion": "stepping",
+  "facing": "turning",
+  "floorWork": true,
+  "airborne": false,
+  "fingers": false,
+  "expressions": false,
+  "lookAt": false,
+  "rootMotion": true,
+  "keywords": [
+   "Pregnant woman"
+  ]
+ },
+ "tempo": {
+  "bpm": 100,
+  "beatsPerBar": 4,
+  "firstBeat": 0.533,
+  "confidence": 0.43,
+  "basis": "motion",
+  "alternatives": [
+   200,
+   50
+  ]
+ },
+ "events": [
+  {
+   "t": 0.7,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 0.7,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 1.267,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 1.367,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 1.5,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 2.333,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 4.367,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 4.533,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 4.6,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 5.133,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 5.3,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 8.433,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 8.567,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 10.267,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 11.633,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 12.133,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 12.833,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 15.567,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 16.1,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 16.133,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 17.033,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 17.367,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 17.967,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 18.133,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 18.167,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 19.2,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 19.267,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 19.333,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 19.367,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 19.467,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 19.9,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 20.367,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 21.533,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 21.7,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 21.967,
+   "type": "lift",
+   "side": "left"
+  }
+ ],
+ "ranges": [
+  {
+   "from": 0,
+   "to": 0.7,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 1.267,
+   "to": 1.367,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 1.5,
+   "to": 4.367,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 4.6,
+   "to": 5.133,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 5.3,
+   "to": 11.633,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 12.133,
+   "to": 17.033,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 17.367,
+   "to": 17.967,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 18.167,
+   "to": 19.267,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 19.467,
+   "to": 19.9,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 20.367,
+   "to": 21.533,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 21.7,
+   "to": 21.967,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 0.7,
+   "to": 2.333,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 4.533,
+   "to": 8.433,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 8.567,
+   "to": 10.267,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 12.833,
+   "to": 15.567,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 18.133,
+   "to": 19.2,
+   "type": "footLock",
+   "side": "right"
+  }
+ ],
+ "root": {
+  "netTravel": 0.29,
+  "maxTravel": 0.48,
+  "netTurnDeg": -78,
+  "turnRangeDeg": 380,
+  "hipsBounce": 0.53
+ },
+ "poses": {
+  "start": "crouch",
+  "end": "stand",
+  "startSupport": "left",
+  "endSupport": "both",
+  "startArms": "down",
+  "endArms": "down"
+ },
+ "retarget": {
+  "restPose": "T",
+  "sourceHipHeight": 0.89,
+  "floorAligned": true
+ },
+ "provenance": {
+  "tags": "auto",
+  "tempo": "auto",
+  "events": "auto",
+  "ranges": "auto"
+ },
+ "x": {
+  "openVrma": {
+   "pathTravel": 3.49,
+   "angularSpeed": {
+    "legs": 0.84,
+    "arms": 0.76,
+    "torso": 0.43
+   },
+   "bodyShare": {
+    "head": 0.17,
+    "torso": 0.09,
+    "arms": 0.14,
+    "hands": 0.15,
+    "hips": 0.17,
+    "legs": 0.28
+   },
+   "energy": 0.24,
+   "airborne": 0,
+   "lowHips": 0.25
+  }
+ }
+}

@@ -1,0 +1,58 @@
+{
+ "character": "kavi",
+ "homeStyle": "kollywood",
+ "bands": {
+  "tap": [
+   "kavi_tap_cheer"
+  ],
+  "special": [
+   "kavi_special"
+  ],
+  "idle": [
+   "idle_sway"
+  ],
+  "calm": [
+   "calm_breathe",
+   "kl_folk_hip_sway"
+  ],
+  "low": [
+   "kl_heel_clap",
+   "kl_mass_entry"
+  ],
+  "mid": [
+   "kl_drum_mime",
+   "kl_folk_hip_sway",
+   "kl_scarf_twirl"
+  ],
+  "high": [
+   "kl_kuthu_step",
+   "kl_wrist_flick"
+  ],
+  "accent": [
+   "tl_victory_v"
+  ]
+ },
+ "borrowWhenStyleDiffers": {
+  "tollywood": [
+   "tl_mass_stomp",
+   "tl_hook_loop",
+   "tl_fast_footwork",
+   "tl_shoulder_shake",
+   "tl_slide_point"
+  ],
+  "kollywood": [
+   "kl_kuthu_step",
+   "kl_drum_mime",
+   "kl_folk_hip_sway",
+   "kl_wrist_flick",
+   "kl_heel_clap"
+  ],
+  "hollywood": [
+   "hw_bounce_step",
+   "hw_step_clap",
+   "hw_arm_wave",
+   "hw_fist_pump",
+   "hw_shuffle_kick"
+  ]
+ }
+}

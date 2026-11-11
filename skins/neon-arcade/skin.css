@@ -1,0 +1,7 @@
+/* Neon Arcade — recolor pack. Structure inspired by Side Cut; original CSS. */
+html[data-skin=neon-arcade]{
+  --tom:#ff2bd6; --acc:#ff2bd6; --paper:#0b0614;
+}
+html[data-skin=neon-arcade] body{background:color-mix(in srgb,#0b0614 8%, var(--ink));}
+html[data-skin=neon-arcade] #bigart{box-shadow:0 0 0 3px #ff2bd6,0 16px 40px #0008!important;}
+html[data-skin=neon-arcade] .brand h1 span{color:#ff2bd6}

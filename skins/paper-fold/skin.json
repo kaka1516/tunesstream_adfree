@@ -1,0 +1,9 @@
+{
+  "id": "paper-fold",
+  "name": "Paper Fold",
+  "description": "Bright editorial paper with ink borders.",
+  "npLayout": "art-hero",
+  "art": "square",
+  "themeColor": "#fffaf3",
+  "sideLabel": "PAPER FOLD \u2014 NOW SPINNING"
+}

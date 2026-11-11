@@ -1,0 +1,7 @@
+/* Frost Panel — recolor pack. Structure inspired by Side Cut; original CSS. */
+html[data-skin=frost-panel]{
+  --tom:#88c0d0; --acc:#88c0d0; --paper:#eceff4;
+}
+html[data-skin=frost-panel] body{background:color-mix(in srgb,#eceff4 8%, var(--ink));}
+html[data-skin=frost-panel] #bigart{box-shadow:0 0 0 3px #88c0d0,0 16px 40px #0008!important;}
+html[data-skin=frost-panel] .brand h1 span{color:#88c0d0}

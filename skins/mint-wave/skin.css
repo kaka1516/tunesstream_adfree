@@ -1,0 +1,7 @@
+/* Mint Wave — recolor pack. Structure inspired by Side Cut; original CSS. */
+html[data-skin=mint-wave]{
+  --tom:#2dd4a8; --acc:#2dd4a8; --paper:#e7f6ef;
+}
+html[data-skin=mint-wave] body{background:color-mix(in srgb,#e7f6ef 8%, var(--ink));}
+html[data-skin=mint-wave] #bigart{box-shadow:0 0 0 3px #2dd4a8,0 16px 40px #0008!important;}
+html[data-skin=mint-wave] .brand h1 span{color:#2dd4a8}

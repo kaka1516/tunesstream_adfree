@@ -1,0 +1,165 @@
+{
+ "specVersion": "0.1",
+ "id": "cmu_05_17",
+ "name": "05_17",
+ "description": "dance - coupe dessous, grand jete en tourant",
+ "duration": 8.67,
+ "sourceFps": 120,
+ "license": {
+  "spdx": "LicenseRef-CMU-Mocap",
+  "url": "http://mocap.cs.cmu.edu/faqs.php",
+  "attribution": "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.",
+  "authors": [
+   {
+    "name": "Carnegie Mellon University Graphics Lab",
+    "url": "http://mocap.cs.cmu.edu/"
+   },
+   {
+    "name": "Bruce Hahne (BVH conversion, cgspeed)"
+   }
+  ],
+  "source": {
+   "kind": "mocap",
+   "url": "http://mocap.cs.cmu.edu/",
+   "originalId": "05_17",
+   "originalFormat": "bvh",
+   "converter": "open-vrma/cmu2vrma@0.1"
+  }
+ },
+ "tags": {
+  "kind": "dance",
+  "genre": [
+   "modern"
+  ],
+  "energy": 5,
+  "bodyParts": [
+   "full"
+  ],
+  "locomotion": "traveling",
+  "facing": "turning",
+  "floorWork": false,
+  "airborne": true,
+  "fingers": false,
+  "expressions": false,
+  "lookAt": false,
+  "rootMotion": true,
+  "keywords": [
+   "Modern dance"
+  ]
+ },
+ "tempo": {
+  "bpm": 97.3,
+  "beatsPerBar": 4,
+  "firstBeat": 0.251,
+  "confidence": 1,
+  "basis": "steps",
+  "alternatives": [
+   194.6,
+   48.6
+  ]
+ },
+ "allow": {
+  "stretch": {
+   "mode": "beats"
+  }
+ },
+ "events": [
+  {
+   "t": 5.8,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 5.933,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 6.433,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 7.033,
+   "type": "contact",
+   "side": "left"
+  },
+  {
+   "t": 8.667,
+   "type": "lift",
+   "side": "left"
+  },
+  {
+   "t": 8.667,
+   "type": "lift",
+   "side": "right"
+  }
+ ],
+ "ranges": [
+  {
+   "from": 5.8,
+   "to": 5.933,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 7.033,
+   "to": 8.667,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 6.433,
+   "to": 8.667,
+   "type": "footLock",
+   "side": "right"
+  }
+ ],
+ "root": {
+  "netTravel": 4.23,
+  "maxTravel": 4.23,
+  "netTurnDeg": 239,
+  "turnRangeDeg": 261,
+  "hipsBounce": 0.41
+ },
+ "poses": {
+  "start": "stand",
+  "end": "stand",
+  "startSupport": "none",
+  "endSupport": "both",
+  "startArms": "down",
+  "endArms": "other"
+ },
+ "retarget": {
+  "restPose": "T",
+  "sourceHipHeight": 0.95,
+  "floorAligned": true
+ },
+ "provenance": {
+  "tags": "auto",
+  "tempo": "auto",
+  "events": "auto",
+  "ranges": "auto"
+ },
+ "x": {
+  "openVrma": {
+   "pathTravel": 4.46,
+   "angularSpeed": {
+    "legs": 2.63,
+    "arms": 2.69,
+    "torso": 0.99
+   },
+   "bodyShare": {
+    "head": 0.09,
+    "torso": 0.08,
+    "arms": 0.15,
+    "hands": 0.25,
+    "hips": 0.14,
+    "legs": 0.28
+   },
+   "energy": 1.38,
+   "airborne": 0.36,
+   "lowHips": 0
+  }
+ }
+}

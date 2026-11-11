@@ -1,0 +1,15 @@
+{
+  "id": "classic-deck",
+  "name": "Classic Deck",
+  "version": 1,
+  "description": "Hardware player chrome — bevels, LCD seek digits, dense rows, thick icons. Winamp-ish without bitmaps.",
+  "preview": "preview.svg",
+  "css": "skin.css",
+  "icons": "icons.svg",
+  "npLayout": "compact-deck",
+  "art": "square",
+  "sideLabel": "CLASSIC DECK — ON AIR",
+  "themeColor": "#23262b",
+  "fonts": ["fonts/VT323-Regular.woff2"],
+  "textures": []
+}

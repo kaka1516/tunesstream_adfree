@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "max_bytes_per_run": 52428800,
+  "max_total_bytes": 1073741824,
+  "min_days_between_runs": 6,
+  "sources": {
+    "open-vrma": true,
+    "polyhaven-hdri": true,
+    "butterchurn-presets": true,
+    "vrm-characters": true
+  },
+  "schedule": "Monday 04:00 Asia/Calcutta. Phone: crontab + wd.sh fallback. Desktop 8121: Scheduled Task MusicStream8121_VizUpdate. Off: python3 scripts/viz-update.py --off (or create assets/viz/update/disabled)."
+}

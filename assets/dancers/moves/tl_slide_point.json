@@ -1,0 +1,43 @@
+{
+ "id": "tl_slide_point",
+ "name": "Side slide + point",
+ "style": "tollywood",
+ "beats": 2,
+ "loop": true,
+ "oneShot": false,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": -6,
+   "head": 0,
+   "uarmL": 95,
+   "larmL": 0,
+   "uarmR": 12,
+   "larmR": -8,
+   "thighL": 24,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "rootX": -10,
+   "gripL": "point",
+   "t": 0,
+   "ease": "inOut"
+  },
+  {
+   "torso": 6,
+   "head": 0,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 95,
+   "larmR": 0,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 24,
+   "shinR": -2,
+   "rootX": 10,
+   "gripR": "point",
+   "t": 0.5,
+   "ease": "inOut"
+  }
+ ]
+}

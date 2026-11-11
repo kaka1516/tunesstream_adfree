@@ -1,0 +1,9 @@
+{
+  "id": "neon-arcade",
+  "name": "Neon Arcade",
+  "description": "Hot magenta/cyan arcade glass over Side Cut chrome.",
+  "npLayout": "art-hero",
+  "art": "square",
+  "themeColor": "#0b0614",
+  "sideLabel": "NEON ARCADE \u2014 NOW SPINNING"
+}

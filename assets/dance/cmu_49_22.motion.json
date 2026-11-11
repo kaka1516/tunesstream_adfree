@@ -1,0 +1,155 @@
+{
+ "specVersion": "0.1",
+ "id": "cmu_49_22",
+ "name": "49_22",
+ "description": "dance - lean back on bent leg, balance, bend elbow by ear",
+ "duration": 10.7,
+ "sourceFps": 120,
+ "license": {
+  "spdx": "LicenseRef-CMU-Mocap",
+  "url": "http://mocap.cs.cmu.edu/faqs.php",
+  "attribution": "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.",
+  "authors": [
+   {
+    "name": "Carnegie Mellon University Graphics Lab",
+    "url": "http://mocap.cs.cmu.edu/"
+   },
+   {
+    "name": "Bruce Hahne (BVH conversion, cgspeed)"
+   }
+  ],
+  "source": {
+   "kind": "mocap",
+   "url": "http://mocap.cs.cmu.edu/",
+   "originalId": "49_22",
+   "originalFormat": "bvh",
+   "converter": "open-vrma/cmu2vrma@0.1"
+  }
+ },
+ "tags": {
+  "kind": "dance",
+  "genre": [
+   "modern"
+  ],
+  "energy": 1,
+  "bodyParts": [
+   "full"
+  ],
+  "locomotion": "stepping",
+  "facing": "front",
+  "floorWork": false,
+  "airborne": false,
+  "fingers": false,
+  "expressions": false,
+  "lookAt": false,
+  "rootMotion": true,
+  "keywords": [
+   "Modern dance, gymnastics"
+  ]
+ },
+ "tempo": {
+  "bpm": 100,
+  "beatsPerBar": 4,
+  "firstBeat": 0.5,
+  "confidence": 0.88,
+  "basis": "motion",
+  "alternatives": [
+   200,
+   50
+  ]
+ },
+ "allow": {
+  "stretch": {
+   "mode": "beats"
+  }
+ },
+ "events": [
+  {
+   "t": 1.333,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 3.9,
+   "type": "lift",
+   "side": "right"
+  },
+  {
+   "t": 7.533,
+   "type": "contact",
+   "side": "right"
+  },
+  {
+   "t": 7.833,
+   "type": "lift",
+   "side": "right"
+  }
+ ],
+ "ranges": [
+  {
+   "from": 0,
+   "to": 10.7,
+   "type": "footLock",
+   "side": "left"
+  },
+  {
+   "from": 1.333,
+   "to": 3.9,
+   "type": "footLock",
+   "side": "right"
+  },
+  {
+   "from": 7.533,
+   "to": 7.833,
+   "type": "footLock",
+   "side": "right"
+  }
+ ],
+ "root": {
+  "netTravel": 0.45,
+  "maxTravel": 0.49,
+  "netTurnDeg": 45,
+  "turnRangeDeg": 50,
+  "hipsBounce": 0.14
+ },
+ "poses": {
+  "start": "stand",
+  "end": "stand",
+  "startSupport": "left",
+  "endSupport": "both",
+  "startArms": "up",
+  "endArms": "other"
+ },
+ "retarget": {
+  "restPose": "T",
+  "sourceHipHeight": 0.98,
+  "floorAligned": true
+ },
+ "provenance": {
+  "tags": "auto",
+  "tempo": "auto",
+  "events": "auto",
+  "ranges": "auto"
+ },
+ "x": {
+  "openVrma": {
+   "pathTravel": 0.67,
+   "angularSpeed": {
+    "legs": 0.23,
+    "arms": 0.3,
+    "torso": 0.26
+   },
+   "bodyShare": {
+    "head": 0.23,
+    "torso": 0.12,
+    "arms": 0.13,
+    "hands": 0.17,
+    "hips": 0.17,
+    "legs": 0.18
+   },
+   "energy": 0.09,
+   "airborne": 0,
+   "lowHips": 0
+  }
+ }
+}

@@ -1,0 +1,832 @@
+{
+  "version": "adult-202611111129",
+  "tier": "adult",
+  "clips": [
+    {
+      "id": "cmu_61_12",
+      "file": "cmu_61_12.vrma",
+      "label": "Salsa A",
+      "energy": 5,
+      "duration": 14.07,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.3,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.53)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_12",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_60_12",
+      "file": "cmu_60_12.vrma",
+      "label": "Salsa spin",
+      "energy": 4,
+      "duration": 14.07,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.533,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.48)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_12",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "spinning",
+      "adult": true
+    },
+    {
+      "id": "cmu_60_05",
+      "file": "cmu_60_05.vrma",
+      "label": "Salsa turn",
+      "energy": 4,
+      "duration": 13.97,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.267,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.31)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_05",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "spinning",
+      "adult": true
+    },
+    {
+      "id": "cmu_60_08",
+      "file": "cmu_60_08.vrma",
+      "label": "Salsa long phrase",
+      "energy": 5,
+      "duration": 28.47,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.533,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.36)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_08",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_60_10",
+      "file": "cmu_60_10.vrma",
+      "label": "Salsa quick spin",
+      "energy": 4,
+      "duration": 9.93,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.567,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.58)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_10",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "spinning",
+      "adult": true
+    },
+    {
+      "id": "cmu_60_13",
+      "file": "cmu_60_13.vrma",
+      "label": "Salsa spin B",
+      "energy": 4,
+      "duration": 18.9,
+      "bpm": 164,
+      "alts": [
+        82
+      ],
+      "firstBeat": 0.167,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.43)",
+      "tempoMin": 61.5,
+      "tempoMax": 218.1,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_13",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "spinning",
+      "adult": true
+    },
+    {
+      "id": "cmu_60_15",
+      "file": "cmu_60_15.vrma",
+      "label": "Salsa loop",
+      "energy": 4,
+      "duration": 17.8,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0,
+      "tempoNote": "open-vrma tempo (unknown, confidence 0.29)",
+      "tempoMin": 70,
+      "tempoMax": 160,
+      "loop": true,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_15",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "spinning",
+      "adult": true
+    },
+    {
+      "id": "cmu_61_06",
+      "file": "cmu_61_06.vrma",
+      "label": "Salsa C",
+      "energy": 5,
+      "duration": 14.73,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.6,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.38)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_06",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_61_08",
+      "file": "cmu_61_08.vrma",
+      "label": "Salsa long phrase B",
+      "energy": 5,
+      "duration": 28.47,
+      "bpm": 103,
+      "alts": [
+        206,
+        51.5
+      ],
+      "firstBeat": 0.133,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.43)",
+      "tempoMin": 77.2,
+      "tempoMax": 137.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_08",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_61_11",
+      "file": "cmu_61_11.vrma",
+      "label": "Salsa spin C",
+      "energy": 5,
+      "duration": 17.53,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.367,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.46)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_11",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "spinning",
+      "adult": true
+    },
+    {
+      "id": "cmu_61_13",
+      "file": "cmu_61_13.vrma",
+      "label": "Salsa spin D",
+      "energy": 5,
+      "duration": 18.9,
+      "bpm": 82,
+      "alts": [
+        164,
+        41
+      ],
+      "firstBeat": 0.233,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.43)",
+      "tempoMin": 61.5,
+      "tempoMax": 218.1,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_13",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "spinning",
+      "adult": true
+    },
+    {
+      "id": "cmu_61_15",
+      "file": "cmu_61_15.vrma",
+      "label": "Salsa spin E",
+      "energy": 5,
+      "duration": 17.8,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.067,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.45)",
+      "tempoMin": 75.0,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_15",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "spinning",
+      "adult": true
+    },
+    {
+      "id": "cmu_55_02",
+      "file": "cmu_55_02.vrma",
+      "label": "Lambada",
+      "energy": 2,
+      "duration": 18.13,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0,
+      "tempoNote": "open-vrma tempo (unknown, confidence 0.27)",
+      "tempoMin": 70,
+      "tempoMax": 160,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "55_02",
+      "desc": "lambada dance",
+      "genre": "lambada",
+      "moods": [
+        "romantic",
+        "chill",
+        "party"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_60_01",
+      "file": "cmu_60_01.vrma",
+      "label": "Salsa A",
+      "energy": 4,
+      "duration": 18.67,
+      "bpm": 82,
+      "alts": [
+        164,
+        41
+      ],
+      "firstBeat": 0.3,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.38)",
+      "tempoMin": 30.8,
+      "tempoMax": 218.1,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_01",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_60_02",
+      "file": "cmu_60_02.vrma",
+      "label": "Salsa B",
+      "energy": 4,
+      "duration": 17.47,
+      "bpm": 86,
+      "alts": [
+        172,
+        43
+      ],
+      "firstBeat": 0.4,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.33)",
+      "tempoMin": 32.2,
+      "tempoMax": 228.8,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_02",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_60_03",
+      "file": "cmu_60_03.vrma",
+      "label": "Salsa C",
+      "energy": 4,
+      "duration": 15.23,
+      "bpm": 82,
+      "alts": [
+        164,
+        41
+      ],
+      "firstBeat": 0.367,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.50)",
+      "tempoMin": 30.8,
+      "tempoMax": 218.1,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_03",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_60_04",
+      "file": "cmu_60_04.vrma",
+      "label": "Salsa D",
+      "energy": 4,
+      "duration": 15.57,
+      "bpm": 232.3,
+      "alts": [
+        116.2
+      ],
+      "firstBeat": 0.075,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.65)",
+      "tempoMin": 87.2,
+      "tempoMax": 309.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_04",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_60_06",
+      "file": "cmu_60_06.vrma",
+      "label": "Salsa E",
+      "energy": 5,
+      "duration": 14.73,
+      "bpm": 110,
+      "alts": [],
+      "firstBeat": 0.0,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.29)",
+      "tempoMin": 82.5,
+      "tempoMax": 146.3,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_06",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "spinning",
+      "adult": true
+    },
+    {
+      "id": "cmu_60_07",
+      "file": "cmu_60_07.vrma",
+      "label": "Salsa F",
+      "energy": 5,
+      "duration": 17.23,
+      "bpm": 239.4,
+      "alts": [
+        119.7
+      ],
+      "firstBeat": 0.233,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.62)",
+      "tempoMin": 89.8,
+      "tempoMax": 318.4,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_07",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_60_09",
+      "file": "cmu_60_09.vrma",
+      "label": "Salsa G",
+      "energy": 5,
+      "duration": 21.43,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.233,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.58)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_09",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_60_11",
+      "file": "cmu_60_11.vrma",
+      "label": "Salsa H",
+      "energy": 4,
+      "duration": 17.53,
+      "bpm": 258.5,
+      "alts": [
+        129.3
+      ],
+      "firstBeat": 0.04,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.73)",
+      "tempoMin": 97.0,
+      "tempoMax": 343.8,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_11",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "spinning",
+      "adult": true
+    },
+    {
+      "id": "cmu_60_14",
+      "file": "cmu_60_14.vrma",
+      "label": "Salsa I",
+      "energy": 4,
+      "duration": 16.2,
+      "bpm": 239.3,
+      "alts": [
+        119.7
+      ],
+      "firstBeat": 0.048,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.61)",
+      "tempoMin": 89.8,
+      "tempoMax": 318.3,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "60_14",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "spinning",
+      "adult": true
+    },
+    {
+      "id": "cmu_61_01",
+      "file": "cmu_61_01.vrma",
+      "label": "Salsa partner A",
+      "energy": 5,
+      "duration": 18.67,
+      "bpm": 231.5,
+      "alts": [
+        115.8
+      ],
+      "firstBeat": 0.085,
+      "tempoNote": "open-vrma tempo (steps, confidence 0.63)",
+      "tempoMin": 86.8,
+      "tempoMax": 307.9,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_01",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_61_02",
+      "file": "cmu_61_02.vrma",
+      "label": "Salsa partner B",
+      "energy": 5,
+      "duration": 17.47,
+      "bpm": 88,
+      "alts": [
+        176,
+        44
+      ],
+      "firstBeat": 0.567,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.39)",
+      "tempoMin": 33.0,
+      "tempoMax": 234.1,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_02",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_61_03",
+      "file": "cmu_61_03.vrma",
+      "label": "Salsa partner C",
+      "energy": 5,
+      "duration": 15.23,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.367,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.51)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_03",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_61_04",
+      "file": "cmu_61_04.vrma",
+      "label": "Salsa partner D",
+      "energy": 5,
+      "duration": 15.57,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.467,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.50)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_04",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_61_05",
+      "file": "cmu_61_05.vrma",
+      "label": "Salsa partner E",
+      "energy": 5,
+      "duration": 13.97,
+      "bpm": 78,
+      "alts": [
+        156
+      ],
+      "firstBeat": 0.2,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.48)",
+      "tempoMin": 58.5,
+      "tempoMax": 207.5,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_05",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "spinning",
+      "adult": true
+    },
+    {
+      "id": "cmu_61_07",
+      "file": "cmu_61_07.vrma",
+      "label": "Salsa partner F",
+      "energy": 5,
+      "duration": 17.23,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.567,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.37)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_07",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "spinning",
+      "adult": true
+    },
+    {
+      "id": "cmu_61_09",
+      "file": "cmu_61_09.vrma",
+      "label": "Salsa partner G",
+      "energy": 5,
+      "duration": 21.43,
+      "bpm": 92,
+      "alts": [
+        184,
+        46
+      ],
+      "firstBeat": 0.3,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.41)",
+      "tempoMin": 34.5,
+      "tempoMax": 244.7,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_09",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_61_10",
+      "file": "cmu_61_10.vrma",
+      "label": "Salsa partner H",
+      "energy": 5,
+      "duration": 9.93,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.467,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.52)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_10",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    },
+    {
+      "id": "cmu_61_14",
+      "file": "cmu_61_14.vrma",
+      "label": "Salsa partner I",
+      "energy": 5,
+      "duration": 16.2,
+      "bpm": 100,
+      "alts": [
+        200,
+        50
+      ],
+      "firstBeat": 0.6,
+      "tempoNote": "open-vrma tempo (motion, confidence 0.33)",
+      "tempoMin": 37.5,
+      "tempoMax": 266.0,
+      "loop": false,
+      "license": "LicenseRef-CMU-Mocap",
+      "source": "61_14",
+      "desc": "salsa dance",
+      "genre": "salsa",
+      "moods": [
+        "party",
+        "romantic"
+      ],
+      "locomotion": "traveling",
+      "adult": true
+    }
+  ],
+  "characters": [],
+  "note": "Loaded only when the signed-in user has 18+ visuals enabled by an admin. Never mixed into the main catalog.",
+  "source": "open-vrma / CMU Graphics Lab Motion Capture Database",
+  "selection": "Curated Latin set (salsa, lambada) with a clear redistribution licence (LicenseRef-CMU-Mocap). No twerk, pole, dancehall, or body-roll clips were available from allowlisted CC0/CC-BY sources. No compliant freely licensed, clearly adult, non-franchise swimwear or club-outfit VRM character was found."
+}

@@ -1,0 +1,187 @@
+<!doctype html>
+<html><head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>ms-v75 avatar harness (visible-stage probe)</title>
+<style>
+html,body{margin:0;background:#0e1218;color:#eee;font:13px system-ui}
+#stage{position:relative;width:100vw;height:100vh;overflow:hidden;background:#16202c}
+#stage canvas.ms-main{display:block;width:100%;height:100%;position:relative;z-index:0}
+#hud{position:fixed;left:8px;bottom:8px;z-index:5;background:rgba(0,0,0,.65);padding:8px 10px;border-radius:8px;max-width:96vw;white-space:pre-wrap;font:12px/1.35 ui-monospace,monospace}
+#picker,#motions{position:fixed;left:8px;right:8px;z-index:5;display:flex;flex-wrap:wrap;gap:4px;max-height:26vh;overflow:auto}
+#picker{top:8px}#motions{top:auto;bottom:72px;display:none}
+#picker button,#motions button{font:11px system-ui;padding:4px 7px;border-radius:6px;border:0;background:#2a3648;color:#fff}
+#picker button.on,#motions button.on{background:#6af;color:#041018}
+</style>
+<script src="/vendor/ms/viz.js?v=1.5-v75"></script>
+</head>
+<body>
+<div id=picker></div>
+<div id=motions></div>
+<div id=stage><canvas class=ms-main id=cv></div>
+<pre id=hud>boot…</pre>
+<script>
+function loadScript(src){
+  return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error(src)); document.head.appendChild(s); });
+}
+/** Read pixels from a canvas (2d or webgl) into ImageData via a 2d scratch. */
+function readPixels(src){
+  if(!src||!src.width||!src.height) return null;
+  try{
+    const scratch=document.createElement('canvas');
+    scratch.width=src.width; scratch.height=src.height;
+    const sctx=scratch.getContext('2d',{willReadFrequently:true});
+    sctx.drawImage(src,0,0);
+    return sctx.getImageData(0,0,scratch.width,scratch.height);
+  }catch(e){ return null; }
+}
+/** Non-background / non-transparent coverage. For transparent caches, any alpha>20 counts. */
+function coverageFromImageData(img, opts){
+  opts=opts||{};
+  if(!img) return {coverage:0,nonBg:0,total:0};
+  const d=img.data; let nonBg=0,total=0;
+  const step=16; // every 4th pixel
+  for(let i=0;i<d.length;i+=step){
+    total++;
+    const r=d[i],g=d[i+1],b=d[i+2],a=d[i+3];
+    if(a<20) continue;
+    // reject near stage bg #16202c and near-black clears
+    const dist=Math.abs(r-22)+Math.abs(g-32)+Math.abs(b-44);
+    if(dist>40 || a>200) nonBg++;
+  }
+  return {coverage: total? nonBg/total : 0, nonBg, total};
+}
+function frameDiff(a,b){
+  if(!a||!b||a.data.length!==b.data.length) return 0;
+  const A=a.data,B=b.data; let s=0,n=0;
+  for(let i=0;i<A.length;i+=16){ s+=Math.abs(A[i]-B[i])+Math.abs(A[i+1]-B[i+1])+Math.abs(A[i+2]-B[i+2])+Math.abs(A[i+3]-B[i+3]); n++; }
+  return n? s/(n*4) : 0;
+}
+function pickAvatarCanvas(viz, mainCv){
+  const stage=document.getElementById('stage');
+  const V=viz._V; const a=V&&V.avatar;
+  // Prefer Live2D offscreen cache (isolates character from scene)
+  if(a&&a._live2dCache){ const c=a._live2dCache(); if(c&&c.width) return {cv:c, kind:'live2d-cache'}; }
+  // VRM / Cubism5 overlay webgl
+  const overlays=[...stage.querySelectorAll('.msv-avatar canvas')];
+  if(overlays.length) return {cv:overlays[0], kind:'overlay'};
+  return {cv:mainCv, kind:'main'};
+}
+
+window.__MS_V73__ = { results: {}, version:'ms-v75' };
+window.__MS_V72__ = window.__MS_V73__;
+window.__MS_V71__ = window.__MS_V73__;
+const hud=document.getElementById('hud');
+const cv=document.getElementById('cv');
+function log(s){ hud.textContent=s; console.log('[harness]', s); }
+
+(async function(){
+  log('creating analyser…');
+  let an;
+  try {
+    const off=new OfflineAudioContext(1,44100,44100);
+    an=off.createAnalyser(); an.fftSize=256;
+  } catch(e){
+    const AC=window.AudioContext||window.webkitAudioContext; const ac=new AC();
+    an=ac.createAnalyser(); an.fftSize=256; try{await ac.resume()}catch(_){}
+  }
+  log('loading avatar bridges…');
+  await loadScript('/vendor/ms/avatar-hiyori.js?v=1.5-v75');
+  await loadScript('/vendor/ms/avatar-vrm.js?v=1.5-v75');
+  await loadScript('/assets/chars/live2d-cubism5.js?v=1.5-v75');
+
+  const phone=/phone=1/.test(location.search);
+  const viz=window.MSViz.init(cv, an, { phone, dprCap: phone?1.5:2 });
+  // CRITICAL: start the viz rAF so canvas resizes and avatars draw
+  viz.start();
+  try{ viz.setScene('marigold'); }catch(_){}
+  cv.style.width='100%'; cv.style.height='100%';
+
+  const avatars=window.MSViz.avatars();
+  window.__MS_V73__.avatars=avatars.map(a=>a.id);
+  log('avatars('+avatars.length+'): '+avatars.map(a=>a.id).join(', '));
+
+  const picker=document.getElementById('picker');
+  const motionsEl=document.getElementById('motions');
+  let errs=[];
+  window.addEventListener('error', e => errs.push('onerror:'+e.message));
+  window.addEventListener('unhandledrejection', e => errs.push('rej:'+String(e.reason&&e.reason.message||e.reason)));
+  const _err=console.error.bind(console);
+  console.error=function(){ errs.push(Array.from(arguments).map(String).join(' ').slice(0,180)); return _err.apply(console,arguments); };
+
+  const HARU_MOTIONS = ['idle'].concat(Array.from({length:26},(_,i)=>'m'+String(i+1).padStart(2,'0')));
+
+  function showHaruMotions(show){
+    motionsEl.style.display = show ? 'flex' : 'none';
+    if(!show) return;
+    if(motionsEl.dataset.built) return;
+    motionsEl.dataset.built='1';
+    HARU_MOTIONS.forEach((name)=>{
+      const b=document.createElement('button');
+      b.textContent = name;
+      b.onclick=async()=>{
+        [...motionsEl.querySelectorAll('button')].forEach(x=>x.classList.toggle('on',x===b));
+        try{
+          const V=viz._V; const a=V&&V.avatar;
+          if(a && a._playHaruMotion) await a._playHaruMotion(name);
+          else if(window.__msPlayHaruMotion) await window.__msPlayHaruMotion(name);
+          log('Haru motion '+name);
+        }catch(e){ log('motion fail '+e); }
+      };
+      motionsEl.appendChild(b);
+    });
+  }
+
+  async function pick(id){
+    errs=[]; window.__MS_V73__.readyShot=false;
+    [...picker.querySelectorAll('button')].forEach(b=>b.classList.toggle('on', b.dataset.id===id));
+    showHaruMotions(id==='haru' || String(id).startsWith('haru_'));
+    log('loading '+id+'…');
+    const t0=performance.now();
+    try{
+      viz.start();
+      const okSet=await viz.setAvatar(id);
+      if(!okSet) throw new Error('setAvatar returned false: '+(viz.stats().avatarErr||''));
+      const waitMs = id.startsWith('vrm_')||id==='amahane'?5000:2800;
+      await new Promise(r=>setTimeout(r, waitMs));
+      for(let i=0;i<5;i++){ await new Promise(r=>requestAnimationFrame(r)); }
+
+      // ms-v75: measure the VISIBLE stage (pixels the avatar drew on the on-screen canvas / VRM overlay), never an offscreen cache
+      try{ viz.trigger('tap'); }catch(_){}
+      const pr=await viz.probeAvatar({gapMs:700,timeoutMs:5000});
+      const st=viz.stats();
+      const hardErrs=errs.filter(e=>!/favicon|AudioContext|deprecated|VRMLookAt|options\.autoInteract|AbortError/i.test(e));
+      const finalPass=!!pr.pass && st.running && st.avatar===id && hardErrs.length===0;
+      const result={ ok:finalPass, fps:st.fps, boxPct:pr.boxPct, stagePct:pr.stagePct, motionPct:pr.motionPct, colorDelta:pr.colorDelta, dom:pr.dom, reason:pr.reason||'',
+        loadMs:+(performance.now()-t0).toFixed(0), avatarErr:st.avatarErr||'', mode:st.avatarMode, running:!!st.running, errs:hardErrs.slice(0,5), measured:'visible-stage' };
+      log(id+' → '+(finalPass?'PROBE PASS':'PROBE FAIL')+' slot='+pr.boxPct+'% stage='+pr.stagePct+'% motion='+pr.motionPct+'% dC='+pr.colorDelta+' dom='+(pr.dom&&pr.dom.ok?'ok':JSON.stringify(pr.dom&&pr.dom.issues||pr.reason))+' fps='+st.fps+'\n(probe numbers are not a visual sign-off; look at the stage)');
+      window.__MS_V73__.results[id]=result;
+      window.__MS_V73__.lastId=id; window.__MS_V73__.readyShot=true;
+      return finalPass;
+    }catch(e){
+      window.__MS_V73__.results[id]={ok:false, err:String(e&&e.message||e), errs:errs.slice(0,5), coverage:0, frameDiff:0};
+      log(id+' FAIL '+e);
+      window.__MS_V73__.readyShot=true;
+      return false;
+    }
+  }
+
+  // Core 20 first in picker, then Haru motion aliases
+  const CORE = new Set(['hiyori','haru','mao','rice','mao_pro','shizuku','koharu','cyannyan','archchan','amahane',
+    'vrm_darkness_shibu','vrm_vivi','vrm_sendagaya_shibu','vrm_victoria','vrm_vita','vrm_avatar_a','vrm_avatar_b','vrm_hair_f','vrm_sendagaya_shino']);
+  const ordered=[...avatars].sort((a,b)=>{
+    const ac=CORE.has(a.id)?0:1, bc=CORE.has(b.id)?0:1; if(ac!==bc) return ac-bc;
+    return String(a.id).localeCompare(String(b.id));
+  });
+  ordered.forEach(a=>{
+    const b=document.createElement('button');
+    b.textContent=(a.label||a.id).replace(' (Live2D)','').replace(' (VRM)','');
+    b.dataset.id=a.id; b.onclick=()=>pick(a.id); picker.appendChild(b);
+  });
+
+  window.__MS_V73__.pick=pick; window.__MS_V73__.viz=viz;
+  window.__READY__=true;
+  log('ready · '+avatars.length+' avatars · viz started · pixel gate on · '+HARU_MOTIONS.length+' Haru motions');
+})().catch(e=>{ log('BOOT FAIL '+e); window.__ERROR__=String(e&&e.message||e); });
+</script>
+</body></html>

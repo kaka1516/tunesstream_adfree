@@ -1,0 +1,41 @@
+{
+ "id": "kl_heel_clap",
+ "name": "Heel bounce clap",
+ "style": "kollywood",
+ "beats": 1,
+ "loop": true,
+ "oneShot": false,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 30,
+   "larmL": 80,
+   "uarmR": 30,
+   "larmR": 80,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "rootY": 0,
+   "t": 0,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 18,
+   "larmL": 100,
+   "uarmR": 18,
+   "larmR": 100,
+   "thighL": 14,
+   "shinL": -22,
+   "thighR": 14,
+   "shinR": -22,
+   "rootY": 4,
+   "t": 0.5,
+   "ease": "snap"
+  }
+ ]
+}

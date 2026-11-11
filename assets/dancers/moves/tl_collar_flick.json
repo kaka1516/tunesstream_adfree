@@ -1,0 +1,59 @@
+{
+ "id": "tl_collar_flick",
+ "name": "Collar flick + point out",
+ "style": "tollywood",
+ "beats": 2,
+ "loop": true,
+ "oneShot": false,
+ "joints": "see rig.json; omitted joints = neutral",
+ "keys": [
+  {
+   "torso": 0,
+   "head": -8,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 40,
+   "larmR": 150,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "gripR": "flick",
+   "face": "wink",
+   "t": 0,
+   "ease": "inOut"
+  },
+  {
+   "torso": 0,
+   "head": 6,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 110,
+   "larmR": 0,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "gripR": "point",
+   "rootX": 4,
+   "face": "grin",
+   "t": 0.4,
+   "ease": "snap"
+  },
+  {
+   "torso": 0,
+   "head": 0,
+   "uarmL": 12,
+   "larmL": -8,
+   "uarmR": 110,
+   "larmR": 0,
+   "thighL": 4,
+   "shinL": -2,
+   "thighR": 4,
+   "shinR": -2,
+   "gripR": "point",
+   "t": 1,
+   "ease": "inOut"
+  }
+ ]
+}
