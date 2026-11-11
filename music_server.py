@@ -1598,14 +1598,16 @@ def _radio(vid, exclude=()):
     from concurrent.futures import ThreadPoolExecutor, as_completed
     ex = set(exclude) | {vid}; pools = []
     urls = (f"https://music.youtube.com/watch?v={vid}&list=RDAMVM{vid}", f"https://www.youtube.com/watch?v={vid}&list=RD{vid}")
-    def one(u):
-        try: return flat(u, 30, timeout=12)
+    def one(u):  # radio-20261111
+        try: return _mixlist_url(u, 30, 8)
         except Exception: return []
     with ThreadPoolExecutor(2) as pool:
         futs = [pool.submit(one, u) for u in urls]
-        for fut in as_completed(futs, timeout=14):
-            try: pools.append(fut.result())
-            except Exception: pools.append([])
+        try:  # radio-20261111
+            for fut in as_completed(futs, timeout=10):
+                try: pools.append(fut.result())
+                except Exception: pools.append([])
+        except Exception: pass
     base = [x for p in pools for x in p if x["id"] not in ex]
     if len(base) > 8:
         hop = random.choice(base[5:min(len(base), 20)])["id"]
@@ -1625,14 +1627,16 @@ def _radio_fast_raw(vid, exclude=()):
     from concurrent.futures import ThreadPoolExecutor, as_completed
     ex = set(exclude) | {vid}; pools = []
     urls = (f"https://music.youtube.com/watch?v={vid}&list=RDAMVM{vid}", f"https://www.youtube.com/watch?v={vid}&list=RD{vid}")
-    def one(u):
-        try: return flat(u, 25, timeout=14)
+    def one(u):  # radio-20261111
+        try: return _mixlist_url(u, 25, 7)
         except Exception: return []
     with ThreadPoolExecutor(2) as pool:
         futs = [pool.submit(one, u) for u in urls]
-        for fut in as_completed(futs, timeout=16):
-            try: pools.append(fut.result())
-            except Exception: pools.append([])
+        try:  # radio-20261111: a slow list must not raise out of radio
+            for fut in as_completed(futs, timeout=9):
+                try: pools.append(fut.result())
+                except Exception: pools.append([])
+        except Exception: pass
     out, seen, per = [], set(), {}
     mx = max((len(p) for p in pools), default=0)
     for i in range(mx):
@@ -2600,10 +2604,14 @@ _YTR = {}; _YTSD = {}; _YTCH = {}  # RD list cache; seed durations seen in RD li
 _CH = threading.local()  # per-request chain ids (last played/queued) for v68 chain-fetch
 def _rd_list(vid):
     c = _YTR.get(vid)
-    if c and time.time() - c[1] <= RADIO_TTL: return c[0]
-    L = flat(f"https://www.youtube.com/watch?v={vid}&list=RD{vid}", 40, timeout=15)
+    if c and c[0] and time.time() - c[1] <= RADIO_TTL: return c[0]
+    L = _mixlist(vid, "RD" + vid, 40, 8)  # radio-20261111: innertube first (~1 s), yt-dlp flat only as fallback
+    if not L:  # radio-20261111: an empty answer (YouTube slow / bot-check) must never stick for 2 h; reuse an older good copy
+        return (c[0] if c and c[0] else None) or _radio_stale(vid).get("rd") or []
     if len(_YTR) > 300: _YTR.clear()
     _YTR[vid] = (L, time.time())
+    try: _radio_disk_save(vid, mix="balanced", rd=L)
+    except Exception: pass
     for x in L:
         if x.get("id") and x.get("dur") and len(_YTSD) < 5000: _YTSD.setdefault(x["id"], x["dur"])
         if x.get("id") and x.get("channel") and len(_YTCH) < 5000: _YTCH.setdefault(x["id"], x["channel"])
@@ -2638,7 +2646,7 @@ def _yt_radio(fn):
         if len(out) < 5:
             chain = [c for c in (getattr(_CH, "ids", None) or []) if c != vid][:4]
             for c in chain:
-                if len(out) >= 8 or time.time() - t0 > 14: break
+                if len(out) >= 8 or time.time() - t0 > 6: break  # radio-20261111
                 try: take(_rd_list(c), "yt_radio_chain")
                 except Exception: continue
         if len(out) >= 5: return out
@@ -2675,7 +2683,175 @@ def _memo_radio(fn, tag="radio"):
                 print(f"wrap disk save {vid}: {e}", flush=True)
         return out
     w.__wrapped__ = getattr(fn, "__wrapped__", fn); return w
-radio = _rad_clean(_yt_radio(radio)); radio_fast = _memo_radio(_rad_clean(_yt_radio(radio_fast)), "fast")
+
+# ---- radio-20261111: radio must never "just fail" ------------------------------------------------------------------
+# Root cause of the repeat failures: every radio list came from a yt-dlp scrape of YouTube's mix page (12-16 s timeouts,
+# up to ~45 s chained), on a phone sharing 2 scrape slots with background prewarm, while the player gives up after 12 s.
+# When YouTube was slow or bot-checking the phone, the list came back empty, the empty list was cached for 2 h, and the
+# player showed "Could not load next songs". Now: the mix list comes from YouTube's own JSON "next" endpoint (~1 s, no
+# yt-dlp), empty results are never cached, every /api/radio call is time-boxed, and a thin/empty/late answer is topped
+# up from backup sources (older good list for this seed -> YouTube related videos -> radio of the last played songs ->
+# a search on the artist) so the queue keeps going.
+_YTREL = {}
+def _yti_next(vid, pl=None, timeout=6):
+    """YouTube mix list (playlistPanel) + related videos for vid from /youtubei/v1/next. Returns (mix, related)."""
+    body = json.dumps({"context": {"client": {"clientName": "WEB", "clientVersion": _ITV, "hl": "en"}}, "videoId": vid, "playlistId": pl or ("RD" + vid)}).encode()
+    j = json.loads(_yti_post("/youtubei/v1/next?prettyPrint=false", body, timeout).decode("utf-8", "replace"))
+    twc = (j.get("contents") or {}).get("twoColumnWatchNextResults") or {}
+    mix, rel = [], []
+    for c in (((twc.get("playlist") or {}).get("playlist") or {}).get("contents") or []):
+        v = c.get("playlistPanelVideoRenderer") or {}
+        i = v.get("videoId") or ""; lt = _it_txt(v.get("lengthText"))
+        if not VID.match(i) or not lt: continue  # no length = live/upcoming
+        mix.append({"id": i, "title": _it_txt(v.get("title")) or "?", "dur": _it_dur(lt), "channel": _it_txt(v.get("longBylineText")) or _it_txt(v.get("shortBylineText"))})
+    for r in (((twc.get("secondaryResults") or {}).get("secondaryResults") or {}).get("results") or []):
+        lk = r.get("lockupViewModel") or {}
+        if lk.get("contentType") != "LOCKUP_CONTENT_TYPE_VIDEO" or not VID.match(lk.get("contentId") or ""): continue
+        md = (lk.get("metadata") or {}).get("lockupMetadataViewModel") or {}
+        ch = ""
+        try: ch = md["metadata"]["contentMetadataViewModel"]["metadataRows"][0]["metadataParts"][0]["text"]["content"]
+        except Exception: pass
+        m = re.search(r'"text": "(\d+(?::\d+){1,2})"', json.dumps(lk.get("contentImage") or {}))
+        if not m: continue  # no length badge = live/upcoming
+        rel.append({"id": lk["contentId"], "title": ((md.get("title") or {}).get("content")) or "?", "dur": _it_dur(m.group(1)), "channel": ch})
+    for x in mix + rel:
+        if x.get("title") and len(_TITLE) < 4000: _TITLE.setdefault(x["id"], x["title"])
+        if x.get("dur") and len(_YTSD) < 5000: _YTSD.setdefault(x["id"], x["dur"])
+        if x.get("channel") and len(_YTCH) < 5000: _YTCH.setdefault(x["id"], x["channel"])
+    if rel:
+        if len(_YTREL) > 300: _YTREL.clear()
+        _YTREL[vid] = (rel, time.time())
+    return mix, rel
+def _mixlist(vid, pl, n=25, timeout=7):
+    """Mix list for (vid, playlist id): innertube first, yt-dlp flat as fallback within the same time budget."""
+    t0 = time.time()
+    try:
+        mix, _r = _yti_next(vid, pl, timeout=min(6, timeout))
+        if len(mix) >= 5: return mix[:n]
+    except Exception as e:
+        print(f"radio next fail {vid} {type(e).__name__}: {str(e)[:60]}", flush=True)
+    left = timeout - (time.time() - t0)
+    if left < 2.5: return []
+    u = (f"https://music.youtube.com/watch?v={vid}&list={pl}" if pl.startswith("RDAMVM") else f"https://www.youtube.com/watch?v={vid}&list={pl}")
+    try: return flat(u, n, timeout=left)
+    except Exception: return []
+def _mixlist_url(u, n=25, timeout=7):
+    m = re.search(r"[?&]v=([\w-]{11}).*?[?&]list=([\w-]+)", u)
+    if not m: return flat(u, n, timeout=timeout)
+    return _mixlist(m.group(1), m.group(2), n, timeout)
+def _radio_stale(vid, max_age=14 * 86400):
+    """Any older good radio lists saved for this seed (ignores the 2 h freshness rule; a stale list beats silence)."""
+    out = {}
+    for mx in ("balanced", "familiar", "fresh"):
+        path = _radio_disk_path(vid, mx)
+        try:
+            d = json.loads(path.read_text(encoding="utf-8"))
+            if time.time() - d.get("t", 0) > max_age: continue
+            for f in ("wrap_out", "fast_out", "fast", "base", "rd", "full"):
+                if d.get(f) and not out.get(f): out[f] = d[f]
+        except Exception: continue
+    return out
+RESCUE_MIN = int(cfg.get("RADIO_MIN", "12"))
+def _tcall(_tl, fn, *a, **k):
+    """Run fn in a daemon thread; give up after timeout seconds (a hung socket can't hold the radio answer)."""
+    box = {}
+    def go():
+        try: box["r"] = fn(*a, **k)
+        except Exception as e: box["e"] = e
+    th = threading.Thread(target=go, daemon=True, name="radio-call"); th.start(); th.join(max(0.5, _tl))
+    if "r" in box: return box["r"]
+    if "e" in box: raise box["e"]
+    raise TimeoutError("radio call timeout")
+def _radio_rescue(vid, ex, a, k, have, deadline):
+    exs = set(ex or ()) | {vid} | {x.get("id") for x in have}
+    try: st = title_of(vid) or ""
+    except Exception: st = ""
+    long_ok = bool(re.search(r"jukebox|nonstop|non stop|mashup|mix\b", st, re.I))
+    seen = _SkSeen(); seen.add(st, _YTSD.get(vid), _YTCH.get(vid, ""))
+    try:
+        for t0, c0 in _rad_exf_pairs(a, k): seen.add(t0, 0, c0)
+    except Exception: pass
+    for x in have: seen.add(x.get("title") or "", x.get("dur") or 0, x.get("channel"))
+    out = list(have); used = []
+    def take(L, why):
+        n0 = len(out)
+        for x in L or ():
+            i = x.get("id")
+            if not i or not VID.match(i) or i in exs: continue
+            t = x.get("title") or ""; d = x.get("dur") or 0
+            try:
+                if live_known(i): continue
+            except Exception: pass
+            if not long_ok and (d > 1200 or _RAD_JUNK.search(t)): continue
+            if seen.hit(t, d, x.get("channel")): continue
+            seen.add(t, d, x.get("channel")); exs.add(i); out.append(dict(x, why=x.get("why") or why))
+            if len(out) >= 24: break
+        if len(out) > n0: used.append(f"{why}+{len(out) - n0}")
+    full = lambda: len(out) >= 20 or time.time() > deadline
+    # 1) older good lists for this seed (instant, no network)
+    sd = _radio_stale(vid)
+    for f in ("wrap_out", "fast_out", "fast", "full", "rd", "base"):
+        if full(): break
+        take(sd.get(f), "same_lane")
+    c = _YTR.get(vid)
+    if c and not full(): take(c[0], "same_lane")
+    # 2) YouTube's own mix + related videos (one ~1 s call)
+    if not full():
+        try:
+            rc = _YTREL.get(vid)
+            if rc and time.time() - rc[1] < RADIO_TTL: mix, rel = [], rc[0]
+            else:
+                tl = max(1.5, min(5, deadline - time.time())); mix, rel = _tcall(tl + 0.5, _yti_next, vid, "RD" + vid, timeout=tl)
+            take(mix, "same_lane"); take(rel, "similar_artist")
+        except Exception as e: used.append(f"next:{type(e).__name__}")
+    # 3) radio of the last played / queued songs
+    for cid in [x for x in (getattr(_CH, "ids", None) or []) if x != vid][:3]:
+        if full(): break
+        try:
+            L = (_YTR.get(cid) or [None])[0] or _radio_stale(cid).get("rd") or _tcall(max(1.5, min(4, deadline - time.time())) + 0.5, _yti_next, cid, "RD" + cid, timeout=max(1.5, min(4, deadline - time.time())))[0]
+            take(L, "same_lane")
+        except Exception: continue
+    # 4) a plain search on the artist / song
+    if not full():
+        ch = re.sub(r"\s*-\s*topic$|vevo$", "", (_YTCH.get(vid) or (_seed_meta.get(vid) or {}).get("channel") or ""), flags=re.I).strip()
+        q = f"{ch} songs" if ch else (f"{st} similar songs" if st else "")
+        if q:
+            try:
+                tl = max(1.5, min(5, deadline - time.time())); r = _tcall(tl + 0.5, _fast_search, q, timeout=tl)
+                take([{"id": e.get("id"), "title": e.get("title"), "dur": e.get("duration"), "channel": e.get("channel")} for e in r.get("entries") or [] if not e.get("live_status")], "similar_artist")
+            except Exception as e: used.append(f"search:{type(e).__name__}")
+    return out, used
+_RG = {}; _RG_L = threading.Lock()
+def _radio_guard(fn, tag, budget):
+    """Answer inside `budget` seconds. Late, failed, empty or thin lists are topped up by _radio_rescue.
+    The real lookup keeps running in the background and fills the caches for the next call."""
+    def w(vid, ex=(), *a, **k):
+        t0 = time.time(); chid = list(getattr(_CH, "ids", None) or []); bg = getattr(_BG, "on", False)
+        try: key = (tag, vid, hash(repr((sorted(set(ex or ())), a, sorted(k.items())))))
+        except Exception: key = (tag, vid, t0)
+        with _RG_L:
+            ent = _RG.get(key)
+            if ent is None or (not ent[0].is_alive() and time.time() - ent[2] > 2):
+                box = {}
+                def go():
+                    _CH.ids = chid; _BG.on = bg
+                    try: box["r"] = fn(vid, ex, *a, **k)
+                    except Exception as e: box["e"] = e
+                ent = (threading.Thread(target=go, daemon=True, name="radio-" + tag), box, time.time()); _RG[key] = ent; ent[0].start()
+                if len(_RG) > 200:
+                    for kk in [kk for kk, vv in list(_RG.items()) if not vv[0].is_alive()]: _RG.pop(kk, None)
+        th, box = ent[0], ent[1]; th.join(max(0.5, budget - (time.time() - t0)))
+        got = box.get("r") if isinstance(box.get("r"), list) else []
+        if len(got) >= RESCUE_MIN: return got
+        why = "late" if th.is_alive() else ("error:" + type(box["e"]).__name__ if "e" in box else ("empty" if not got else "thin"))
+        _CH.ids = chid
+        try: res, used = _radio_rescue(vid, ex, a, k, got, t0 + budget + 3)
+        except Exception as e: res, used = got, [f"rescue:{type(e).__name__}"]
+        print(f"radio_guard {tag} {vid} {why} main={len(got)} out={len(res)} via={','.join(used) or '-'} ms={int((time.time() - t0) * 1000)}", flush=True)
+        return res
+    w.__wrapped__ = getattr(fn, "__wrapped__", fn); return w
+RADIO_FAST_BUDGET = float(cfg.get("RADIO_FAST_BUDGET", "7")); RADIO_FULL_BUDGET = float(cfg.get("RADIO_FULL_BUDGET", "16"))
+radio = _radio_guard(_rad_clean(_yt_radio(radio)), "full", RADIO_FULL_BUDGET); radio_fast = _radio_guard(_memo_radio(_rad_clean(_yt_radio(radio_fast)), "fast"), "fast", RADIO_FAST_BUDGET)  # radio-20261111
 _pg = {"m": 0, "b": b""}
 def _page():
     p = ROOT / "player.html"; m = p.stat().st_mtime
