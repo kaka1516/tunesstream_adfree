@@ -21,9 +21,9 @@ Uninstall: `%LOCALAPPDATA%\MusicStream\Uninstall Music Stream.cmd`.
 ```sh
 sh install.sh --yes --start
 ```
-or, straight from a **public** GitHub repo (replace OWNER):
+or, straight from a **public** GitHub repo :
 ```sh
-curl -fsSL https://raw.githubusercontent.com/OWNER/music-stream/main/get.sh | sh
+curl -fsSL https://raw.githubusercontent.com/kaka1516/tunesstream_adfree/main/get.sh | sh
 ```
 Then open **http://127.0.0.1:8125/setup** on that device to create the admin account. Stop with `./stop.sh`, start with `./start.sh`.
 
