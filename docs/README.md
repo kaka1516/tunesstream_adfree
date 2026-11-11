@@ -14,6 +14,7 @@ Music Stream is a self-hosted, ad-free music player. One Python process (`music_
 | [FAILOVER.md](FAILOVER.md) | set up, check or switch off the **automatic backup server** (a PC or old phone takes over the link only while the main phone is down) |
 | [UPDATES.md](UPDATES.md) | ship a change (box → phone/desktop), roll it back, and see how yt-dlp, visuals and the PWA update themselves |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | fix a symptom (bot-check, stuck songs, AV1-only video, tunnel down, Termux killed, lockout, slow search…) |
+| [MAKE_PUBLIC.md](MAKE_PUBLIC.md) | put it on the internet (instant link or your own address), and what to do after a device wipe |
 | [SECURITY.md](SECURITY.md) | review auth, roles, lockouts, recovery and which files are secret |
 
 **Superseded docs:**

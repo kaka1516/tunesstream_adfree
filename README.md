@@ -27,11 +27,30 @@ curl -fsSL https://raw.githubusercontent.com/kaka1516/tunesstream_adfree/main/ge
 ```
 Then open **http://127.0.0.1:8125/setup** on that device to create the admin account. Stop with `./stop.sh`, start with `./start.sh`.
 
-Nothing here opens your server to the internet. To publish it, see `docs/TUNNEL.md` (Cloudflare tunnel) — that step
-needs your own Cloudflare account and is deliberately not automatic.
+Installing never opens your server to the internet. Going public is a separate, deliberate step (next section).
 
 Secrets are **never** in this repo: `music.env`, `users.json`, `sessions.json`, `user_data/`, tunnel credentials,
 `cert.pem` and ssh keys are git-ignored. Start from `music.env.example` if you configure by hand.
+
+## Make it public (use it from anywhere)
+
+After installing, it only works at home. To get an https address you can open from anywhere:
+- **Windows:** double-click **Make Music Stream public** on the desktop. Choose **A** (instant link, no account, 30 seconds)
+  or **B** (your own permanent address; needs a free Cloudflare account and a domain). Turn off: **Stop public link**.
+- **Linux / Raspberry Pi / phone (Termux):** type `ms-public`, then choose **A** or **B**. Turn off: `ms-public off`.
+
+It refuses to go public until an admin account exists and the login is switched on. Full plain-English guide:
+[docs/MAKE_PUBLIC.md](docs/MAKE_PUBLIC.md).
+
+## If your device is wiped
+
+1. Install again in one step (above).
+2. If you have a backup, copy `users.json`, `sessions.json`, `user_data/` and `music.env` back into the app folder.
+   If you don't, create a new admin at `http://127.0.0.1:8125/setup`.
+3. Run **Make Music Stream public** / `ms-public`. Choose **A** for an instant link right now, or **B** with the **same address**
+   as before to get your permanent address back. The tool re-links the tunnel for you.
+
+Stuck? Use choice **A**, which always works without an account, and read "Stuck? What to do" in [docs/MAKE_PUBLIC.md](docs/MAKE_PUBLIC.md).
 
 ## Install (advanced options)
 | Platform | Command | Notes |

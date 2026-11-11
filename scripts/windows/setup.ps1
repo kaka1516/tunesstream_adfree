@@ -60,6 +60,7 @@ if ((Resolve-Path $Src).Path.TrimEnd('\') -ne (Resolve-Path $App).Path.TrimEnd('
   if ($LASTEXITCODE -ge 8) { throw "copy failed (robocopy $LASTEXITCODE)" }
 }
 Copy-Item -Force $ctl (Join-Path $Dir 'ms.ps1')
+Copy-Item -Force (Join-Path $Src 'scripts\windows\public.ps1') (Join-Path $Dir 'public.ps1')
 Ok "app in $App"
 
 # ---- 2. Python 3.9+ (use yours if present, else a private copy) ----
@@ -142,16 +143,19 @@ Ok "music.env ready (port $Port; key generated and kept private)"
 $startCmd = Join-Path $Dir 'Start Music Stream.cmd'; $stopCmd = Join-Path $Dir 'Stop Music Stream.cmd'
 Set-Content -Encoding ASCII $startCmd "@echo off`r`npowershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"%~dp0ms.ps1`" start -Open"
 Set-Content -Encoding ASCII $stopCmd "@echo off`r`npowershell -NoProfile -ExecutionPolicy Bypass -File `"%~dp0ms.ps1`" stop`r`nping -n 3 127.0.0.1 >nul"
+$pubCmd = Join-Path $Dir 'Make Music Stream public.cmd'; $pubOff = Join-Path $Dir 'Stop public link.cmd'
+Set-Content -Encoding ASCII $pubCmd "@echo off`r`npowershell -NoProfile -ExecutionPolicy Bypass -File `"%~dp0public.ps1`" %*`r`nif `"%~1`"==`"`" pause"
+Set-Content -Encoding ASCII $pubOff "@echo off`r`npowershell -NoProfile -ExecutionPolicy Bypass -File `"%~dp0public.ps1`" off`r`npause"
 Set-Content -Encoding ASCII (Join-Path $Dir 'Uninstall Music Stream.cmd') "@echo off`r`npowershell -NoProfile -ExecutionPolicy Bypass -File `"%~dp0ms.ps1`" uninstall`r`npause"
 if (-not $NoShortcuts) {
   Step "Desktop shortcuts"
   $ws = New-Object -ComObject WScript.Shell; $desk = [Environment]::GetFolderPath('Desktop')
   $ico = Join-Path $App 'favicon.ico'
-  foreach ($s in @(@('Music Stream', $startCmd), @('Stop Music Stream', $stopCmd))) {
+  foreach ($s in @(@('Music Stream', $startCmd), @('Stop Music Stream', $stopCmd), @('Make Music Stream public', $pubCmd), @('Stop public link', $pubOff))) {
     $l = $ws.CreateShortcut((Join-Path $desk ($s[0] + '.lnk'))); $l.TargetPath = $s[1]; $l.WorkingDirectory = $Dir; $l.WindowStyle = 7
     if (Test-Path $ico) { $l.IconLocation = $ico }; $l.Save()
   }
-  Ok "'Music Stream' and 'Stop Music Stream' are on your desktop"
+  Ok "Desktop: 'Music Stream', 'Stop Music Stream', 'Make Music Stream public', 'Stop public link'"
 }
 
 # ---- 8. start + health check ----
@@ -177,4 +181,10 @@ if (-not $hasUsers) {
 } elseif (-not $Quiet) { Start-Process "$url/" }
 Write-Host "Start: double-click 'Music Stream' on the desktop.  Stop: double-click 'Stop Music Stream'."
 Write-Host "Folder: $Dir   Logs: $App\server.log"
+Write-Host ""
+if ($hasUsers -and -not $Quiet) {
+  $a = Read-Host "Do you want to use Music Stream from outside your home too (make it public)? [y/N]"
+  if ($a -match '^[yY]') { & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Dir 'public.ps1') }
+  else { Write-Host "OK. You can do it later: double-click 'Make Music Stream public' on the desktop." }
+} else { Write-Host "To use it from outside your home later: create the admin first, then double-click 'Make Music Stream public' on the desktop." }
 exit 0

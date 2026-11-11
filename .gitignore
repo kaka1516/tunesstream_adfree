@@ -66,3 +66,8 @@ node_modules/
 /assets/chars/vrma/
 /assets/chars/vrm/Runa_Inoue.vrm
 Readme_VRMA_MotionPack*
+# ---- public-link private state (cloudflared binary, logs, tunnel config) ----
+.public/
+public/
+PUBLIC_LINK.txt
+PUBLIC LINK.txt

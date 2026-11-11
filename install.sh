@@ -72,6 +72,12 @@ if [ "$AUTO" = 1 ]; then case "$OS" in
   *) if command -v systemctl >/dev/null 2>&1; then mkdir -p "$HOME/.config/systemd/user" && render "$TPL" "$VPY" > "$HOME/.config/systemd/user/music-stream.service" && systemctl --user daemon-reload && systemctl --user enable music-stream && say "systemd user unit enabled (start: systemctl --user start music-stream; for boot without login: loginctl enable-linger ${USER:-$(id -un)})"; else say "no systemd: see deploy/ for templates"; fi;; esac
 else say "autostart not changed (pass --autostart to install $TPL, or --print-autostart to just view it)"; fi
 say "done. Start: ./start.sh   Open: http://127.0.0.1:$PORT/?k=<MUSIC_KEY from music.env, created on first start>"
+
+# ---- ms-public command (make it reachable from the internet; see docs/MAKE_PUBLIC.md) ----
+BIN="$HOME/.local/bin"; [ "$OS" = termux ] && BIN="$PREFIX/bin"
+mkdir -p "$BIN" 2>/dev/null && printf '#!/bin/sh\nexec sh "%s/scripts/ms-public.sh" "$@"\n' "$DIR" > "$BIN/ms-public" && chmod +x "$BIN/ms-public" \
+  && say "installed the 'ms-public' command ($BIN/ms-public)" || say "could not install ms-public into $BIN; use: sh $DIR/ms-public"
+case ":$PATH:" in *":$BIN:"*) ;; *) say "note: $BIN is not on your PATH yet; until you log in again use: sh $DIR/ms-public";; esac
 PORT="$(sed -n 's/^MUSIC_PORT=//p' music.env | head -1)"
 if [ "$START" = 1 ]; then
   sh ./start.sh
@@ -80,3 +86,5 @@ if [ "$START" = 1 ]; then
   else say "running. First run: open http://127.0.0.1:$PORT/setup in a browser ON THIS DEVICE to create the admin account (stop: ./stop.sh)"
        say "headless? create it here instead: $VPY ms_users.py create-admin \"$DIR\" <name> <file-with-password>"; fi
 fi
+if [ -f users.json ] && grep -q '"admin"' users.json 2>/dev/null; then say "to use it from outside your home: run  ms-public"
+else say "after you create the admin account, run  ms-public  to use it from outside your home (instant link or your own address)"; fi

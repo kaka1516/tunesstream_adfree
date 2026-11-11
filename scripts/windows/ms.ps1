@@ -12,7 +12,7 @@ function Test-Health($port) { try { $r = Invoke-WebRequest -UseBasicParsing -Tim
 $port = Get-Port; $url = "http://127.0.0.1:$port/"
 switch ($Cmd.ToLower()) {
   'start' {
-    if ((Get-Mine).Count -gt 0 -and (Test-Health $port)) { Say "Already running: $url" }
+    if (@(Get-Mine).Count -gt 0 -and (Test-Health $port)) { Say "Already running: $url" }
     else {
       if (-not (Test-Path $vpy)) { throw "Not installed (missing $vpy). Run install.cmd again." }
       $env:PYTHONUNBUFFERED = '1'; $env:PYTHONIOENCODING = 'utf-8'
@@ -28,7 +28,7 @@ switch ($Cmd.ToLower()) {
     }
   }
   'stop' {
-    $m = Get-Mine
+    $m = @(Get-Mine)
     foreach ($p in $m) { try { Stop-Process -Id $p.ProcessId -Force -ErrorAction Stop } catch {} }
     if ($m.Count) { Say "Stopped Music Stream ($($m.Count) process(es))." } else { Say "Music Stream was not running." }
   }
@@ -37,8 +37,9 @@ switch ($Cmd.ToLower()) {
   'open' { Start-Process $url }
   'uninstall' {
     & $PSCommandPath stop -Quiet
+    $pp = Join-Path $Dir 'public.ps1'; if (Test-Path $pp) { & powershell -NoProfile -ExecutionPolicy Bypass -File $pp off | Out-Null }
     $desk = [Environment]::GetFolderPath('Desktop')
-    foreach ($n in 'Music Stream.lnk', 'Stop Music Stream.lnk') { Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $desk $n) }
+    foreach ($n in 'Music Stream.lnk', 'Stop Music Stream.lnk', 'Make Music Stream public.lnk', 'Stop public link.lnk') { Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $desk $n) }
     $a = Read-Host "Shortcuts removed and server stopped. Also delete $Dir including your accounts and settings? Type DELETE to confirm"
     if ($a -ceq 'DELETE') { Set-Location $env:TEMP; Remove-Item -Recurse -Force $Dir; Write-Host "Deleted." } else { Write-Host "Folder kept." }
   }
