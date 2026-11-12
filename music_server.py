@@ -675,6 +675,7 @@ def _vwarm(vid, c):
         info = None; err = None; _bg_blocked(vid)  # play4-20261111
         for kind in _kinds(vid):  # play2-20261110
             try: info = _ydl_info(vid, vfmt("v360" + c), kind); break
+            except ExtractBusy: raise  # perf-20261112
             except Exception as e: err = e; _kind_bad(vid, kind)
         if info is None: raise err or RuntimeError("no info")
         ls = _live_status(info); _live_note(vid, ls)
@@ -715,22 +716,23 @@ def _url_expire(u):
 def _ucache_path(vid, q):
     safe = re.sub(r"[^A-Za-z0-9_-]+", "_", f"{vid}_{q}")
     return UCACHE_DIR / f"{safe}.json"
+UC_MARGIN = int(cfg.get("UCACHE_MARGIN", "900"))  # perf-20261112: reuse a stream URL until ~15 min before googlevideo's expire
 def _ucache_load(vid, q):
     key = (vid, q); c = _ucache.get(key)
-    if c and c.get("url") and (c.get("expire") or 0) > time.time() + 60:
+    if c and c.get("url") and (c.get("expire") or 0) > time.time() + UC_MARGIN:
         if _live_url(c["url"]): _live_note(vid, "is_live"); _ucache_invalidate(vid, q); raise LiveUnsupported("is_live")
         return c
     p = _ucache_path(vid, q)
     if p.exists():
         try:
             c = json.loads(p.read_text())
-            if c.get("url") and (c.get("expire") or 0) > time.time() + 60:
+            if c.get("url") and (c.get("expire") or 0) > time.time() + UC_MARGIN:
                 if _live_url(c["url"]): _live_note(vid, "is_live"); _ucache_invalidate(vid, q); raise LiveUnsupported("is_live")  # ms-v77: pre-v77 cached live manifest
                 _ucache[key] = c; return c
         except Exception: pass
     return None
 def _ucache_save(vid, q, url, headers):
-    exp = _url_expire(url) or (int(time.time()) + 4 * 3600)
+    exp = _url_expire(url) or (int(time.time()) + 3600 + UC_MARGIN)  # perf-20261112: no expire= in the URL -> keep ~1 h
     c = {"url": url, "headers": headers or {}, "expire": exp, "cached_at": int(time.time()), "vid": vid, "q": q}
     _ucache[(vid, q)] = c
     try: _ucache_path(vid, q).write_text(json.dumps(c))
@@ -766,7 +768,8 @@ def _ydl_get(kind, fmt):
         lst = _YP["free"].get((kind, fmt))
         if lst: return lst.pop()
     o = {"quiet": True, "no_warnings": True, "format": fmt, "skip_download": True, "noplaylist": True, **_js_opts()}
-    if kind == "vis": o["extractor_args"] = {"youtube": {"player_client": ["visionos"]}}
+    o["extractor_args"] = {"youtube": {"skip": ["translated_subs"]}}  # perf-20261112
+    if kind == "vis": o["extractor_args"]["youtube"]["player_client"] = ["visionos"]
     y = yt_dlp.YoutubeDL(o); y._ms_n = 0; y._ms_mod = yt_dlp
     return y
 def _ydl_put(kind, fmt, y, ok):
@@ -800,6 +803,42 @@ def _vis_health(ok):
         _VSTAT.update(vis_ok=0, vis_fail=0, off_until=time.time() + 1800); print("xt visionos failing -> default clients for 30 min", flush=True)  # play5-20261111
     elif n >= 40: _VSTAT.update(vis_ok=_VSTAT["vis_ok"] // 2, vis_fail=_VSTAT["vis_fail"] // 2)
 _TLF = threading.local(); _FGV = {}; _BGX = threading.BoundedSemaphore(1); _BOTC = [0.0]  # play4-20261111
+# --- perf-20261112: at most MUSIC_YTDLP_MAX yt-dlp lookups at once (stress test: 15 parallel lookups took 25-42 s each on the phone).
+# A listener waits up to MUSIC_YTDLP_WAIT s for a slot, then gets a fast "busy" (HTTP 503 + Retry-After) and the player retries.
+class ExtractBusy(RuntimeError): pass
+def _cfg_int(k, d):
+    try: return max(1, int(os.environ.get(k) or cfg.get(k) or d))
+    except Exception: return d
+XT_MAX = _cfg_int("MUSIC_YTDLP_MAX", 4); XT_WAIT = float(_cfg_int("MUSIC_YTDLP_WAIT", 12)); XT_BG_WAIT = 30.0
+class _XGate:
+    def __init__(s, n): s.n = n; s.act = 0; s.fgw = 0; s.cv = threading.Condition(); s.stat = {"busy": 0, "max_act": 0, "waits": 0}
+    def acquire(s, fg, timeout):
+        end = time.time() + timeout
+        with s.cv:
+            if fg: s.fgw += 1
+            try:
+                while True:
+                    if fg: free = s.n - s.act
+                    elif s.fgw: free = 0                       # a listener is waiting: background lookups step aside
+                    else: free = max(1, s.n - 1) - s.act       # background never takes the last slot
+                    if free > 0:
+                        s.act += 1; s.stat["max_act"] = max(s.stat["max_act"], s.act); return True
+                    left = end - time.time()
+                    if left <= 0:
+                        s.stat["busy"] += 1; return False
+                    s.stat["waits"] += 1; s.cv.wait(min(left, 1.0))
+            finally:
+                if fg: s.fgw -= 1
+    def release(s):
+        with s.cv: s.act = max(0, s.act - 1); s.cv.notify_all()
+    def info(s): return {"max": s.n, "active": s.act, "waiting": s.fgw, **s.stat}
+_XG = _XGate(XT_MAX)
+class _xslot:
+    def __enter__(s):
+        fg = getattr(_TLF, "fg", False)
+        if not _XG.acquire(fg, XT_WAIT if fg else XT_BG_WAIT): raise ExtractBusy("server busy: too many song lookups at once")
+        return s
+    def __exit__(s, *a): _XG.release()
 def _ydl_info(vid, fmt, kind):
     if getattr(_TLF, "fg", False): return _ydl_info0(vid, fmt, kind)
     got = False; end = time.time() + 25
@@ -820,11 +859,12 @@ def _ydl_info0(vid, fmt, kind):
         if "confirm you" in str(e): _BOTC[0] = time.time()
         raise
 def _ydl_info1(vid, fmt, kind):
-    y = _ydl_get(kind, fmt); ok = False
-    try:
-        info = y.extract_info(f"https://www.youtube.com/watch?v={vid}", download=False); ok = True
-        return info
-    finally: _ydl_put(kind, fmt, y, ok)
+    with _xslot():  # perf-20261112
+        y = _ydl_get(kind, fmt); ok = False
+        try:
+            info = y.extract_info(f"https://www.youtube.com/watch?v={vid}", download=False); ok = True
+            return info
+        finally: _ydl_put(kind, fmt, y, ok)
 _FL_INF = {}; _FL_L = threading.Lock(); _FL_SEM = threading.BoundedSemaphore(max(1, int(cfg.get("FLAT_MAX", "2")))); _BG = threading.local()  # play2b-20261110
 def _flat_inproc(url, n=None, timeout=45):
     """Same JSON as `yt-dlp --flat-playlist -J [--playlist-end n] url`, without starting a new python + yt-dlp import."""
@@ -890,7 +930,7 @@ def _extract_inproc(vid, q="std"):
             if kind == "vis": _vis_health(True)
             print(f"xt {vid} q={q} client={kind} fmt={info.get('format_id')} ms={int((time.time() - t0) * 1000)} ok", flush=True)
             return u, {k: str(v) for k, v in dict(hdr).items()}
-        except LiveUnsupported: raise
+        except (LiveUnsupported, ExtractBusy): raise  # perf-20261112
         except Exception as e:
             e1 = e
             if "confirm you" not in str(e): _kind_bad(vid, kind)  # play5-20261111
@@ -899,8 +939,9 @@ def _extract_inproc(vid, q="std"):
             if _UPCOMING_ERR.search(str(e)): break
     if True:
         if _UPCOMING_ERR.search(str(e1)): _live_note(vid, "is_upcoming"); raise LiveUnsupported("is_upcoming") from e1
-        out = subprocess.run(YTDLP + ["-f", fmt, "-g", "--no-warnings", f"https://www.youtube.com/watch?v={vid}"],
-                             capture_output=True, text=True, timeout=60, creationflags=NOFLAGS)
+        with _xslot():  # perf-20261112: the CLI fallback is a whole new python; same cap
+            out = subprocess.run(YTDLP + ["-f", fmt, "-g", "--no-warnings", f"https://www.youtube.com/watch?v={vid}"],
+                                 capture_output=True, text=True, timeout=60, creationflags=NOFLAGS)
         lines = (out.stdout or "").strip().splitlines()
         if not lines: raise RuntimeError(f"extract failed: {e1}") from e1
         if _live_url(lines[0]): _live_note(vid, "is_live"); raise LiveUnsupported("is_live")
@@ -3374,8 +3415,8 @@ class H(BaseHTTPRequestHandler):
                 if phase == "prewarm":
                     return self.send(200, json.dumps(radio_prewarm(vid)), "application/json")
                 if phase == "fast":
-                    return self.send(200, json.dumps(radio_fast(vid, ex, exf, qs.get("mix", "")[:12], qs.get("ta", "")[:600].split("|"), qs.get("sk", "")[:1500].split("|"), qs.get("lk", "")[:1500].split("|"), [x for x in qs.get("lk_ids", "").split(",") if VID.match(x)][:80], qs.get("sch", "")[:120])), "application/json")
-                return self.send(200, json.dumps(radio(vid, ex, qs.get("ta", "")[:600].split("|"), qs.get("sk", "")[:1500].split("|"), qs.get("lk", "")[:1500].split("|"), qs.get("lang", "")[:60], qs.get("mix", "")[:12], [x for x in qs.get("lk_ids", "").split(",") if VID.match(x)][:80], qs.get("sch", "")[:120], exf)), "application/json")
+                    return self._radio_out(radio_fast(vid, ex, exf, qs.get("mix", "")[:12], qs.get("ta", "")[:600].split("|"), qs.get("sk", "")[:1500].split("|"), qs.get("lk", "")[:1500].split("|"), [x for x in qs.get("lk_ids", "").split(",") if VID.match(x)][:80], qs.get("sch", "")[:120]))
+                return self._radio_out(radio(vid, ex, qs.get("ta", "")[:600].split("|"), qs.get("sk", "")[:1500].split("|"), qs.get("lk", "")[:1500].split("|"), qs.get("lang", "")[:60], qs.get("mix", "")[:12], [x for x in qs.get("lk_ids", "").split(",") if VID.match(x)][:80], qs.get("sch", "")[:120], exf))
             if u.path == "/api/chips": return self.send(200, json.dumps(chips(qs.get("a", "").split("|")[:3])), "application/json")
             if u.path == "/api/import": return self.send(200, json.dumps(import_safe(qs.get("t", ""))), "application/json")
             if u.path == "/api/lyrics":
@@ -3466,6 +3507,7 @@ class H(BaseHTTPRequestHandler):
                     try:
                         with _fg(vid): _vwarm(vid, vc)  # play4-20261111
                     except LiveUnsupported as e: return self._live409(vid, e.status)
+                    except ExtractBusy: return self._busy503()  # perf-20261112
                     except Exception: pass  # fall back to the per-rendition extraction below
                 bl = None
                 for _try in range(3):
@@ -3474,6 +3516,7 @@ class H(BaseHTTPRequestHandler):
                         break
                     except LiveUnsupported as e:
                         return self._live409(vid, e.status)
+                    except ExtractBusy: return self._busy503()  # perf-20261112
                     except Exception:
                         if _try == 2: return self.send(502, "upstream error", "text/plain")
                         time.sleep(0.4 * (_try + 1))
@@ -3516,7 +3559,7 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/cmd" and not (_keyok(qs.get("k", "")) or _auth_cookie_ok(self)): return self.send(403, "forbidden", "text/plain")  # sec-20261110
             if u.path == "/cmd": return self.send(200, music_cmd(qs.get("c", ""), qs.get("a", "").strip()), "text/plain; charset=utf-8")
             if u.path == "/status": return self.send(200, status(), "text/plain")
-            if u.path == "/api/stats": return self.send(200, json.dumps({"active_dl": active_dls(), "blobs": len(_blobs), "max_fetch": MAX_FETCH, "max_active": MAX_ACTIVE, "rooms": len(ROOMS)}), "application/json")
+            if u.path == "/api/stats": return self.send(200, json.dumps({"active_dl": active_dls(), "blobs": len(_blobs), "max_fetch": MAX_FETCH, "max_active": MAX_ACTIVE, "xt": _XG.info(), "ucache": len(_ucache), "rooms": len(ROOMS)}), "application/json")
             if u.path == "/api/home":
                 return self.send(200, json.dumps(home_feed(qs.get("langs", "")[:40], qs.get("lk_ids", "")[:900], qs.get("seed", "")[:20], qs.get("hist", "")[:900])), "application/json")
             if u.path == "/api/played":
@@ -3531,6 +3574,20 @@ class H(BaseHTTPRequestHandler):
         except Exception as e:
             return self.send(500, "error: " + type(e).__name__, "text/plain")
         self.send(404, "no", "text/plain")
+    def _radio_out(self, res):  # perf-20261112: send the list, then warm the next 2 songs' stream URLs in the background
+        r = self.send(200, json.dumps(res), "application/json")
+        try:
+            items = res if isinstance(res, list) else next((v for v in (res or {}).values() if isinstance(v, list) and v and isinstance(v[0], dict) and v[0].get("id")), [])
+            ids = [x["id"] for x in items if isinstance(x, dict) and VID.match(str(x.get("id") or ""))][:2]
+            if ids: _warm_enqueue(ids, "std")
+        except Exception: pass
+        return r
+    def _busy503(self):  # perf-20261112: too many lookups at once -> quick, retryable answer instead of a 20 s hang
+        self.send_response(503); self.send_header("Retry-After", "2"); self.send_header("Content-Type", "application/json")
+        self.send_header("Cache-Control", "no-store"); b = json.dumps({"busy": True, "retry": 2, "msg": "busy, retrying"}).encode()
+        self.send_header("Content-Length", str(len(b))); self.end_headers()
+        try: self.wfile.write(b)
+        except Exception: pass
     def _live409(self, vid, st):
         self.send_response(409); self.send_header("Content-Type", "application/json"); self.send_header("X-MS-Unsupported", "live")
         b = json.dumps({"error": "live_unsupported", "id": vid, "live_status": st,
