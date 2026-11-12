@@ -36,6 +36,8 @@ lcache/
 uat/
 *.log
 *.pid
+*.workers
+*.lock
 ytdlp_version.txt
 ytdlp_heal.txt
 ytdlp_update.json

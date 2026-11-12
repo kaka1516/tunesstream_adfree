@@ -1,6 +1,14 @@
 """Ad-free YouTube/YTM audio service: web UI + HTTP stream + download + local headless playback + Telegram.
 Audio is fetched with yt-dlp (no ad segments) and transcoded by ffmpeg. Separate from V10/OKI on purpose."""
-import urllib.error, os, re, json, secrets, subprocess, threading, time, urllib.parse, urllib.request, html
+import os, sys
+from pathlib import Path as _PathForCluster
+# cluster-20261113: the public-port process stays a slim TCP front (no yt-dlp) when MUSIC_WORKERS>1.
+if __name__ == "__main__" and not os.environ.get("MUSIC_WORKER_ID"):
+    sys.path.insert(0, str(_PathForCluster(__file__).resolve().parent))
+    import ms_cluster
+    if ms_cluster.should_supervise():
+        raise SystemExit(ms_cluster.run_supervisor(script=str(_PathForCluster(__file__).resolve())))
+import urllib.error, re, json, secrets, subprocess, threading, time, urllib.parse, urllib.request, html
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 ROOT = Path(__file__).parent
@@ -3152,7 +3160,8 @@ def _warm_worker():
         _fg_wait()  # speed-20261110
         try: warm_url(*job, follow=True)  # lat-20261111
         except Exception: pass
-threading.Thread(target=_warm_worker, daemon=True).start()
+if os.environ.get('MUSIC_WORKER_BG', '1') != '0':
+    threading.Thread(target=_warm_worker, daemon=True).start()
 WARM_PER_HOUR = max(0, int(cfg.get("WARM_PER_HOUR", "60") or 0)); _QW = {"n": 0, "hour": 0, "last": ""}  # perf2-20261112
 def _quiet_warm():
     """When nobody has started a song for 2 min: pre-resolve stream URLs of the most played and recently played songs
@@ -3177,7 +3186,8 @@ def _quiet_warm():
                 except Exception: pass
                 time.sleep(5)
         except Exception as e: print(f"quiet warm skip {type(e).__name__}", flush=True)
-threading.Thread(target=_quiet_warm, daemon=True, name="quiet-warm").start()
+if os.environ.get('MUSIC_WORKER_BG', '1') != '0':
+    threading.Thread(target=_quiet_warm, daemon=True, name="quiet-warm").start()
 def _warm_enqueue(ids, fq):
     with _WARMQ_L:
         n = 0
@@ -3675,7 +3685,15 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/cmd" and not (_keyok(qs.get("k", "")) or _auth_cookie_ok(self)): return self.send(403, "forbidden", "text/plain")  # sec-20261110
             if u.path == "/cmd": return self.send(200, music_cmd(qs.get("c", ""), qs.get("a", "").strip()), "text/plain; charset=utf-8")
             if u.path == "/status": return self.send(200, status(), "text/plain")
-            if u.path == "/api/stats": return self.send(200, json.dumps({"active_dl": active_dls(), "blobs": len(_blobs), "max_fetch": MAX_FETCH, "max_active": MAX_ACTIVE, "xt": _XG.info(), "ucache": len(_ucache), "lookup_helper": {k: v for k, v in _LK.items() if k not in ("key", "url")} | {"on": bool(_LK["url"]), "up": bool(_LK["url"]) and time.time() >= _LK["down_until"]}, "quiet_warm": dict(_QW), "rooms": len(ROOMS)}), "application/json")
+            if u.path == "/api/stats":
+                _cl = {}
+                try:
+                    import ms_cluster as _msc
+                    _cl = json.loads((_msc.CLUSTER_JSON).read_text(encoding="utf-8")) if _msc.CLUSTER_JSON.exists() else {}
+                except Exception:
+                    _cl = {}
+                return self.send(200, json.dumps({"active_dl": active_dls(), "blobs": len(_blobs), "max_fetch": MAX_FETCH, "max_active": MAX_ACTIVE, "xt": _XG.info(), "ucache": len(_ucache), "lookup_helper": {k: v for k, v in _LK.items() if k not in ("key", "url")} | {"on": bool(_LK["url"]), "up": bool(_LK["url"]) and time.time() >= _LK["down_until"]}, "quiet_warm": dict(_QW), "rooms": len(ROOMS),
+                    "worker": os.environ.get("MUSIC_WORKER_ID"), "workers": _cl.get("n") or 1, "worker_ports": _cl.get("ports") or []}), "application/json")
             if u.path == "/api/home":
                 return self.send(200, json.dumps(home_feed(qs.get("langs", "")[:40], qs.get("lk_ids", "")[:900], qs.get("seed", "")[:20], qs.get("hist", "")[:900])), "application/json")
             if u.path == "/api/played":
@@ -3794,11 +3812,16 @@ def tg_loop(tok, allowed):
 if __name__ == "__main__":
     # ms-v75: background yt-dlp jobs start only when the server runs, never on `import music_server` (tests/tools).
     # ensure_ytdlp honours YTDLP_AUTO_UPDATE; the hourly smoke watch still runs (read-only unless auto-update is on).
-    ensure_ytdlp(background=True)
-    ytdlp_watch()
-    ytdlp_daily()
-    tok = cfg.get("MUSIC_BOT_TOKEN")
-    if tok: threading.Thread(target=tg_loop, args=(tok, set(filter(None, cfg.get("MUSIC_ALLOWED_CHATS", "").split(","))),), daemon=True).start()
+    # cluster-20261113: workers 1..n-1 skip background jobs; worker 0 (or a single process) keeps them.
+    import ms_cluster
+    ms_cluster.watch_parent()
+    _bg = os.environ.get("MUSIC_WORKER_BG", "1") != "0"
+    if _bg:
+        ensure_ytdlp(background=True)
+        ytdlp_watch()
+        ytdlp_daily()
+        tok = cfg.get("MUSIC_BOT_TOKEN")
+        if tok: threading.Thread(target=tg_loop, args=(tok, set(filter(None, cfg.get("MUSIC_ALLOWED_CHATS", "").split(","))),), daemon=True).start()
     class _Srv(ThreadingHTTPServer):  # perf2-20261112: no traceback spam for expected "busy" / client hang-ups
         # backlog-20261112: Python's default listen queue is 5; a login storm / burst of 100 new tunnel connections
         # overflowed it and cloudflared answered 502. MUSIC_BACKLOG (env or music.env), default 128.
@@ -3807,7 +3830,8 @@ if __name__ == "__main__":
             e = _sys.exc_info()[1]
             if isinstance(e, (ExtractBusy, BrokenPipeError, ConnectionResetError, ConnectionAbortedError)): return
             return super().handle_error(request, client_address)
-    _Srv((cfg.get("MUSIC_BIND", "0.0.0.0"), PORT), H).serve_forever()
+    _bind = os.environ.get("MUSIC_BIND") or cfg.get("MUSIC_BIND", "0.0.0.0")
+    _Srv((_bind, PORT), H).serve_forever()
 
 
 

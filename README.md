@@ -66,7 +66,7 @@ Options: `--no-ffmpeg` (`--with-ffmpeg` to force it on OpenWrt), `--no-node`, `-
 Re-running is safe: existing `music.env` values (port, bind, `YTDLP_AUTO_UPDATE`, …) are kept, never overwritten. The installer never starts the server and never prints your key;
 `MUSIC_KEY` is created in `music.env` on first start. Open `http://<host>:<port>/?k=<MUSIC_KEY>`.
 
-Start: `./start.sh` (Linux/Termux/OpenWrt; refuses to start a second copy while `server.pid` is alive), `start.bat` or `scripts\start.ps1` (Windows).
+Start: `./start.sh` (Linux/Termux/OpenWrt; refuses to start a second copy while `server.pid` is alive), `start.bat` or `scripts\start.ps1` (Windows). On a phone or any machine with more than one usable core the server starts up to 3 worker processes behind the same public port (`MUSIC_WORKERS=auto`; set `MUSIC_WORKERS=1` for the old single process).
 
 ## Updating yt-dlp (explicit)
 YouTube changes break extractors; the fix is a newer yt-dlp. Fresh installs set `YTDLP_AUTO_UPDATE=0`, so nothing

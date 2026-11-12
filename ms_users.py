@@ -101,6 +101,70 @@ def _atomic_write(path, obj, secure=True):
         try: os.chmod(path, 0o600)
         except Exception: pass
 
+
+# cluster-20261113: process-safe lock so several server workers can share users.json / sessions.json.
+class _FileLock:
+    """Reentrant (same thread) exclusive file lock. Works on Linux/Android and Windows."""
+    def __init__(self, path, timeout=15):
+        self.path = str(path); self.timeout = timeout; self.fd = None
+        self._owner = None; self._count = 0
+        self._tlock = threading.Lock()
+    def acquire(self):
+        me = threading.get_ident()
+        with self._tlock:
+            if self._owner == me:
+                self._count += 1; return
+        t0 = time.time()
+        d = os.path.dirname(self.path)
+        if d:
+            try: os.makedirs(d, exist_ok=True)
+            except Exception: pass
+        while True:
+            if self.fd is None:
+                self.fd = os.open(self.path, os.O_CREAT | os.O_RDWR, 0o600)
+            try:
+                if os.name == "nt":
+                    import msvcrt
+                    os.lseek(self.fd, 0, os.SEEK_SET)
+                    msvcrt.locking(self.fd, msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(self.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                with self._tlock:
+                    self._owner = me; self._count = 1
+                return
+            except (OSError, IOError, OverflowError):
+                if time.time() - t0 > self.timeout:
+                    raise TimeoutError("lock timeout: " + self.path)
+                time.sleep(0.01)
+    def release(self):
+        me = threading.get_ident()
+        with self._tlock:
+            if self._owner != me:
+                return
+            self._count -= 1
+            if self._count > 0:
+                return
+            self._owner = None
+            fd, self.fd = self.fd, None
+        if fd is not None:
+            try:
+                if os.name == "nt":
+                    import msvcrt
+                    os.lseek(fd, 0, os.SEEK_SET)
+                    msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(fd, fcntl.LOCK_UN)
+            except Exception:
+                pass
+            try: os.close(fd)
+            except Exception: pass
+    def __enter__(self):
+        self.acquire(); return self
+    def __exit__(self, *a):
+        self.release()
+
 def _lock_net(ipkey):  # lock64-20261111: "cf:2001:db8:1:2:aa::5" -> "cf:2001:db8:1:2::/64"; IPv4 unchanged (/32)
     k = ipkey or "?"
     try:
@@ -114,11 +178,28 @@ def _lock_net(ipkey):  # lock64-20261111: "cf:2001:db8:1:2:aa::5" -> "cf:2001:db
     except Exception: pass
     return k
 
+
+class _MutCtx:
+    def __init__(self, store):
+        self.store = store
+    def __enter__(self):
+        self.store._plock.acquire()
+        self.store.lock.acquire()
+        # _users/_sess already reload when the file mtime changes; do not wipe unsaved in-memory edits.
+        return self.store
+    def __exit__(self, *a):
+        try: self.store.lock.release()
+        finally: self.store._plock.release()
+
 class Store:
     def __init__(self, d):
         self.d = Path(d); self.uf = self.d / "users.json"; self.sf = self.d / "sessions.json"
         self.lock = threading.RLock(); self._u = None; self._um = None; self._s = None; self._sm = None
         self._fails = {}; self._flock = threading.Lock(); self._dirty_s = 0.0
+        self._plock = _FileLock(self.d / "users.lock")  # cluster-20261113: cross-process users/sessions writes
+    def _mutate(self):
+        """Exclusive process+thread lock and force a disk reload before read-modify-write."""
+        return _MutCtx(self)
     # ---- load/save (reloads when the file changed on disk)
     def _mt(self, f):
         try: return f.stat().st_mtime_ns
@@ -169,7 +250,7 @@ class Store:
     # users2-20261111 ---------------------------------------------------------------------------------------------
     def set_name(self, u, name):
         u = norm_user(u); name = "".join(c for c in str(name or "") if c.isprintable()).strip()[:40]
-        with self.lock:
+        with self._mutate():
             us = self._users()
             if u not in us: return False, "No such user."
             if name: us[u]["name"] = name
@@ -178,7 +259,7 @@ class Store:
         return True, None
     def set_disabled(self, u, off):
         u = norm_user(u)
-        with self.lock:
+        with self._mutate():
             us = self._users()
             if u not in us: return False, "No such user."
             if off and us[u].get("role") == "admin" and len([n for n in self.admins() if not us[n].get("disabled")]) <= 1:
@@ -192,7 +273,7 @@ class Store:
     def set_adult_viz(self, u, on):  # adult-viz-20261111
         """Admin-only per-user 18+ visuals flag, off by default (missing key)."""
         u = norm_user(u)
-        with self.lock:
+        with self._mutate():
             us = self._users()
             if u not in us: return False, "No such user."
             if on: us[u]["adult_viz"] = True
@@ -211,7 +292,7 @@ class Store:
         return sorted(L, key=lambda x: -x["last_active"])
     def drop_session_id(self, u, sid, keep_tok=""):
         u = norm_user(u); keep = _th(keep_tok) if keep_tok else ""
-        with self.lock:
+        with self._mutate():
             ss = self._sess(); dead = [k for k, v in ss.items() if v.get("u") == u and (k.startswith(sid) if sid else k != keep)]
             if sid and len(dead) != 1: return False, "No such device."
             for k in dead: ss.pop(k, None)
@@ -219,7 +300,7 @@ class Store:
         return True, len(dead)
     def reset_settings(self, u):
         u = norm_user(u)
-        with self.lock:
+        with self._mutate():
             if u not in self._users(): return False, "No such user."
             j = self.get_state(u); j["ls"] = {k: v for k, v in j["ls"].items() if k in LIB_KEYS}
             j["rev"] = int(j["rev"]) + 1; j["ts"] = time.time(); self.udir(); _atomic_write(self.state_path(u), j, secure=False)
@@ -229,7 +310,7 @@ class Store:
         if e: return False, e
         if role not in ("admin", "user"): return False, "Bad role."
         h = hash_pw(pw)  # slow part outside the lock
-        with self.lock:
+        with self._mutate():
             us = self._users()
             if only_if_empty and us: return False, "Setup is already done. Sign in instead."
             if u in us: return False, "That username already exists."
@@ -245,7 +326,7 @@ class Store:
         if x.get("role") != "admin": return False, "That account is not an admin."
         ok, e = self.set_password(u, pw)
         if not ok: return ok, e
-        with self.lock:
+        with self._mutate():
             us = self._users(); us[u].pop("disabled", None); us[u].pop("mcp", None); self._save_users()
         with self._flock: self._fails.clear()
         return True, None
@@ -253,7 +334,7 @@ class Store:
         u = norm_user(u); e = pw_problem(pw)
         if e: return False, e
         h = hash_pw(pw)
-        with self.lock:
+        with self._mutate():
             us = self._users()
             if u not in us: return False, "No such user."
             us[u]["hash"] = h; us[u]["pwv"] = int(us[u].get("pwv", 1)) + 1; us[u].pop("mcp", None)
@@ -262,7 +343,7 @@ class Store:
     def set_role(self, u, role):
         u = norm_user(u)
         if role not in ("admin", "user"): return False, "Bad role."
-        with self.lock:
+        with self._mutate():
             us = self._users()
             if u not in us: return False, "No such user."
             if role == "user" and us[u].get("role") == "admin" and len(self.admins()) <= 1:
@@ -271,7 +352,7 @@ class Store:
         return True, None
     def remove(self, u):
         u = norm_user(u)
-        with self.lock:
+        with self._mutate():
             us = self._users()
             if u not in us: return False, "No such user."
             if us[u].get("role") == "admin" and len(self.admins()) <= 1: return False, "You can't remove the last admin."
@@ -328,7 +409,7 @@ class Store:
             return "bad", None
         with self._flock: self._fails.pop("ui:" + u + "|" + _lock_net(ipkey), None)  # users3-20261111
         if x.get("disabled"): return "disabled", None  # users2-20261111
-        with self.lock:
+        with self._mutate():
             us = self._users()
             if u in us: us[u]["last_login"] = int(now); self._save_users()
         return "ok", u
@@ -336,7 +417,7 @@ class Store:
     def new_session(self, u, keep, now=None, ua=""):
         now = time.time() if now is None else now; u = norm_user(u)
         tok = secrets.token_urlsafe(32)
-        with self.lock:
+        with self._mutate():
             x = self._users().get(u)
             if not x: return None
             ss = self._sess()
@@ -350,26 +431,43 @@ class Store:
         """-> (user_info_dict, renewed_keep_flag_or_None) ; (None, None) if invalid."""
         if not tok or not _TOK_RE.match(tok): return None, None
         now = time.time() if now is None else now
+        h = _th(tok)
+        def _info(s, x, ren=None):
+            return {"u": s["u"], "role": x.get("role", "user"), "keep": bool(s.get("keep")), "mcp": bool(x.get("mcp")), "name": x.get("name") or "", "adult_viz": bool(x.get("adult_viz"))}, ren
         with self.lock:
-            ss = self._sess(); h = _th(tok); s = ss.get(h)
+            ss = self._sess(); s = ss.get(h)
             if not s: return None, None
             x = self._users().get(s.get("u"))
             if not x or s.get("exp", 0) <= now or s.get("pwv") != x.get("pwv", 1) or x.get("disabled"):  # users2-20261111
+                need = "drop"
+            elif now - s.get("ren", 0) >= (RENEW_KEEP if s.get("keep") else RENEW_SHORT):
+                need = "renew"
+            elif now - (s.get("seen") or 0) >= 300 or (self._dirty_s and now - self._dirty_s < 1):
+                need = "touch"
+            else:
+                return _info(s, x)
+        # cluster-20261113: only the write path takes the cross-process lock
+        with self._mutate():
+            ss = self._sess(); s = ss.get(h)
+            if not s: return None, None
+            x = self._users().get(s.get("u"))
+            if not x or s.get("exp", 0) <= now or s.get("pwv") != x.get("pwv", 1) or x.get("disabled"):
                 ss.pop(h, None); self._save_sess(); return None, None
             ren = None
-            if now - (s.get("seen") or 0) >= 300: s["seen"] = now; self._dirty_s = now  # users2-20261111: last active (5-min grain)
+            if now - (s.get("seen") or 0) >= 300: s["seen"] = now; self._dirty_s = now
             if now - s.get("ren", 0) >= (RENEW_KEEP if s.get("keep") else RENEW_SHORT):
                 s["exp"] = now + (KEEP_TTL if s.get("keep") else SHORT_TTL); s["ren"] = now; self._save_sess(); self._dirty_s = 0
                 ren = bool(s.get("keep"))
-            elif self._dirty_s and now - self._dirty_s < 1: self._save_sess(); self._dirty_s = 0
-            return {"u": s["u"], "role": x.get("role", "user"), "keep": bool(s.get("keep")), "mcp": bool(x.get("mcp")), "name": x.get("name") or "", "adult_viz": bool(x.get("adult_viz"))}, ren
+            elif need in ("touch", "renew") or (self._dirty_s and now - self._dirty_s < 1):
+                self._save_sess(); self._dirty_s = 0
+            return _info(s, x, ren)
     def drop_session(self, tok):
         if not tok: return
-        with self.lock:
+        with self._mutate():
             if self._sess().pop(_th(tok), None) is not None: self._save_sess()
     def drop_user_sessions(self, u):
         u = norm_user(u)
-        with self.lock:
+        with self._mutate():
             ss = self._sess(); dead = [k for k, v in ss.items() if v.get("u") == u]
             for k in dead: ss.pop(k, None)
             if dead or self.sf.exists(): self._save_sess()
@@ -400,17 +498,19 @@ class Store:
         set_ = {k: v for k, v in (set_ or {}).items() if isinstance(v, str) and (k in allow or sync_ok(k))}  # users2-20261111 / adult-viz-20261111
         dele = [k for k in (dele or []) if k in allow or sync_ok(k)]
         if any(len(v) > KEY_MAX for v in set_.values()): return False, "value too large"
-        with self.lock:
-            if norm_user(u) not in self._users(): return False, "no such user"
-            j = self.get_state(u); ls = j["ls"]
-            ls.update(set_)
-            for k in dele: ls.pop(k, None)
-            if now is not None: j["now"] = now
-            if sum(len(k) + len(v) for k, v in ls.items()) > STATE_MAX: return False, "state too large"
-            if len(ls) > SYNC_MAX_KEYS: return False, "too many keys"
-            j["rev"] = int(j["rev"]) + 1; j["ts"] = time.time()
-            self.udir(); _atomic_write(self.state_path(u), j, secure=False)
-            return True, j["rev"]
+        path = self.state_path(u)
+        with _FileLock(str(path) + ".lock"):
+            with self.lock:
+                if norm_user(u) not in self._users(): return False, "no such user"
+                j = self.get_state(u); ls = j["ls"]
+                ls.update(set_)
+                for k in dele: ls.pop(k, None)
+                if now is not None: j["now"] = now
+                if sum(len(k) + len(v) for k, v in ls.items()) > STATE_MAX: return False, "state too large"
+                if len(ls) > SYNC_MAX_KEYS: return False, "too many keys"
+                j["rev"] = int(j["rev"]) + 1; j["ts"] = time.time()
+                self.udir(); _atomic_write(path, j, secure=False)
+                return True, j["rev"]
 def clean_now(n, now=None):
     if not isinstance(n, dict) or not _VID_RE.match(str(n.get("id") or "")): return None
     f = lambda x, d=0.0: float(x) if isinstance(x, (int, float)) and x == x and abs(x) < 1e7 else d

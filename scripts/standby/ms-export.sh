@@ -13,7 +13,7 @@ PORT="${MS_PORT:-8121}"
 cd "$D" 2>/dev/null || { echo "no $D" >&2; exit 2; }
 set -- ${SSH_ORIGINAL_COMMAND:-${1:-version}}
 mode="${1:-version}"
-CORE_FILES="music_server.py ms_users.py ms_standby.py famlang.py famkey.js famlang.js game.js player.html sw.js icon.svg icon-192.png icon-512.png favicon.ico THEMES.md THIRD_PARTY_NOTICES.md README.md install.sh install.ps1 start.sh start.bat"
+CORE_FILES="music_server.py ms_users.py ms_cluster.py ms_standby.py famlang.py famkey.js famlang.js game.js player.html sw.js icon.svg icon-192.png icon-512.png favicon.ico THEMES.md THIRD_PARTY_NOTICES.md README.md install.sh install.ps1 start.sh start.bat"
 CORE_DIRS="scripts docs licenses deploy"
 core_paths() { for f in $CORE_FILES $CORE_DIRS; do [ -e "$f" ] && printf '%s\n' "$f"; done; }
 paths_of() { case "$1" in

@@ -14,6 +14,14 @@ Runs the normal music_server.py, unchanged, with four small differences:
 The main server never runs this file; it is only started by the standby scripts
 (scripts/standby/ms-standby.sh or ms-standby.ps1).
 """
+import os, sys
+from pathlib import Path as _PathForCluster
+# cluster-20261113: same multi-core front as the main server; workers run this file so standby patches apply.
+if __name__ == "__main__" and not os.environ.get("MUSIC_WORKER_ID"):
+    sys.path.insert(0, str(_PathForCluster(__file__).resolve().parent))
+    import ms_cluster
+    if ms_cluster.should_supervise():
+        raise SystemExit(ms_cluster.run_supervisor(script=str(_PathForCluster(__file__).resolve())))
 import json, os, sys, time, urllib.parse
 from pathlib import Path
 
@@ -111,7 +119,11 @@ M.H.do_GET = _standby_get
 
 if __name__ == "__main__":
     print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} STANDBY mode: changes paused, banner on (failover-20261111)", flush=True)
-    M.ensure_ytdlp(background=True); M.ytdlp_watch(); M.ytdlp_daily()
+    import ms_cluster
+    ms_cluster.watch_parent()
+    _bg = os.environ.get("MUSIC_WORKER_BG", "1") != "0"
+    if _bg:
+        M.ensure_ytdlp(background=True); M.ytdlp_watch(); M.ytdlp_daily()
     # no Telegram bot on the backup (it would answer twice)
     class _Srv(M.ThreadingHTTPServer):  # backlog-20261112: same listen queue + quiet busy/hang-up errors as the main server
         request_queue_size = max(16, int(os.environ.get("MUSIC_BACKLOG") or M.cfg.get("MUSIC_BACKLOG", "128") or 128))
@@ -119,4 +131,5 @@ if __name__ == "__main__":
             e = sys.exc_info()[1]
             if isinstance(e, (getattr(M, "ExtractBusy", ()), BrokenPipeError, ConnectionResetError, ConnectionAbortedError)): return
             return super().handle_error(request, client_address)
-    _Srv((M.cfg.get("MUSIC_BIND", "0.0.0.0"), M.PORT), M.H).serve_forever()
+    _bind = os.environ.get("MUSIC_BIND") or M.cfg.get("MUSIC_BIND", "0.0.0.0")
+    _Srv((_bind, M.PORT), M.H).serve_forever()
