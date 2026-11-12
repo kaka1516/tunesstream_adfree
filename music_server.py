@@ -806,6 +806,11 @@ _TLF = threading.local(); _FGV = {}; _BGX = threading.BoundedSemaphore(1); _BOTC
 # --- perf-20261112: at most MUSIC_YTDLP_MAX yt-dlp lookups at once (stress test: 15 parallel lookups took 25-42 s each on the phone).
 # A listener waits up to MUSIC_YTDLP_WAIT s for a slot, then gets a fast "busy" (HTTP 503 + Retry-After) and the player retries.
 class ExtractBusy(RuntimeError): pass
+def _quiet_call(fn, *a):
+    try: return fn(*a)
+    except (ExtractBusy, LiveUnsupported): return None
+    except Exception as e: print(f"bg {getattr(fn, '__name__', 'job')} fail {type(e).__name__}: {str(e)[:90]}", flush=True)
+_BUSYV = {}  # vid -> last time a listener got "busy" for it (perf2-20261112)
 def _cfg_int(k, d):
     try: return max(1, int(os.environ.get(k) or cfg.get(k) or d))
     except Exception: return d
@@ -833,6 +838,54 @@ class _XGate:
         with s.cv: s.act = max(0, s.act - 1); s.cv.notify_all()
     def info(s): return {"max": s.n, "active": s.act, "waiting": s.fgw, **s.stat}
 _XG = _XGate(XT_MAX)
+# --- perf2-20261112: optional LAN lookup helper (scripts/ms_lookup_service.py on a stronger PC). Off unless ROOT/lookup.env has
+# LOOKUP_URL + LOOKUP_KEY. Asked first (1.5 s to connect); off / slow / error -> the usual local lookup under the cap above.
+def _lk_cfg():
+    c = {}
+    try:
+        for ln in (ROOT / "lookup.env").read_text(encoding="utf-8").splitlines():
+            ln = ln.strip()
+            if ln and not ln.startswith("#") and "=" in ln: k, v = ln.split("=", 1); c[k.strip()] = v.strip()
+    except Exception: pass
+    return c
+_LKC = _lk_cfg()
+_LK = {"url": _LKC.get("LOOKUP_URL", "").rstrip("/"), "key": _LKC.get("LOOKUP_KEY", ""), "down_until": 0.0, "ok": 0, "err": 0, "yt_err": 0, "skip": 0, "ms": 0}
+_LK_SEM = threading.BoundedSemaphore(max(1, int(_LKC.get("LOOKUP_MAX", "8") or 8)))
+def _ydl_opts(kind, fmt):
+    o = {"quiet": True, "no_warnings": True, "format": fmt, "skip_download": True, "noplaylist": True, **_js_opts()}
+    o["extractor_args"] = {"youtube": {"skip": ["translated_subs"]}}
+    if kind == "vis": o["extractor_args"]["youtube"]["player_client"] = ["visionos"]
+    return o
+class _LkYtErr(RuntimeError): pass
+def _remote_info(vid, fmt, kind):
+    """None = helper not used (off/down/busy) -> caller does a local lookup. Raises only for a real YouTube answer (same IP)."""
+    if not (_LK["url"] and _LK["key"]) or time.time() < _LK["down_until"]: return None
+    if not _LK_SEM.acquire(timeout=2): _LK["skip"] += 1; return None
+    t0 = time.time(); c = None
+    try:
+        pu = urllib.parse.urlsplit(_LK["url"])
+        c = _hc.HTTPConnection(pu.hostname, pu.port or 80, timeout=3); c.connect(); c.sock.settimeout(30)
+        body = json.dumps({"url": f"https://www.youtube.com/watch?v={vid}", "opts": _ydl_opts(kind, fmt)})
+        c.request("POST", "/x", body=body, headers={"Content-Type": "application/json", "X-MS-Lookup-Key": _LK["key"], "Accept-Encoding": "gzip"})
+        r = c.getresponse(); b = r.read()
+        if r.getheader("Content-Encoding") == "gzip": b = _gz.decompress(b)
+        if r.status == 200:
+            info = json.loads(b)["info"]; _LK["ok"] += 1; _LK["fails"] = 0; _LK["ms"] = int((time.time() - t0) * 1000); info["_ms_remote"] = 1; return info
+        if r.status == 422:
+            _LK["yt_err"] += 1; raise _LkYtErr((json.loads(b) or {}).get("err") or "lookup error")
+        if r.status in (503, 504): _LK["skip"] += 1; return None
+        raise OSError(f"lookup helper http {r.status}")
+    except _LkYtErr: raise
+    except Exception as e:
+        _LK["err"] += 1; _LK["fails"] = _LK.get("fails", 0) + 1
+        if isinstance(e, ConnectionRefusedError) or _LK["fails"] >= 3:  # PC off / helper stopped, or 3 failures in a row
+            _LK["down_until"] = time.time() + 30; _LK["fails"] = 0
+            print(f"lookup helper unavailable ({type(e).__name__}) -> local lookups for 30 s", flush=True)
+        return None
+    finally:
+        _LK_SEM.release()
+        try: c and c.close()
+        except Exception: pass
 class _xslot:
     def __enter__(s):
         fg = getattr(_TLF, "fg", False)
@@ -859,6 +912,12 @@ def _ydl_info0(vid, fmt, kind):
         if "confirm you" in str(e): _BOTC[0] = time.time()
         raise
 def _ydl_info1(vid, fmt, kind):
+    try:
+        ri = _remote_info(vid, fmt, kind)  # perf2-20261112
+        if ri is not None: return ri
+    except _LkYtErr as e:
+        if "confirm you" in str(e) or _UPCOMING_ERR.search(str(e)): raise RuntimeError(str(e)) from None
+        pass  # other helper-side yt-dlp errors: try once locally (different yt-dlp version / runtime)
     with _xslot():  # perf-20261112
         y = _ydl_get(kind, fmt); ok = False
         try:
@@ -1836,6 +1895,19 @@ _FF = threading.BoundedSemaphore(MAX_FF)         # cap on concurrent ffmpeg mp3 
 _pend = [0]
 def active_dls(): return sum(1 for b in list(_blobs.values()) if not b.err and len(b.have) < b.n)
 _tl = threading.local()
+_ARA = max(0, min(64, int(cfg.get("AUDIO_RA_MB", "6") or 0)))  # perf2-20261112: audio read-ahead window (MB); 0 = old whole-file prefetch
+_V4_ALWAYS = _flag("STREAM_IPV4", "0")  # perf2-20261112: force IPv4 for every stream fetch (default: only for IPv4-bound URLs)
+class _HTTPS4(_hc.HTTPSConnection):  # perf2-20261112
+    def connect(s):
+        import socket, ssl
+        ai = socket.getaddrinfo(s.host, s.port or 443, socket.AF_INET, socket.SOCK_STREAM)
+        raw = socket.create_connection(ai[0][4][:2], s.timeout)
+        s.sock = (getattr(s, "_context", None) or ssl.create_default_context()).wrap_socket(raw, server_hostname=s.host)
+def _v4_url(url):
+    try:
+        ip = (urllib.parse.parse_qs(urllib.parse.urlsplit(url).query).get("ip") or [""])[0]
+        return bool(ip) and ":" not in ip
+    except Exception: return False
 def _rget(url, a, b, timeout=20, hdrs=None):
     """Ranged GET over a per-thread keep-alive HTTPS connection (googlevideo: new TLS per 1MB chunk cost ~0.5-1s).
     Returns (final_url, headers, body). Follows up to 3 redirects; falls back to urllib on any connection error.
@@ -1843,22 +1915,23 @@ def _rget(url, a, b, timeout=20, hdrs=None):
     import http.client
     base = {"User-Agent": "Mozilla/5.0"}
     if hdrs: base.update({k: v for k, v in hdrs.items() if k.lower() not in ("range", "host", "content-length")})
-    base["Range"] = f"bytes={a}-{b}"
+    base["Range"] = f"bytes={a}-{b}"; url0 = url
     for _ in range(4):
         p = urllib.parse.urlsplit(url)
         if p.scheme != "https": break
         pool = getattr(_tl, "c", None)
         if pool is None: pool = _tl.c = {}
-        c = pool.get(p.netloc)
+        v4 = _V4_ALWAYS or _v4_url(url) or _v4_url(url0); pk = p.netloc + ("|4" if v4 else "")  # perf2-20261112
+        c = pool.get(pk)
         for attempt in (0, 1):
             try:
-                if c is None: c = pool[p.netloc] = http.client.HTTPSConnection(p.netloc, timeout=timeout)
+                if c is None: c = pool[pk] = (_HTTPS4 if v4 else http.client.HTTPSConnection)(p.netloc, timeout=timeout)
                 c.request("GET", p.path + ("?" + p.query if p.query else ""), headers=base)
                 r = c.getresponse(); body = r.read(); break
             except Exception:
                 try: c.close()
                 except Exception: pass
-                c = None; pool.pop(p.netloc, None)
+                c = None; pool.pop(pk, None)
                 if attempt: raise
         if r.status in (301, 302, 303, 307, 308) and r.getheader("Location"):
             url = urllib.parse.urljoin(url, r.getheader("Location")); continue
@@ -1902,9 +1975,9 @@ class Blob:
         # vbuf-20261111: video (and long audio) keep a read-ahead window instead of pulling the whole file. Pulling every
         # rendition in full (seen: 360+480+720+1080 = 1.3 GB in 2 min for one long video) saturated the phone's Wi-Fi and
         # starved the tunnel upload, which is what made video buffer. Window = VIDEO_RA_MB ahead of the newest read.
-        s.ra = _VRA if fq.startswith("v") else (0 if s.n <= 48 else 48); s.nw = 0
+        s.ra = _VRA if fq.startswith("v") else (_ARA if _ARA else (0 if s.n <= 48 else 48)); s.nw = 0  # perf2-20261112: _ARA
         s._spawn()
-    nw = 0; ra = 0; slid = False  # slid: a real read arrived (until then only the first 2 MB, the player usually joins mid-video)
+    nw = 0; ra = 0; slid = False; rdn = 0  # rdn: chunks the player has moved through (perf2-20261112: window = 2 x that, 3..VIDEO_RA_MB)  # slid: a real read arrived (until then only the first 2 MB, the player usually joins mid-video)
     def _spawn(s):
         with s.cond:
             k = 4 - s.nw
@@ -1913,7 +1986,7 @@ class Blob:
         for _ in range(k): threading.Thread(target=s.work, daemon=True).start()
     def pick(s):
         with s.cond:
-            rng = range(s.want, min(s.n, s.want + (s.ra if s.slid else 2))) if s.ra else list(range(s.want, s.n)) + list(range(0, s.want))
+            rng = range(s.want, min(s.n, s.want + (min(s.ra, max(3, 2 * s.rdn)) if s.slid else 2))) if s.ra else list(range(s.want, s.n)) + list(range(0, s.want))  # perf2-20261112
             for i in rng:
                 if i not in s.have and i not in s.busy: s.busy.add(i); return i
         return None
@@ -1958,7 +2031,9 @@ class Blob:
     def read(s, a, b):  # bytes a..b (inclusive); serves head/direct slices while the 1MB chunk is still in flight
         i = a // CH
         if s.ra and (i != s.want or not s.slid):  # vbuf-20261111: slide the read-ahead window with playback
-            with s.cond: s.want = i; s.slid = True
+            with s.cond:
+                if s.slid and i == s.want + 1: s.rdn += 1  # perf2-20261112: steady playback grows the window; a seek does not
+                s.want = i; s.slid = True
             s._spawn()
         if a < len(s.head) and i not in s.have: return s.head[a:min(b + 1, len(s.head))]
         with s.cond:
@@ -3034,11 +3109,12 @@ def _dl_run(j):
             tmpd.rmdir()
         except Exception: pass
 # --- speed-20261110: background lookups wait while a song someone picked is being looked up ---
-_FGN = [0]; _FGL = threading.Lock()
+_FGN = [0]; _FGL = threading.Lock(); _FG_LAST = [0.0]
 class _fg:
     def __init__(s, vid=None): s.v = vid  # play4-20261111
     def __enter__(s):
         s.o = getattr(_TLF, "fg", False); _TLF.fg = True
+        _FG_LAST[0] = time.time()  # perf2-20261112
         with _FGL:
             _FGN[0] += 1
             if s.v: _FGV[s.v] = _FGV.get(s.v, 0) + 1
@@ -3064,6 +3140,31 @@ def _warm_worker():
         try: warm_url(*job, follow=True)  # lat-20261111
         except Exception: pass
 threading.Thread(target=_warm_worker, daemon=True).start()
+WARM_PER_HOUR = max(0, int(cfg.get("WARM_PER_HOUR", "60") or 0)); _QW = {"n": 0, "hour": 0, "last": ""}  # perf2-20261112
+def _quiet_warm():
+    """When nobody has started a song for 2 min: pre-resolve stream URLs of the most played and recently played songs
+    (low priority; stays far under YouTube's guest budget of ~300 lookups/hour)."""
+    time.sleep(90)
+    while True:
+        time.sleep(60)
+        try:
+            if not WARM_PER_HOUR: continue
+            h = int(time.time() // 3600)
+            if h != _QW["hour"]: _QW.update(hour=h, n=0)
+            if _QW["n"] >= WARM_PER_HOUR or _FGN[0] or _XG.act or time.time() - _FG_LAST[0] < 120 or time.time() - _BOTC[0] < 1800: continue
+            d = _plays_load(); top = sorted((d.get("counts") or {}).items(), key=lambda kv: -int(kv[1] or 0))[:40]
+            cand = list(dict.fromkeys([k for k, _ in top] + [x.get("id") for x in reversed(d.get("recent") or [])][:30]))
+            done = 0
+            for v in cand:
+                if done >= 4 or _QW["n"] >= WARM_PER_HOUR or _FGN[0] or time.time() - _FG_LAST[0] < 120: break
+                if not v or not VID.match(v) or live_known(v) or _ucache_load(v, "std"): continue
+                if _disk_blob(v, "std"): continue  # already on disk: plays with no lookup at all
+                _QW["n"] += 1; done += 1; _QW["last"] = v
+                try: warm_url(v, "std")
+                except Exception: pass
+                time.sleep(5)
+        except Exception as e: print(f"quiet warm skip {type(e).__name__}", flush=True)
+threading.Thread(target=_quiet_warm, daemon=True, name="quiet-warm").start()
 def _warm_enqueue(ids, fq):
     with _WARMQ_L:
         n = 0
@@ -3377,7 +3478,7 @@ class H(BaseHTTPRequestHandler):
                 vc = "a" if qs.get("c") == "av1" else "h"
                 x = _VINFO.get((vid, vc))
                 if not x:
-                    threading.Thread(target=lambda: _vwarm(vid, vc), daemon=True).start()
+                    threading.Thread(target=lambda: _quiet_call(_vwarm, vid, vc), daemon=True).start()  # perf2-20261112
                     return self.send(200, json.dumps({"id": vid, "c": vc, "res": {}, "pending": 1}), "application/json")
                 try: return self.send(200, json.dumps({"id": vid, "c": vc, "res": x["res"]}), "application/json")
                 except Exception as e: return self.send(200, json.dumps({"id": vid, "c": vc, "res": {}, "err": str(e)[:120]}), "application/json")
@@ -3435,6 +3536,8 @@ class H(BaseHTTPRequestHandler):
                 if not VID.match(vid): return self.send(400, json.dumps({"ok": False, "err": "bad id"}), "application/json")
                 st = live_check(vid)
                 return self.send(200, json.dumps({"id": vid, "live_status": st or "unknown", "live": st in _LIVE_BAD}), "application/json")
+            if u.path == "/api/busy":  # perf2-20261112
+                v = qs.get("id", ""); return self.send(200, json.dumps({"busy": bool(v) and time.time() - _BUSYV.get(v, 0) < 15, "retry": 2}), "application/json")
             if u.path == "/api/warm":
                 # URL-resolve only (no media download). ids=comma list, max 8; q= format key.
                 ids = [x for x in (qs.get("ids") or qs.get("id") or "").split(",") if VID.match(x)][:8]
@@ -3507,7 +3610,7 @@ class H(BaseHTTPRequestHandler):
                     try:
                         with _fg(vid): _vwarm(vid, vc)  # play4-20261111
                     except LiveUnsupported as e: return self._live409(vid, e.status)
-                    except ExtractBusy: return self._busy503()  # perf-20261112
+                    except ExtractBusy: return self._busy503(vid)  # perf-20261112
                     except Exception: pass  # fall back to the per-rendition extraction below
                 bl = None
                 for _try in range(3):
@@ -3516,7 +3619,7 @@ class H(BaseHTTPRequestHandler):
                         break
                     except LiveUnsupported as e:
                         return self._live409(vid, e.status)
-                    except ExtractBusy: return self._busy503()  # perf-20261112
+                    except ExtractBusy: return self._busy503(vid)  # perf-20261112
                     except Exception:
                         if _try == 2: return self.send(502, "upstream error", "text/plain")
                         time.sleep(0.4 * (_try + 1))
@@ -3559,7 +3662,7 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/cmd" and not (_keyok(qs.get("k", "")) or _auth_cookie_ok(self)): return self.send(403, "forbidden", "text/plain")  # sec-20261110
             if u.path == "/cmd": return self.send(200, music_cmd(qs.get("c", ""), qs.get("a", "").strip()), "text/plain; charset=utf-8")
             if u.path == "/status": return self.send(200, status(), "text/plain")
-            if u.path == "/api/stats": return self.send(200, json.dumps({"active_dl": active_dls(), "blobs": len(_blobs), "max_fetch": MAX_FETCH, "max_active": MAX_ACTIVE, "xt": _XG.info(), "ucache": len(_ucache), "rooms": len(ROOMS)}), "application/json")
+            if u.path == "/api/stats": return self.send(200, json.dumps({"active_dl": active_dls(), "blobs": len(_blobs), "max_fetch": MAX_FETCH, "max_active": MAX_ACTIVE, "xt": _XG.info(), "ucache": len(_ucache), "lookup_helper": {k: v for k, v in _LK.items() if k not in ("key", "url")} | {"on": bool(_LK["url"]), "up": bool(_LK["url"]) and time.time() >= _LK["down_until"]}, "quiet_warm": dict(_QW), "rooms": len(ROOMS)}), "application/json")
             if u.path == "/api/home":
                 return self.send(200, json.dumps(home_feed(qs.get("langs", "")[:40], qs.get("lk_ids", "")[:900], qs.get("seed", "")[:20], qs.get("hist", "")[:900])), "application/json")
             if u.path == "/api/played":
@@ -3582,7 +3685,8 @@ class H(BaseHTTPRequestHandler):
             if ids: _warm_enqueue(ids, "std")
         except Exception: pass
         return r
-    def _busy503(self):  # perf-20261112: too many lookups at once -> quick, retryable answer instead of a 20 s hang
+    def _busy503(self, vid=""):  # perf-20261112: too many lookups at once -> quick, retryable answer instead of a 20 s hang
+        if vid: _BUSYV[vid] = time.time()  # perf2-20261112: /api/busy tells the player why its media request failed
         self.send_response(503); self.send_header("Retry-After", "2"); self.send_header("Content-Type", "application/json")
         self.send_header("Cache-Control", "no-store"); b = json.dumps({"busy": True, "retry": 2, "msg": "busy, retrying"}).encode()
         self.send_header("Content-Length", str(len(b))); self.end_headers()
@@ -3682,7 +3786,12 @@ if __name__ == "__main__":
     ytdlp_daily()
     tok = cfg.get("MUSIC_BOT_TOKEN")
     if tok: threading.Thread(target=tg_loop, args=(tok, set(filter(None, cfg.get("MUSIC_ALLOWED_CHATS", "").split(","))),), daemon=True).start()
-    ThreadingHTTPServer((cfg.get("MUSIC_BIND", "0.0.0.0"), PORT), H).serve_forever()
+    class _Srv(ThreadingHTTPServer):  # perf2-20261112: no traceback spam for expected "busy" / client hang-ups
+        def handle_error(self, request, client_address):
+            e = _sys.exc_info()[1]
+            if isinstance(e, (ExtractBusy, BrokenPipeError, ConnectionResetError, ConnectionAbortedError)): return
+            return super().handle_error(request, client_address)
+    _Srv((cfg.get("MUSIC_BIND", "0.0.0.0"), PORT), H).serve_forever()
 
 
 

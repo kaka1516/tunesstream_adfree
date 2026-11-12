@@ -71,6 +71,22 @@ def test_ucache_margin_and_fallback():
     assert 3600 <= c["expire"] - now <= 3600 + ms.UC_MARGIN + 5 and ms._ucache_load(vid, q)
     ms._ucache_invalidate(vid, q); assert ms._ucache_load(vid, q) is None
 
+def test_lookup_helper_off_or_down_falls_back():
+    old = dict(ms._LK)
+    try:
+        ms._LK.update(url="", key="")
+        assert ms._remote_info("aaaaaaaaaaa", "bestaudio", "vis") is None          # not configured -> local
+        ms._LK.update(url="http://127.0.0.1:9", key="x" * 32, down_until=0)       # nothing listens on :9
+        t0 = time.time(); assert ms._remote_info("aaaaaaaaaaa", "bestaudio", "vis") is None
+        assert time.time() - t0 < 3 and ms._LK["down_until"] > time.time()        # quick, and skipped for a while
+        t0 = time.time(); assert ms._remote_info("aaaaaaaaaaa", "bestaudio", "vis") is None and time.time() - t0 < 0.1
+    finally: ms._LK.clear(); ms._LK.update(old)
+
+def test_v4_url_detection():
+    assert ms._v4_url("https://r1.googlevideo.com/videoplayback?ip=203.0.113.5&id=1")
+    assert not ms._v4_url("https://r1.googlevideo.com/videoplayback?ip=2001%3Adb8%3A%3A1&id=1")
+    assert not ms._v4_url("https://r1.googlevideo.com/videoplayback?id=1")
+
 if __name__ == "__main__":
     n = 0
     for k, f in list(globals().items()):
