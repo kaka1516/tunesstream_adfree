@@ -542,14 +542,27 @@ def _search(q, n=8):
     if res: _scache[key] = (res, time.time()); _sdisk_put(key, res)  # speed-20261110
     return res
 _lcache = {}
+# backlog-20261112: mix/playlist lists were the slowest thing under load (100 users: p50 18 s, 65% timeouts) - every
+# request ran its own in-process yt-dlp list fetch, the same list was fetched in parallel, and empty lists were never
+# cached. Now: one fetch per list at a time (others wait for it), at most LIST_MAX (2) list fetches at once
+# (8 s wait, then an empty answer the player already handles), empty results cached for 10 min.
+_LLK = {}; _LLKL = threading.Lock(); _LLS = threading.BoundedSemaphore(max(1, int(cfg.get("LIST_MAX", "2") or 2)))
 def ytlist(lid):
     c = _lcache.get(lid)
-    if c and time.time() - c[1] < 1800: return c[0]
-    url = f"https://www.youtube.com/watch?v={lid[2:]}&list={lid}" if lid.startswith("RD") and len(lid) == 13 else f"https://www.youtube.com/playlist?list={lid}"
-    L = flat(url, 100)
-    if len(_lcache) > 100: _lcache.clear()
-    if L: _lcache[lid] = (L, time.time())
-    return L
+    if c and time.time() - c[1] < (1800 if c[0] else 600): return c[0]
+    with _LLKL:
+        if len(_LLK) > 500: _LLK.clear()
+        lk = _LLK.setdefault(lid, threading.Lock())
+    with lk:
+        c = _lcache.get(lid)
+        if c and time.time() - c[1] < (1800 if c[0] else 600): return c[0]
+        url = f"https://www.youtube.com/watch?v={lid[2:]}&list={lid}" if lid.startswith("RD") and len(lid) == 13 else f"https://www.youtube.com/playlist?list={lid}"
+        if not _LLS.acquire(timeout=8): return []
+        try: L = flat(url, 100)
+        finally: _LLS.release()
+        if len(_lcache) > 200: _lcache.clear()
+        _lcache[lid] = (L or [], time.time())
+        return L
 _art = {}
 VID = re.compile(r"^[A-Za-z0-9_-]{11}$")
 def resolve(x):
@@ -3787,6 +3800,9 @@ if __name__ == "__main__":
     tok = cfg.get("MUSIC_BOT_TOKEN")
     if tok: threading.Thread(target=tg_loop, args=(tok, set(filter(None, cfg.get("MUSIC_ALLOWED_CHATS", "").split(","))),), daemon=True).start()
     class _Srv(ThreadingHTTPServer):  # perf2-20261112: no traceback spam for expected "busy" / client hang-ups
+        # backlog-20261112: Python's default listen queue is 5; a login storm / burst of 100 new tunnel connections
+        # overflowed it and cloudflared answered 502. MUSIC_BACKLOG (env or music.env), default 128.
+        request_queue_size = max(16, int(__import__("os").environ.get("MUSIC_BACKLOG") or cfg.get("MUSIC_BACKLOG", "128") or 128))
         def handle_error(self, request, client_address):
             e = _sys.exc_info()[1]
             if isinstance(e, (ExtractBusy, BrokenPipeError, ConnectionResetError, ConnectionAbortedError)): return

@@ -113,4 +113,10 @@ if __name__ == "__main__":
     print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} STANDBY mode: changes paused, banner on (failover-20261111)", flush=True)
     M.ensure_ytdlp(background=True); M.ytdlp_watch(); M.ytdlp_daily()
     # no Telegram bot on the backup (it would answer twice)
-    M.ThreadingHTTPServer((M.cfg.get("MUSIC_BIND", "0.0.0.0"), M.PORT), M.H).serve_forever()
+    class _Srv(M.ThreadingHTTPServer):  # backlog-20261112: same listen queue + quiet busy/hang-up errors as the main server
+        request_queue_size = max(16, int(os.environ.get("MUSIC_BACKLOG") or M.cfg.get("MUSIC_BACKLOG", "128") or 128))
+        def handle_error(self, request, client_address):
+            e = sys.exc_info()[1]
+            if isinstance(e, (getattr(M, "ExtractBusy", ()), BrokenPipeError, ConnectionResetError, ConnectionAbortedError)): return
+            return super().handle_error(request, client_address)
+    _Srv((M.cfg.get("MUSIC_BIND", "0.0.0.0"), M.PORT), M.H).serve_forever()

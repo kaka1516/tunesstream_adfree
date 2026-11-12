@@ -92,3 +92,28 @@ if __name__ == "__main__":
     for k, f in list(globals().items()):
         if k.startswith("test_"): f(); n += 1; print("ok", k)
     print(f"{n} passed")
+
+def test_list_singleflight_cap_and_empty_cache():  # backlog-20261112
+    calls = []; lk = threading.Lock(); cur = [0]; peak = [0]
+    def fake_flat(url, n):
+        with lk: calls.append(url); cur[0] += 1; peak[0] = max(peak[0], cur[0])
+        time.sleep(0.2)
+        with lk: cur[0] -= 1
+        return [] if "EMPTY" in url else [{"id": "x"}]
+    old = ms.flat; ms.flat = fake_flat; ms._lcache.clear()
+    try:
+        out = []
+        ts = [threading.Thread(target=lambda i=i: out.append(ms.ytlist(f"PLlist{i % 4:02d}xxxxxxxx"))) for i in range(20)]
+        [t.start() for t in ts]; [t.join() for t in ts]
+        assert len(calls) == 4, calls            # one fetch per distinct list
+        assert peak[0] <= 2, peak                # at most LIST_MAX at once
+        assert all(o == [{"id": "x"}] for o in out)
+        ms.ytlist("PLEMPTYxxxxxxxx"); ms.ytlist("PLEMPTYxxxxxxxx")
+        assert sum("EMPTY" in c for c in calls) == 1  # empty answer cached too
+    finally: ms.flat = old
+
+def test_backlog_setting():
+    import re
+    src = (ROOT / "music_server.py").read_text(encoding="utf-8")
+    assert re.search(r"request_queue_size = max\(16, int\(.*MUSIC_BACKLOG.*\"128\"", src)
+    assert "request_queue_size" in (ROOT / "ms_standby.py").read_text(encoding="utf-8")
