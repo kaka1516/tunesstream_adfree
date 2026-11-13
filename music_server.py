@@ -275,13 +275,18 @@ def ytdlp_update_nightly(reason="manual"):
         # re-import in-process so the running server uses the new extractors without a restart
         reimported = False
         try:
+            if after == before and reason != "manual": raise RuntimeError("unchanged")  # ytidle-20261113: never swap modules under live requests for nothing
             try:  # ytfix-20261110: undo yt-dlp's urllib3 patch first, or the re-import wraps it twice and every lookup fails
                 import urllib3.util.url as _u3
                 while type(getattr(_u3, "_PERCENT_RE", None)).__name__ == "Urllib3PercentREOverride": _u3._PERCENT_RE = _u3._PERCENT_RE.re
             except Exception: pass
             for m in [m for m in list(sys.modules) if m == "yt_dlp" or m.startswith("yt_dlp.")]: del sys.modules[m]
             importlib.invalidate_caches(); import yt_dlp as _y; mod = _y.version.__version__; ch = getattr(_y.version, "CHANNEL", ""); reimported = True
-        except Exception as e: mod, ch = f"? ({e})"[:80], ""
+        except Exception as e:
+            mod, ch = f"? ({e})"[:80], ""
+            if str(e) == "unchanged":
+                try: import yt_dlp as _y; mod = _y.version.__version__; ch = getattr(_y.version, "CHANNEL", "")
+                except Exception: pass
         try: ok, serr = ytdlp_smoke()
         except Exception as e: ok, serr = False, str(e)
         _ytdlp_state["ok"] = ok; _ytdlp_state["ver"] = after or mod
@@ -299,7 +304,9 @@ def ytdlp_daily():
         time.sleep(int(cfg.get("YTDLP_DAILY_DELAY", "180")))
         while True:
             try:
-                if YT_AUTO and time.time() - float(_yu.get("ts", 0) or 0) >= 86400: ytdlp_update_nightly("daily")
+                # ytidle-20261113: one worker only, 02:00-06:00 local, and only after 15 min with no media requests
+                if (YT_AUTO and os.environ.get("MUSIC_WORKER_ID", "0") == "0" and 2 <= time.localtime().tm_hour < 6 and time.time() - _MEDIA_AT[0] > 900
+                        and time.time() - float(_yu.get("ts", 0) or 0) >= 86400): ytdlp_update_nightly("daily")
             except Exception as e: print(f"yt-dlp daily update error: {e}", flush=True)
             time.sleep(1800)
     threading.Thread(target=loop, daemon=True, name="ytdlp-daily").start()
@@ -2628,6 +2635,7 @@ def similar(t, a):
             s = g("https://labs.api.listenbrainz.org/similar-artists/json?algorithm=session_based_days_7500_session_300_contribution_5_threshold_10_limit_100_filter_True_skip_30&artist_mbids=" + mb[0]["id"])
             out = [{"id": None, "q": f"{x['name']} top song", "title": f"{x['name']} (similar artist)", "channel": x["name"], "dur": None, "sim": "listenbrainz"} for x in s[:8]]
     _simc[key] = (out, time.time()); return out
+_MEDIA_AT = [0.0]
 ROOMS = {}  # last snapshot (stats only); the real store is a shared file so every worker sees the same rooms
 _ROOMS_F = CACHE / "rooms.json"; _rooms_tl = threading.Lock()
 try:
@@ -4009,6 +4017,7 @@ class H(BaseHTTPRequestHandler):
                 u = u._replace(path="/audio"); qs["q"] = "std"                      # ms-v75: also the no-ffmpeg path (direct m4a/AAC, no transcode)
             elif u.path == "/dl" and not HAVE_FFMPEG:  # ms-v75: no ffmpeg -> download the original m4a/AAC (or webm) instead of an mp3
                 u = u._replace(path="/audio"); qs["q"] = "std"; _noff_dl = True
+            if u.path in ("/audio", "/video", "/stream"): _MEDIA_AT[0] = time.time()  # ytidle-20261113: last media request (idle signal)
             if u.path in ("/audio", "/video"):
                 vid = resolve(qs.get("id", ""))
                 if not vid: return self.send(404, "not found", "text/plain")
@@ -4124,7 +4133,7 @@ class H(BaseHTTPRequestHandler):
                     _cl = json.loads((_msc.CLUSTER_JSON).read_text(encoding="utf-8")) if _msc.CLUSTER_JSON.exists() else {}
                 except Exception:
                     _cl = {}
-                return self.send(200, json.dumps({"active_dl": active_dls(), "blobs": len(_blobs), "max_fetch": MAX_FETCH, "max_active": MAX_ACTIVE, "xt": _XG.info(), "ucache": len(_ucache), "lookup_helper": {k: v for k, v in _LK.items() if k not in ("key", "url")} | {"on": bool(_LK["url"]), "up": bool(_LK["url"]) and time.time() >= _LK["down_until"]}, "quiet_warm": dict(_QW), "head_cache": _HC.stats(), "rooms": len(ROOMS),
+                return self.send(200, json.dumps({"active_dl": active_dls(), "blobs": len(_blobs), "max_fetch": MAX_FETCH, "max_active": MAX_ACTIVE, "xt": _XG.info(), "ucache": len(_ucache), "lookup_helper": {k: v for k, v in _LK.items() if k not in ("key", "url")} | {"on": bool(_LK["url"]), "up": bool(_LK["url"]) and time.time() >= _LK["down_until"]}, "quiet_warm": dict(_QW), "head_cache": _HC.stats(), "rooms": len(ROOMS), "media_idle": int(time.time() - _MEDIA_AT[0]) if _MEDIA_AT[0] else -1,
                     "worker": os.environ.get("MUSIC_WORKER_ID"), "workers": _cl.get("n") or 1, "worker_ports": _cl.get("ports") or []}), "application/json")
             if u.path == "/api/home":
                 return self.send(200, json.dumps(home_feed(qs.get("langs", "")[:40], qs.get("lk_ids", "")[:900], qs.get("seed", "")[:20], qs.get("hist", "")[:900])), "application/json")
