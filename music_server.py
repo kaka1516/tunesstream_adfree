@@ -626,7 +626,52 @@ def _search_shorts(qq, n=15):
         try: _sdisk_put(key, res)
         except Exception: pass
     return res
+_SHFEED = {}
+def shorts_feed(seeds, ex=None, n=20, page=0):
+    """Personalized Shorts feed: several #shorts searches from seeds (artists/titles), mixed and deduped, cached ~20 min."""
+    n = max(8, min(int(n or 20), 30))
+    page = max(0, int(page or 0))
+    seeds = [re.sub(r"\s+", " ", (s or "").strip()) for s in (seeds or []) if (s or "").strip()]
+    seeds = list(dict.fromkeys(s for s in seeds if len(s) > 1))[:8]
+    exs = [x for x in (ex or []) if VID.match(x or "")]
+    qs = []
+    for s0 in seeds:
+        qs.append(s0 if re.search(r"shorts", s0, re.I) else (s0 + " #shorts"))
+    for extra in ("music #shorts", "songs #shorts", "trending #shorts", "new music #shorts", "dance #shorts"):
+        if extra not in qs:
+            qs.append(extra)
+    key = ("shfeed", tuple(qs), tuple(exs[:40]), n, page)
+    c = _SHFEED.get(key)
+    if c and time.time() - c[1] < 1200:
+        return c[0]
+    seen = set(exs)
+    acc = []
+    # rotate which queries we hit so later pages stay fresh
+    rot = (page * 3) % max(1, len(qs))
+    order = qs[rot:] + qs[:rot]
+    take = order[: 6 if page == 0 else 4]
+    for q in take:
+        if len(acc) >= n:
+            break
+        try:
+            batch = search_shorts(q, 15)
+        except Exception:
+            continue
+        for x in batch or []:
+            i = (x or {}).get("id") or ""
+            if not VID.match(i) or i in seen:
+                continue
+            item = dict(x); item["short"] = True
+            acc.append(item); seen.add(i)
+            if len(acc) >= n:
+                break
+    if acc:
+        if len(_SHFEED) > 200:
+            _SHFEED.clear()
+        _SHFEED[key] = (acc, time.time())
+    return acc
 def _search_warm(res):
+
     """speed-20261113: resolve stream URLs for the first few hits so a click starts in ~0.1 s, not ~2 s."""
     ids = [x["id"] for x in (res or []) if isinstance(x, dict) and VID.match(x.get("id") or "")][:3]
     if not ids:
@@ -3525,6 +3570,10 @@ class H(BaseHTTPRequestHandler):
         self._ms_hdrs = []
         self.send_header("Referrer-Policy", "no-referrer"); self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "SAMEORIGIN"); self.send_header("Cache-Control", getattr(self, "_cc", None) or "no-store")
+        _cc0 = getattr(self, "_cc", None) or "no-store"
+        if "no-store" in _cc0 or "no-cache" in _cc0:
+            self.send_header("CDN-Cache-Control", "no-store")
+            self.send_header("Cloudflare-CDN-Cache-Control", "no-store")
         super().end_headers()
     def guard(self):
         # sec-20261110: decide network trust for THIS request first (thread-local; keep-alive safe)
@@ -3612,7 +3661,12 @@ class H(BaseHTTPRequestHandler):
                 wb = wf.read_bytes(); self.send_response(200); self.send_header("Content-Type", "image/webp"); self.send_header("Vary", "Accept")
                 self.send_header("Cache-Control", "public, max-age=86400"); self.send_header("Content-Length", str(len(wb))); self.end_headers(); self.wfile.write(wb); return
             except Exception: pass  # no Pillow / bad file -> original PNG below
-        self._cc = "private, no-store" if _ms_adult_path(path) else ("public, max-age=2592000" if path.startswith(("/vendor/", "/assets/")) else "public, max-age=300")
+        if path in ("/sw.js", "/manifest.webmanifest") or path.endswith("/sw.js"):
+            self._cc = "no-store, no-cache, must-revalidate"
+        elif path in ("/", "/index.html", "/player.html") or path.endswith("/player.html"):
+            self._cc = "no-store, no-cache, must-revalidate"
+        else:
+            self._cc = "private, no-store" if _ms_adult_path(path) else ("public, max-age=2592000" if path.startswith(("/vendor/", "/assets/")) else "public, max-age=300")
         size = f.stat().st_size
         rg = re.match(r"bytes=(\d*)-(\d*)", self.headers.get("Range", "") or "")
         # gzip whole text assets only when the client did not ask for a byte range
@@ -3622,7 +3676,10 @@ class H(BaseHTTPRequestHandler):
             ck = (str(f), f.stat().st_mtime); _VZ = globals().setdefault("_VZ", {})
             if ck not in _VZ: _VZ[ck] = _gz.compress(b, 6)
             z = _VZ[ck]; self.send_response(200); self.send_header("Content-Type", ctype); self.send_header("Content-Encoding", "gzip"); self.send_header("Vary", "Accept-Encoding")
-            self.send_header("Cache-Control", getattr(self, "_cc", "public, max-age=300")); self.send_header("Content-Length", str(len(z))); self.end_headers(); self.wfile.write(z); return
+            self.send_header("Cache-Control", getattr(self, "_cc", "public, max-age=300"))
+            if "no-store" in (getattr(self, "_cc", "") or ""):
+                self.send_header("CDN-Cache-Control", "no-store"); self.send_header("Cloudflare-CDN-Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(z))); self.end_headers(); self.wfile.write(z); return
         a, b = 0, max(0, size - 1)
         if rg:
             if rg.group(1): a = int(rg.group(1))
@@ -3635,6 +3692,8 @@ class H(BaseHTTPRequestHandler):
         self.send_response(206 if rg else 200)
         self.send_header("Content-Type", ctype); self.send_header("Accept-Ranges", "bytes")
         self.send_header("Cache-Control", getattr(self, "_cc", "public, max-age=300"))
+        if "no-store" in (getattr(self, "_cc", "") or ""):
+            self.send_header("CDN-Cache-Control", "no-store"); self.send_header("Cloudflare-CDN-Cache-Control", "no-store")
         self.send_header("Content-Length", str(b - a + 1 if size else 0))
         if rg: self.send_header("Content-Range", f"bytes {a}-{b}/{size}")
         self.end_headers()
@@ -3833,11 +3892,18 @@ class H(BaseHTTPRequestHandler):
                 return self.send(200, json.dumps({"ok": True, "queued": n}), "application/json")
             if u.path == "/api/prefetch":
                 vid = qs.get("id", ""); fq = ("v" + qs.get("r", "360")) if qs.get("v") else qs.get("q", "std")
-                if VID.match(vid) and ((vid, fq) in _blobs or active_dls() + _pend[0] < MAX_ACTIVE):
+                # radio2-20261113: leave at least one download slot for the song that is actually playing
+                if VID.match(vid) and ((vid, fq) in _blobs or active_dls() + _pend[0] < max(1, MAX_ACTIVE - 1)):
                     def _pf(vid=vid, fq=fq):
                         try:
                             if not str(fq).startswith("v") and _HC.get(vid, fq):
                                 _headc_fill(vid, fq); return
+                            if active_dls() >= max(1, MAX_ACTIVE - 1):
+                                try:
+                                    if not str(fq).startswith("v"): _headc_fill(vid, fq)
+                                except Exception:
+                                    pass
+                                return
                             _fg_wait(15)  # speed-20261110
                             bl = get_blob(vid, fq)
                             # pull ~3MB into disk cache so Next/autoplay starts in ~1s
@@ -3966,7 +4032,15 @@ class H(BaseHTTPRequestHandler):
                 if (qs.get("shorts") or "") in ("1", "true", "yes"):
                     return self.send(200, json.dumps(search_shorts(qs.get("q", ""), _n)), "application/json")
                 return self.send(200, json.dumps(search(qs.get("q", ""), _n)), "application/json")
-            if u.path == "/" and not qs.get("q"): return self.send(200, _MSU.with_boot(_page(), getattr(_REQ, "user", None)))  # login-state-20261110
+            if u.path == "/api/shorts":
+                _n = int(qs.get("n", "20") or 20)
+                _pgno = int(qs.get("page", "0") or 0)
+                _seeds = [x for x in (qs.get("seeds") or "").split(",") if x.strip()]
+                _ex = [x for x in (qs.get("ex") or "").split(",") if x.strip()]
+                return self.send(200, json.dumps(shorts_feed(_seeds, _ex, _n, _pgno)), "application/json")
+            if u.path == "/" and not qs.get("q"):
+                self._cc = "no-store, no-cache, must-revalidate"
+                return self.send(200, _MSU.with_boot(_page(), getattr(_REQ, "user", None)))  # login-state-20261110 radio2-20261113
             if u.path == "/":
                 q = qs.get("q", ""); rows = ""
                 if q:
@@ -4006,6 +4080,13 @@ class H(BaseHTTPRequestHandler):
                 except Exception: return self.send(200, "[]", "application/json")
             if u.path == "/api/room": return self.send(200, json.dumps(room(qs)), "application/json")
         except Exception as e:
+            try:
+                (ROOT / "cache" / "last500.txt").write_text(
+                    time.strftime("%Y-%m-%d %H:%M:%S ") + str((getattr(self, "command", "") or "") + " " + (urllib.parse.urlparse(self.path).path or "/")) + "\n" + __import__("traceback").format_exc(),
+                    encoding="utf-8",
+                )
+            except Exception:
+                pass
             return self.send(500, "error: " + type(e).__name__, "text/plain")
         self.send(404, "no", "text/plain")
     def _radio_out(self, res):  # perf-20261112: send the list, then warm the next 2 songs' stream URLs in the background
