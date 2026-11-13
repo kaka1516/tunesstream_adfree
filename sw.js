@@ -1,4 +1,4 @@
-const V='ms-v86';
+const V='ms-v87';
 const SKIN_RE=/^\/skins\//;
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(V).then(c=>c.addAll(['/famkey.js','/famlang.js','/icon-192.png','/icon-512.png','/icon.svg','/skins/side-cut/skin.json','/skins/side-cut/skin.css','/skins/side-cut/icons.svg','/skins/side-cut/preview.svg','/skins/side-cut/textures/paper.svg','/skins/side-cut/fonts/ArchivoBlack-Regular.woff2','/skins/classic-deck/skin.json','/skins/classic-deck/skin.css','/skins/classic-deck/icons.svg','/skins/classic-deck/preview.svg','/skins/classic-deck/fonts/VT323-Regular.woff2','/skins/glass-stage/skin.json','/skins/glass-stage/skin.css','/skins/glass-stage/icons.svg','/skins/glass-stage/preview.svg','/skins/glass-stage/fonts/Outfit-Variable.woff2'])).catch(()=>{}))});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('ms-')&&k!=V).map(k=>caches.open(k).then(o=>o.match('/shell')).then(r=>r&&caches.open(V).then(n=>n.put('/shell',r))).then(()=>caches.delete(k))))).then(()=>self.clients.claim())));

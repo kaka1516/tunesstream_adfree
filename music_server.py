@@ -881,12 +881,41 @@ _ITAG_H = {"18": 360, "22": 720, "160": 144, "133": 240, "134": 360, "135": 480,
 def _q_video_h(q):
     m = re.match(r"v(\d+)([ah]?)$", q or "")
     return int(m.group(1)) if m and int(m.group(1)) in _VHEIGHTS else None
+def _url_itag(url):
+    """YouTube itag from a googlevideo / videoplayback URL (query or /itag/N path)."""
+    try:
+        u = urllib.parse.urlsplit(url or "")
+        it = (urllib.parse.parse_qs(u.query).get("itag") or [""])[0]
+        if it:
+            return str(it)
+        m = re.search(r"/itag/(\d+)", u.path or "")
+        return m.group(1) if m else ""
+    except Exception:
+        return ""
+def _url_clen(url):
+    """Full-file Content-Length advertised on a googlevideo URL (`clen=`)."""
+    try:
+        c = (urllib.parse.parse_qs(urllib.parse.urlsplit(url or "").query).get("clen") or [""])[0]
+        return int(c) if c else 0
+    except Exception:
+        return 0
 def _url_itag_h(url):
     try:
-        itag = (urllib.parse.parse_qs(urllib.parse.urlsplit(url).query).get("itag") or [""])[0]
+        itag = _url_itag(url)
     except Exception:
         return None
-    return _ITAG_H.get(str(itag))
+    return _ITAG_H.get(str(itag)) if itag else None
+def _headc_get(vid, fq, url=None):
+    """Intro cache only when itag + Content-Length still match the current stream URL."""
+    if not url:
+        return None
+    itag, clen = _url_itag(url), _url_clen(url)
+    if not itag:
+        return None
+    return _HC.get(vid, fq, itag=itag, size=clen or None)
+def _headc_put(vid, fq, data, size, ctype="application/octet-stream", url=None, itag=""):
+    itag = itag or _url_itag(url or "")
+    return _HC.put(vid, fq, data, size, ctype, itag=itag)
 def _url_too_low(url, q):
     """True when a cached/selected stream is clearly below the requested ladder rung (e.g. fmt 18 as 720p)."""
     claim, actual = _q_video_h(q), _url_itag_h(url)
@@ -2142,14 +2171,15 @@ def _headc_fill(vid, fq):
     """Background: resolve URL if needed, fetch the intro Range, store it. Returns True on a hit or a successful fill. Never raises."""
     try:
         if str(fq).startswith("v"): return False
-        _hit = _HC.get(vid, fq)
-        if _hit and int(_hit.get("n") or 0) >= min(int(_hit.get("size") or 0), HEADC_B): return True
         ent = cached_entry(vid, fq)
-        fin, rh, d = _rget(ent.get("furl") or ent["url"], 0, HEADC_B - 1, timeout=15, hdrs=ent.get("headers") or {})
+        url0 = ent.get("furl") or ent["url"]
+        _hit = _headc_get(vid, fq, url0)
+        if _hit and int(_hit.get("n") or 0) >= min(int(_hit.get("size") or 0), HEADC_B): return True
+        fin, rh, d = _rget(url0, 0, HEADC_B - 1, timeout=15, hdrs=ent.get("headers") or {})
         size = int(rh["Content-Range"].split("/")[1]); ctype = rh.get("Content-Type") or "audio/mp4"
         try: ent["furl"] = fin; ent["ft"] = time.time()
         except Exception: pass
-        return _HC.put(vid, fq, d, size, ctype)
+        return _headc_put(vid, fq, d, size, ctype, url=fin or url0)
     except Exception as e:
         try:
             http = isinstance(e, urllib.error.HTTPError) and getattr(e, "code", 0) in (401, 403, 410)
@@ -2214,7 +2244,7 @@ class Blob:
         if _fu: url = _fu
         # Small head probe: first bytes reach the player sooner; workers fill chunk 0. On 403/expired: singleflight refresh BEFORE any response headers.
         # head-20261113: serve a cached intro instantly; any miss/error falls through to _rget.
-        _hc0 = None if str(fq).startswith("v") else _HC.get(vid, fq)
+        _hc0 = None if str(fq).startswith("v") else _headc_get(vid, fq, url)
         if _hc0:
             rh, d0, fin = {"Content-Type": _hc0["ctype"], "Content-Range": f"bytes 0-{_hc0['n']-1}/{_hc0['size']}"}, _hc0["data"], url
         else:
@@ -2245,7 +2275,7 @@ class Blob:
         if s.head and len(d0) >= min(s.size, CH):
             s.f.seek(0); s.f.write(d0); s.have.add(0)
         if s.head and not str(fq).startswith("v"):
-            try: _HC.put(vid, fq, s.head, s.size, s.ctype)
+            try: _headc_put(vid, fq, s.head, s.size, s.ctype, url=getattr(s, "url", None))
             except Exception: pass
             if not _hc0 and len(s.head) < min(s.size, HEADC_B):
                 threading.Thread(target=_headc_fill, args=(vid, fq), daemon=True).start()
@@ -3910,7 +3940,7 @@ class H(BaseHTTPRequestHandler):
                             try: bl.read(0, min(bl.size - 1, (3 << 20) - 1))
                             except Exception: pass
                             try:
-                                if not str(fq).startswith("v") and getattr(bl, "head", None): _HC.put(vid, fq, bl.head, bl.size, bl.ctype)
+                                if not str(fq).startswith("v") and getattr(bl, "head", None): _headc_put(vid, fq, bl.head, bl.size, bl.ctype, url=getattr(bl, "url", None))
                             except Exception: pass
                         finally: _pend[0] -= 1
                     _pend[0] += 1; threading.Thread(target=_pf, daemon=True).start()
@@ -3966,7 +3996,14 @@ class H(BaseHTTPRequestHandler):
                 if u.path == "/audio":
                     _rg0 = re.match(r"bytes=(\d*)-(\d*)", self.headers.get("Range", "") or "")
                     _a0 = int(_rg0.group(1)) if _rg0 and _rg0.group(1) else 0
-                    _hc = _HC.get(vid, fq) if _a0 == 0 else None
+                    _hc = None
+                    if _a0 == 0:
+                        try:
+                            _ent = _ucache_load(vid, fq)
+                            _url = ((_ent or {}).get("furl") or (_ent or {}).get("url") or "") if _ent else ""
+                            _hc = _headc_get(vid, fq, _url) if _url else None
+                        except Exception:
+                            _hc = None
                     if _hc:
                         _sz, _ct, _hd = _hc["size"], _hc["ctype"], _hc["data"]
                         _hn = len(_hd)
@@ -4012,7 +4049,7 @@ class H(BaseHTTPRequestHandler):
                 if a >= bl.size: self.send_response(416); self.send_header("Content-Range", f"bytes */{bl.size}"); self.end_headers(); return
                 b = min(b, bl.size - 1)
                 try:
-                    if u.path == "/audio" and getattr(bl, "head", None): _HC.put(vid, fq, bl.head, bl.size, bl.ctype)
+                    if u.path == "/audio" and getattr(bl, "head", None): _headc_put(vid, fq, bl.head, bl.size, bl.ctype, url=getattr(bl, "url", None))
                 except Exception: pass
                 self.send_response(206 if rg else 200); self.send_header("Content-Type", bl.ctype); self.send_header("Accept-Ranges", "bytes")
                 self.send_header("Content-Length", str(b - a + 1))

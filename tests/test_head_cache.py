@@ -45,6 +45,30 @@ class HeadCacheTest(unittest.TestCase):
         self.assertEqual(got["n"], 400)
         self.assertEqual(got["data"][:1], b"B")
 
+    def test_itag_and_size_must_match(self):
+        data = b"H" * 80
+        self.assertTrue(self.c.put("eeeeeeeeeee", "std", data, 4000, "audio/mp4", itag="140"))
+        # same itag + size -> hit
+        hit = self.c.get("eeeeeeeeeee", "std", itag="140", size=4000)
+        self.assertIsNotNone(hit)
+        self.assertEqual(hit["itag"], "140")
+        self.assertEqual(hit["data"], data)
+        # different itag or size -> miss (do not stitch a different format)
+        self.assertIsNone(self.c.get("eeeeeeeeeee", "std", itag="251", size=4000))
+        self.assertIsNone(self.c.get("eeeeeeeeeee", "std", itag="140", size=9999))
+        # legacy untagged entry is rejected when the caller supplies an itag
+        self.c.put("fffffffffff", "std", b"L" * 80, 4000, "audio/webm")  # no itag
+        self.assertIsNotNone(self.c.get("fffffffffff", "std"))
+        self.assertIsNone(self.c.get("fffffffffff", "std", itag="251"))
+
+        # putting a tagged intro over a same-size legacy entry must store the itag
+        # (otherwise get(itag=...) keeps missing and the head cache is dead)
+        self.c.put("ggggggggggg", "std", b"G" * 80, 4000, "audio/mp4")  # legacy
+        self.assertIsNone(self.c.get("ggggggggggg", "std", itag="140"))
+        self.assertTrue(self.c.put("ggggggggggg", "std", b"G" * 80, 4000, "audio/mp4", itag="140"))
+        hit = self.c.get("ggggggggggg", "std", itag="140", size=4000)
+        self.assertIsNotNone(hit)
+        self.assertEqual(hit["itag"], "140")
 
 if __name__ == "__main__":
     unittest.main()

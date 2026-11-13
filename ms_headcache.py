@@ -75,30 +75,42 @@ class HeadCache:
         safe = SAFE.sub("_", f"{vid}_{fq}")[:80]
         return self.dir / f"{safe}.bin", self.dir / f"{safe}.json"
 
-    def get(self, vid, fq):
-        """Return {data, size, ctype, n} or None. Never raises to the caller."""
+    def get(self, vid, fq, itag=None, size=None):
+        """Return {data, size, ctype, n, itag} or None. Never raises to the caller.
+
+        When itag and/or size are given, a cached intro is only returned if it was
+        stored for that exact itag and full-file Content-Length. Legacy entries
+        without an itag miss so they cannot be stitched onto a different format.
+        """
         try:
             binp, metap = self.paths(vid, fq)
             if not (binp.exists() and metap.exists()):
                 return None
             meta = json.loads(metap.read_text(encoding="utf-8"))
             data = binp.read_bytes()
-            size = int(meta.get("size") or 0)
+            sz = int(meta.get("size") or 0)
             n = int(meta.get("n") or 0)
-            if size <= 0 or not data or n <= 0 or len(data) != n:
+            if sz <= 0 or not data or n <= 0 or len(data) != n:
                 return None
-            if n > size:
+            if n > sz:
                 return None
+            meta_itag = str(meta.get("itag") or "")
+            if itag not in (None, ""):
+                if not meta_itag or str(itag) != meta_itag:
+                    return None
+            if size not in (None, "", 0):
+                if int(size) != sz:
+                    return None
             try:
                 os.utime(binp, None)
                 os.utime(metap, None)
             except Exception:
                 pass
-            return {"data": data, "size": size, "ctype": meta.get("ctype") or "application/octet-stream", "n": n, "t": meta.get("t") or 0}
+            return {"data": data, "size": sz, "ctype": meta.get("ctype") or "application/octet-stream", "n": n, "t": meta.get("t") or 0, "itag": meta_itag}
         except Exception:
             return None
 
-    def put(self, vid, fq, data, size, ctype="application/octet-stream"):
+    def put(self, vid, fq, data, size, ctype="application/octet-stream", itag=""):
         """Atomic write. Returns True if stored. Evicts LRU down to max_bytes."""
         try:
             if not data or size <= 0:
@@ -111,7 +123,7 @@ class HeadCache:
             try:
                 if binp.exists() and metap.exists():
                     oldm = json.loads(metap.read_text(encoding="utf-8"))
-                    if int(oldm.get("size") or 0) == int(size) and int(oldm.get("n") or 0) >= len(data) and binp.stat().st_size == int(oldm.get("n") or 0):
+                    if int(oldm.get("size") or 0) == int(size) and int(oldm.get("n") or 0) >= len(data) and binp.stat().st_size == int(oldm.get("n") or 0) and (not itag or str(oldm.get("itag") or "") == str(itag)):
                         os.utime(binp, None)
                         os.utime(metap, None)
                         return True
@@ -122,7 +134,7 @@ class HeadCache:
             lf = _lock(binp)
             try:
                 tmp.write_bytes(data)
-                jtmp.write_text(json.dumps({"size": int(size), "ctype": ctype or "application/octet-stream", "n": len(data), "t": time.time(), "vid": vid, "q": fq}), encoding="utf-8")
+                jtmp.write_text(json.dumps({"size": int(size), "ctype": ctype or "application/octet-stream", "n": len(data), "t": time.time(), "vid": vid, "q": fq, "itag": str(itag or "")}), encoding="utf-8")
                 os.replace(tmp, binp)
                 os.replace(jtmp, metap)
             finally:
@@ -195,12 +207,12 @@ def init(root, max_mb=300, head_kb=384):
     return _default
 
 
-def get(vid, fq):
-    return _default.get(vid, fq) if _default else None
+def get(vid, fq, itag=None, size=None):
+    return _default.get(vid, fq, itag=itag, size=size) if _default else None
 
 
-def put(vid, fq, data, size, ctype="application/octet-stream"):
-    return _default.put(vid, fq, data, size, ctype) if _default else False
+def put(vid, fq, data, size, ctype="application/octet-stream", itag=""):
+    return _default.put(vid, fq, data, size, ctype, itag=itag) if _default else False
 
 
 def stats():
