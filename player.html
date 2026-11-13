@@ -1,4 +1,4 @@
-﻿<!doctype html><html lang=en><head><!-- adult-viz-20261111 --><!-- ms-v87-sound --><meta charset=utf-8><meta name=ms-build content=ms-v87-sound><script>/* login-20261110: session expired / signed out -> login page */(function(){const F=window.fetch;if(!F)return;window.fetch=function(){return F.apply(this,arguments).then(r=>{try{if(r.status===401&&!window.__msLogin&&(r.headers.get('content-type')||'').indexOf('json')>=0&&new URL(r.url,location.href).origin===location.origin){window.__msLogin=1;location.href='/login?next='+encodeURIComponent(location.pathname+location.search)}}catch(_){}return r})}})()</script><script>/* login-state-20261110: apply the signed-in user's saved state before the player reads localStorage */(function(){
+﻿<!doctype html><html lang=en><head><!-- adult-viz-20261111 --><!-- ms-v88-touch --><meta charset=utf-8><meta name=ms-build content=ms-v88-touch><script>/* login-20261110: session expired / signed out -> login page */(function(){const F=window.fetch;if(!F)return;window.fetch=function(){return F.apply(this,arguments).then(r=>{try{if(r.status===401&&!window.__msLogin&&(r.headers.get('content-type')||'').indexOf('json')>=0&&new URL(r.url,location.href).origin===location.origin){window.__msLogin=1;location.href='/login?next='+encodeURIComponent(location.pathname+location.search)}}catch(_){}return r})}})()</script><script>/* login-state-20261110: apply the signed-in user's saved state before the player reads localStorage */(function(){
 const B=window.__msBoot;if(!B||!B.keys)return;if(new URLSearchParams(location.search).get('u'))return;
 const LS=window.localStorage,K=/* audit-20261111 */(window.__msKeysOf=function(B,x){const D=new Set(B.deny||[]),ok=k=>typeof k==='string'&&/^[A-Za-z0-9_.:-]{1,64}$/.test(k)&&!D.has(k)&&!/^(__|local\.|dev\.)/.test(k);const s=new Set(B.keys||[]);if(B.generic){try{Object.keys(x||{}).forEach(k=>{if(ok(k))s.add(k)});for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(ok(k))s.add(k)}}catch(e){}}return [...s]})(B,(B.state&&B.state.ls)||{}),H=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)+'.'+s.length};
 const gm=()=>{try{return JSON.parse(LS.getItem('__msSync')||'{}')||{}}catch(e){return{}}},sm=m=>{try{LS.setItem('__msSync',JSON.stringify(m))}catch(e){}};
@@ -306,6 +306,9 @@ html[data-theme=paper] #home .hcard .at{opacity:.7}
 <script src="/famlang.js"></script>
 <script id=ms-life-v49>
 var playGen=0;window.__msLife=[];
+/* radio3-20261113: __resumeAt (set on offline/stall/error/early-end) is tied to the track it was set on.
+   Before: a stale value (e.g. Android screen-off fired 'offline') made the NEXT radio song start at that second -> it ended at once / looked like autoplay died. */
+(function(){let v=0,f='';try{Object.defineProperty(window,'__resumeAt',{configurable:true,get(){try{if(!(v>0))return 0;const c=typeof cur==='function'&&cur();return c&&c.id===f?v:0}catch(_){return 0}},set(x){x=+x||0;v=x;try{const c=x>0&&typeof cur==='function'&&cur();f=c&&c.id||''}catch(_){f=''}}})}catch(_){}})();
 function life(ev,id,x){try{const np=document.getElementById('np');const e=Object.assign({t:Math.round(performance.now()),ev,id:id||null,np:!!(np&&np.classList.contains('open'))},x||{});__msLife.push(e);if(__msLife.length>300)__msLife.shift();if(/[?&]lifelog=1/.test(location.search))console.log('[life]',JSON.stringify(e))}catch(_){}}
 function endBar(msg,retry){const b=document.getElementById('endbar');if(!b)return;if(msg){try{ldFloat(null)}catch(e){}}if(!msg){b.classList.remove('on');b.innerHTML='';const f=document.getElementById('endfloat');if(f)f.remove();return}life('endbar',null,{msg});
  b.innerHTML='';const s=document.createElement('span');s.textContent=msg;b.append(s);
@@ -408,6 +411,7 @@ st=setTimeout(async()=>{try{const L=await (await fetch(`/api/suggest?k=${K}&q=${
 fillSug(L)}catch(e){}},180)};
 $('f').onsubmit=e=>{e.preventDefault();clearTimeout(st);const rows=[...$('sug').children];if(sugI>=0&&rows[sugI]){pickSug(rows[sugI].getAttribute('data-q'));return}const q=$('q').value.trim();$('sug').innerHTML='';sugI=-1;if(q){search(q);$('q').blur()}};
 
+function _msMediaBusy(){try{return _msPlayingEls().length>0||(typeof M!=="undefined"&&M&&M.dataset.wantPlay==="1")}catch(_){return false}}
 function _msPlayingEls(){try{return [...document.querySelectorAll('audio,video')].filter(el=>el&&!el.paused&&!el.ended)}catch(_){return[]}}
 function _msSolo(keep){try{_msPlayingEls().forEach(el=>{if(el===keep)return;if(keep===AUD&&el===VID&&typeof mode!=='undefined'&&mode==='v')return;if(el.id==='shv'&&window.__shOpen)return;try{if(el!==VID||!el.muted)el.pause()}catch(_){}})}catch(_){}}
 function _msMediaBusy(){try{if(typeof M!=='undefined'&&M&&((M.dataset&&M.dataset.wantPlay==='1')||(!M.paused&&!M.ended)))return true;return _msPlayingEls().some(el=>el&&(!el.muted||el===AUD||(el.dataset&&el.dataset.wantPlay==='1')))}catch(_){return false}}
@@ -867,8 +871,8 @@ function LV(){return view=='res'?res:view=='shorts'?shRes:view=='saved'?offList(
 window.__swReg={state:'not started',err:'',claim:''};
 if(!window.isSecureContext)window.__swReg.state='blocked: not a secure context';
 else if(!('serviceWorker'in navigator))window.__swReg.state='unsupported in this browser/mode';
-else{window.__swReg.state='registering';navigator.serviceWorker.register('/sw.js?v=ms-v87',{scope:'/'}).then(reg=>{window.__swReg.state='registered';window.__swReg.scope=new URL(reg.scope).pathname;try{reg.update()}catch(_){}try{diagSync('sw-registered')}catch(_){}
-  return navigator.serviceWorker.ready}).then(reg=>{window.__swReg.state='ready';if(!navigator.serviceWorker.controller&&reg&&reg.active){window.__swReg.claim='requested';const ch=new MessageChannel();ch.port1.onmessage=e=>{window.__swReg.claim=e.data&&e.data.ok?'granted':'refused ('+((e.data&&e.data.err)||'?')+')';try{diagSync('sw-claim')}catch(_){}};reg.active.postMessage({type:'ms-claim'},[ch.port2]);try{life('sw-claim-requested',null,{nav:_navType()})}catch(_){}}try{diagSync('sw-ready')}catch(_){}try{const w=reg.active;if(w){const ch=new MessageChannel();ch.port1.onmessage=e=>{const v=e.data&&e.data.v;window.__swV=v||'';if(v&&v!=='ms-v87'&&!sessionStorage.msSwReloaded){if(typeof _msMediaBusy!=='function'||!_msMediaBusy()){sessionStorage.msSwReloaded='1';location.reload()}}};w.postMessage({type:'ms-version'},[ch.port2])}}catch(_){}})
+else{window.__swReg.state='registering';navigator.serviceWorker.register('/sw.js?v=ms-v88',{scope:'/'}).then(reg=>{window.__swReg.state='registered';window.__swReg.scope=new URL(reg.scope).pathname;try{reg.update()}catch(_){}try{diagSync('sw-registered')}catch(_){}
+  return navigator.serviceWorker.ready}).then(reg=>{window.__swReg.state='ready';if(!navigator.serviceWorker.controller&&reg&&reg.active){window.__swReg.claim='requested';const ch=new MessageChannel();ch.port1.onmessage=e=>{window.__swReg.claim=e.data&&e.data.ok?'granted':'refused ('+((e.data&&e.data.err)||'?')+')';try{diagSync('sw-claim')}catch(_){}};reg.active.postMessage({type:'ms-claim'},[ch.port2]);try{life('sw-claim-requested',null,{nav:_navType()})}catch(_){}}try{diagSync('sw-ready')}catch(_){}try{const w=reg.active;if(w){const ch=new MessageChannel();ch.port1.onmessage=e=>{const v=e.data&&e.data.v;window.__swV=v||'';if(v&&v!=='ms-v88'&&!sessionStorage.msSwReloaded){if(typeof _msMediaBusy!=='function'||!_msMediaBusy()){sessionStorage.msSwReloaded='1';location.reload()}}};w.postMessage({type:'ms-version'},[ch.port2])}}catch(_){}})
   .catch(err=>{window.__swReg.state='registration failed';window.__swReg.err=String(err&&err.name||'Error')+': '+String(err&&err.message||'').replace(/https?:\/\/\S+/g,'[url]').replace(/[?&]k=[^&\s]*/g,'').slice(0,140);try{diagSync('sw-error')}catch(_){}});
   navigator.serviceWorker.addEventListener('controllerchange',()=>{window.__swReg.ctrlChanged=Date.now();_swB='checking…';try{swBuild().then(v=>{_swB=v;diagSync('controllerchange')})}catch(_){}try{life('sw-controllerchange',null,{})}catch(_){}})}
 const ob=()=>{const on=navigator.onLine;$('offb').style.display=on?'none':'block';const lb=$('libb');if(lb){lb.textContent=on?'Saved':'Offline';lb.setAttribute('aria-label',on?'Saved library':'Offline library')}};addEventListener('online',ob);addEventListener('offline',()=>{ob();view='saved';tabs();render()});addEventListener('focus',ob);document.addEventListener('visibilitychange',()=>{if(!document.hidden)ob()});ob()})();
@@ -2540,4 +2544,55 @@ addEventListener('beforeunload',e=>{posSave();if(playing()){e.preventDefault();e
   o.addEventListener('touchstart',e=>{if(!e.changedTouches[0])return;y0=e.changedTouches[0].clientY;t0=Date.now()}, {passive:true});
   o.addEventListener('touchend',e=>{if(!e.changedTouches[0]||!window.__shOpen)return;const dy=y0-e.changedTouches[0].clientY;if(Math.abs(dy)>60&&Date.now()-t0<800){if(window.shNext)shNext(dy>0?1:-1)}}, {passive:true});
 })();
-</script></body></html>
+</script><style id="touch-20261113">#ptr{position:fixed;left:50%;top:0;z-index:80;width:38px;height:38px;margin-left:-19px;border-radius:50%;background:var(--card,#1d1d22);box-shadow:0 2px 10px #0007;display:grid;place-items:center;pointer-events:none;opacity:0;transform:translateY(-50px)}#ptr i{width:18px;height:18px;box-sizing:border-box;border:2.5px solid var(--acc,#ff4f2b);border-top-color:transparent;border-radius:50%}#ptr.spin i{animation:ptrs .75s linear infinite}@keyframes ptrs{to{transform:rotate(360deg)}}#mini.swx,#np.swx{transition:transform .18s ease}#tseek{position:absolute;top:50%;z-index:5;transform:translateY(-50%);background:#000a;color:#fff;border-radius:20px;padding:8px 14px;font:600 14px system-ui;pointer-events:none;opacity:0;transition:opacity .25s}#list li.lp{filter:brightness(1.15)}</style>
+<script>/* touch-20261113: mobile gestures - pull-to-refresh (app data, not a page reload), swipe next/prev on the players,
+   swipe up on mini = open, left-edge swipe = Back, long-press a song = its menu, double-tap video sides = seek 10 s.
+   Ignores multi-touch, inputs/sliders, horizontal scrollers and the Shorts overlay (it owns its own vertical swipe). */
+(function(){
+const $=id=>document.getElementById(id);const np=$('np'),mini=$('mini');if(!np||!mini)return;
+const ind=document.createElement('div');ind.id='ptr';ind.setAttribute('aria-hidden','true');ind.innerHTML='<i></i>';document.body.appendChild(ind);
+const PULL=70,SW=70,EDGE=24;let S=null,busy=false,lpT=0,lpFired=0,lastTap={t:0,side:''};
+function hScroll(el){for(let e=el;e&&e!==document.body&&e!==document.documentElement;e=e.parentElement){const s=getComputedStyle(e);if((s.overflowX==='auto'||s.overflowX==='scroll')&&e.scrollWidth>e.clientWidth+4)return true}return false}
+function vScrolled(el,stop){for(let e=el;e&&e!==stop&&e!==document.body;e=e.parentElement){const s=getComputedStyle(e);if((s.overflowY==='auto'||s.overflowY==='scroll')&&e.scrollHeight>e.clientHeight+2&&e.scrollTop>0)return true}return false}
+const noGest=t=>!!t.closest('input,textarea,select,[contenteditable=""],[contenteditable=true],#seekw,#vol,.row2,#vbar,.menu.open,#dlm,#thd,#help,#diagp,#impd,#acctpop,[data-noswipe]');
+function setInd(y,spin){ind.classList.toggle('spin',!!spin);ind.style.opacity=y>4?Math.min(1,y/PULL):0;ind.style.transform='translateY('+(Math.min(y,PULL+20)-50+12)+'px) rotate('+(y*4)+'deg)'}
+function refresh(){if(busy)return;busy=true;setInd(PULL,true);const t0=Date.now();let p;
+ try{const home=$('home');const q=(($('q')&&$('q').value)||'').trim();
+  if(typeof view!=='undefined'&&view==='shorts'){p=q?search(q):loadShortsFeed(false)}
+  else if(home&&home.classList.contains('on')&&typeof loadHome==='function'){p=loadHome(true)}
+  else if(typeof view!=='undefined'&&view==='res'&&q){p=search(q)}
+  else{render()}
+  try{life('ptr-refresh',null,{view:typeof view!=='undefined'?view:'',home:!!(home&&home.classList.contains('on'))})}catch(_){}
+ }catch(e){}
+ Promise.resolve(p).catch(()=>{}).then(()=>new Promise(r=>setTimeout(r,Math.max(0,650-(Date.now()-t0))))).then(()=>{busy=false;setInd(0,false)})}
+window.__msPtrRefresh=refresh;
+function back(){try{if(window.__msTopLayer&&window.__msTopLayer()){window.__msCloseTop();return}}catch(_){}try{history.back()}catch(_){}}
+function cancelLp(){clearTimeout(lpT);lpT=0;document.querySelectorAll('#list li.lp').forEach(x=>x.classList.remove('lp'))}
+document.addEventListener('touchstart',e=>{cancelLp();if(e.touches.length!==1||window.__shOpen){S=null;return}const t=e.touches[0],tg=e.target;
+ const inNp=np.classList.contains('open')&&np.contains(tg),inMini=!inNp&&mini.contains(tg);
+ S={x0:t.clientX,y0:t.clientY,dx:0,dy:0,lock:'',tg,zone:inNp?'np':inMini?'mini':'page',edge:t.clientX<=EDGE&&!inNp,no:noGest(tg),hs:hScroll(tg),top:(window.scrollY||document.documentElement.scrollTop||0)<=0,t0:Date.now()};
+ if(S.zone==='page'&&!S.no){const li=tg.closest('#list li');const mb=li&&li.querySelector('[data-m]');if(mb&&!tg.closest('[data-m],[data-lk],a,button'))lpT=setTimeout(()=>{lpT=0;if(!S||S.lock)return;li.classList.add('lp');setTimeout(()=>li.classList.remove('lp'),250);try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}mb.click();lpFired=Date.now();try{life('longpress-menu',null,{})}catch(_){}},480)}
+},{passive:true,capture:true});
+document.addEventListener('touchmove',e=>{if(!S)return;if(e.touches.length!==1){S=null;cancelLp();setInd(0);return}const t=e.touches[0];S.dx=t.clientX-S.x0;S.dy=t.clientY-S.y0;const ax=Math.abs(S.dx),ay=Math.abs(S.dy);
+ if(!S.lock&&Math.max(ax,ay)>10){S.lock=ax>ay*1.3?'h':ay>ax*1.3?'v':'x';cancelLp()}
+ if(S.no)return;
+ if(S.lock==='v'&&S.zone==='page'&&!S.edge&&S.top&&S.dy>0&&!busy&&!vScrolled(S.tg,document.body)&&!np.classList.contains('open')){S.ptr=1;if(e.cancelable)e.preventDefault();setInd(S.dy*0.55)}
+ else if(S.lock==='h'&&(S.zone==='mini'||S.zone==='np')&&!S.hs){const el=S.zone==='mini'?mini:np.querySelector('#stage')||np;el.style.transform='translateX('+(S.dx*0.35)+'px)';S.mv=el}
+},{passive:false,capture:true});
+document.addEventListener('touchend',e=>{const s=S;S=null;cancelLp();if(!s)return;if(s.mv){const el=s.mv;el.classList.add('swx');el.style.transform='';setTimeout(()=>el.classList.remove('swx'),200)}
+ if(s.ptr){if(s.dy*0.55>=PULL)refresh();else if(!busy)setInd(0);return}
+ if(s.no)return;const ax=Math.abs(s.dx),ay=Math.abs(s.dy);
+ if(s.edge&&s.lock==='h'&&s.dx>SW&&!s.hs){if(e.cancelable)e.preventDefault();try{life('edge-back',null,{})}catch(_){}back();return}
+ if(s.lock==='h'&&ax>SW&&!s.hs&&(s.zone==='mini'||s.zone==='np')){if(e.cancelable)e.preventDefault();try{life('swipe-'+(s.dx<0?'next':'prev'),null,{z:s.zone})}catch(_){}if(s.dx<0)next();else prev();return}
+ if(s.zone==='mini'&&s.lock==='v'&&s.dy<-50){if(e.cancelable)e.preventDefault();try{if(cur())openNp(true)}catch(_){}return}
+ /* double-tap the left/right third of the video = -/+10 s (the middle keeps double-tap = fullscreen) */
+ if(s.zone==='np'&&!s.lock&&Date.now()-s.t0<300&&typeof mode!=='undefined'&&mode==='v'){const st=s.tg.closest('#stage');if(st){const r=st.getBoundingClientRect(),x=s.x0-r.left,side=x<r.width/3?'l':x>r.width*2/3?'r':'';const now=Date.now();
+  if(side&&lastTap.side===side&&now-lastTap.t<320){lastTap={t:0,side:''};if(e.cancelable)e.preventDefault();try{const el=M;const d=isFinite(el.duration)?el.duration:1e9;el.currentTime=Math.max(0,Math.min(d-1,(el.currentTime||0)+(side==='r'?10:-10)));let b=$('tseek');if(!b){b=document.createElement('div');b.id='tseek';st.appendChild(b)}b.textContent=side==='r'?'+10 s ⏩':'⏪ −10 s';b.style.left=side==='l'?'12%':'';b.style.right=side==='r'?'12%':'';b.style.opacity=1;clearTimeout(b._t);b._t=setTimeout(()=>b.style.opacity=0,600);life('dbltap-seek',null,{side})}catch(_){}}
+  else lastTap={t:now,side}}}
+},{passive:false,capture:true});
+document.addEventListener('touchcancel',()=>{S=null;cancelLp();if(!busy)setInd(0)},{capture:true});
+/* the click synthesized after a long-press must not also play the row */
+document.addEventListener('click',e=>{if(lpFired&&Date.now()-lpFired<700&&e.target.closest('#list li')&&!e.target.closest('.menu')){lpFired=0;e.stopPropagation();e.preventDefault()}},true);
+document.addEventListener('contextmenu',e=>{if(e.target.closest('#list li'))e.preventDefault()});
+})();</script>
+</body></html>
