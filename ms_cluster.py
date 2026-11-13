@@ -356,7 +356,21 @@ def run_supervisor(script=None):
         procs[i] = _spawn(script, i, ports[i], n, parent, xt)
         return procs[i]
 
+    def port_up(p):
+        s = _try_connect(p, timeout=0.4)
+        if not s:
+            return False
+        try:
+            s.close()
+        except Exception:
+            pass
+        return True
+
     for i in range(n):
+        # If a previous front died without killing workers, reuse them (do not bind-fail or stack a second set).
+        if port_up(ports[i]):
+            print(f"cluster: worker {i} port {ports[i]} already up; reusing", flush=True)
+            continue
         start_one(i)
         print(f"cluster: worker {i} pid {procs[i].pid} port {ports[i]}", flush=True)
     _write_workers([p.pid for p in procs if p])

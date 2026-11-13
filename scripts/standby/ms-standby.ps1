@@ -52,11 +52,17 @@ function Loop-Restart($why) { # restart the 8121 run.ps1 loop (PowerShell reads 
   Get-CimInstance Win32_Process -Filter "name='powershell.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like "*$ROOT\run.ps1*" } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
   Server-Restart $why; Start-Sleep 2
   Start-Process powershell.exe -ArgumentList @('-NoProfile','-WindowStyle','Hidden','-ExecutionPolicy','Bypass','-File',"`"$ROOT\run.ps1`"") -WindowStyle Hidden }
+function Worker-Ok { try { return ((Invoke-WebRequest "http://127.0.0.1:8221/health" -UseBasicParsing -TimeoutSec 2).Content -match 'ok') } catch { return $false } }
+function Front-Only-Proc { Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like "*ms_front_only.py*" } | Select-Object -First 1 }
+function Start-FrontOnly { if (Front-Only-Proc) { return }; Start-Process -FilePath "C:\Python313\python.exe" -ArgumentList @("-u","ms_front_only.py") -WorkingDirectory $ROOT -WindowStyle Hidden; Ev "front-only recovery started (8121 down, workers up)" }
 function Server-Ensure { $id = Server-Pid
   if ($id) { if ((Test-Path $MARK) -and -not (Is-Standby)) { $p = Get-CimInstance Win32_Process -Filter "ProcessId=$id" -ErrorAction SilentlyContinue
       if ($p -and $p.CommandLine -match 'music_server\.py') { Loop-Restart 'was running in normal mode' } }; return }
+  # 8121 is not listening. Reuse live workers via front-only; otherwise start or bounce the run.ps1 loop.
+  if ((Worker-Ok) -and (Test-Path (Join-Path $ROOT "ms_front_only.py"))) { Start-FrontOnly; return }
   $loop = Get-CimInstance Win32_Process -Filter "name='powershell.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like "*$ROOT\run.ps1*" }
-  if (-not $loop) { Start-Process powershell.exe -ArgumentList @('-NoProfile','-WindowStyle','Hidden','-ExecutionPolicy','Bypass','-File',"`"$ROOT\run.ps1`"") -WindowStyle Hidden; Ev 'backup server started' } }
+  if (-not $loop) { Start-Process powershell.exe -ArgumentList @('-NoProfile','-WindowStyle','Hidden','-ExecutionPolicy','Bypass','-File',"`"$ROOT\run.ps1`"") -WindowStyle Hidden; Ev 'backup server started' }
+  else { Loop-Restart '8121 down with run loop still alive' } }
 
 function Atomic-Copy($src, $dst) { $tmp = "$dst.sbtmp"; Copy-Item -Force $src $tmp; if (Test-Path $dst) { Move-Item -Force $tmp $dst } else { Rename-Item $tmp (Split-Path $dst -Leaf) } }
 function Sync-Data { $tmp = Join-Path $SD 'stage\data'; Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force $tmp | Out-Null
