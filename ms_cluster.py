@@ -153,12 +153,24 @@ class Pool:
 
 
 def _tune(s):
+    # Never inherit the listen socket's accept() timeout (1 s). A 1 s recv
+    # timeout would kill HTTP keep-alive and stall long song/video lookups.
+    try:
+        s.settimeout(None)
+    except Exception:
+        pass
     try:
         s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
     except Exception:
         pass
     try:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+    except Exception:
+        pass
+    try:
+        # Linux: don't delay ACKs on the first bytes of a response.
+        if hasattr(socket, "TCP_QUICKACK"):
+            s.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
     except Exception:
         pass
 

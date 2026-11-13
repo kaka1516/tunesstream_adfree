@@ -515,9 +515,10 @@ def _search(q, n=8):
     if not q:
         return []
     key = (q.lower(), n); c = _scache.get(key)
-    if c and time.time() - c[1] < 1800: return c[0]
+    if c and time.time() - c[1] < 1800:
+        _search_warm(c[0]); return c[0]
     _d = _sdisk_get(key)  # speed-20261110
-    if _d: _scache[key] = (_d, time.time()); return _d
+    if _d: _scache[key] = (_d, time.time()); _search_warm(_d); return _d
     if n <= 1: args = [f"ytsearch1:{q}", "--flat-playlist", "-J", "--no-warnings"]
     else: args = ["https://www.youtube.com/results?" + urllib.parse.urlencode({"search_query": q}), "--flat-playlist", "-J", "--no-warnings", "--playlist-end", str(max(n, 8) + 6)]
     _pe = args[args.index("--playlist-end") + 1] if "--playlist-end" in args else None  # play2-20261110: in-process first
@@ -548,7 +549,20 @@ def _search(q, n=8):
     res = res[:max(n, 1) + 4] if n > 1 else res[:1]
     if len(_scache) > 300: _scache.clear()
     if res: _scache[key] = (res, time.time()); _sdisk_put(key, res)  # speed-20261110
+    _search_warm(res)
     return res
+def _search_warm(res):
+    """speed-20261113: resolve stream URLs for the first few hits so a click starts in ~0.1 s, not ~2 s."""
+    ids = [x["id"] for x in (res or []) if isinstance(x, dict) and VID.match(x.get("id") or "")][:3]
+    if not ids:
+        return
+    try:
+        # Prefer the new first hit (audio, then a full video-rung warm at the default
+        # 720p pick) so a later search is not stuck behind leftover warms.
+        jobs = [(ids[0], "std"), (ids[0], "vw")] + [(i, "std") for i in ids[1:]]
+        _warm_prefer(jobs)
+    except Exception:
+        pass
 _lcache = {}
 # backlog-20261112: mix/playlist lists were the slowest thing under load (100 users: p50 18 s, 65% timeouts) - every
 # request ran its own in-process yt-dlp list fetch, the same list was fetched in parallel, and empty lists were never
@@ -688,24 +702,22 @@ def _vpick(fmts, h, c):
             return _pick(pool)
     pool = ([f for f in ok if (f.get("vcodec") or "").startswith("av01")] if c == "a" else []) or [f for f in ok if (f.get("vcodec") or "").startswith("avc1")] or ok
     return _pick(pool)
-def _vwarm(vid, c):
+def _vwarm(vid, c, need=1080):
     """One yt-dlp extraction resolves every rendition (144..1440) into the URL cache, so switching quality later costs no yt-dlp wait."""
     k = (vid, c); x = _VINFO.get(k)
     if x and time.time() - x["t"] < 3 * 3600: return x
     def go():
-        info = None; err = None; _bg_blocked(vid)  # play4-20261111
-        for kind in _kinds(vid):  # play2-20261110
-            try: info = _ydl_info(vid, vfmt("v360" + c), kind); break
-            except ExtractBusy: raise  # perf-20261112
-            except Exception as e: err = e; _kind_bad(vid, kind)
-        if info is None: raise err or RuntimeError("no info")
+        _bg_blocked(vid)  # play4-20261111
+        info = _ydl_video_info(vid, c, need=need)  # speed-20261113: merge vis+def if 1080/720 avc1 is missing
         ls = _live_status(info); _live_note(vid, ls)
         if ls in _LIVE_BAD: raise LiveUnsupported(ls)
         fm = info.get("formats") or []; res = {}
         for h in _VHEIGHTS:  # v1440-20261111
             f = _vpick(fm, h, c)
             if not f: continue
-            if h >= 1440 and (f.get("height") or 0) < 1400: continue  # v1440-20261111: no fake 1440 from a 1080 file
+            # speed-20261113: never label a 360/480 file as 720/1080 (was happening when
+            # a client/helper list lacked the higher avc1 rung, or fell through to fmt 18).
+            if (f.get("height") or 0) < h: continue
             hdr = {kk: str(vv) for kk, vv in dict(f.get("http_headers") or info.get("http_headers") or {}).items()}
             if not (_ucache.get((vid, f"v{h}{c}")) or {}).get("url"): _ucache_save(vid, f"v{h}{c}", f["url"], hdr)
             res[str(h)] = {"fmt": f.get("format_id"), "h": f.get("height"), "vcodec": (f.get("vcodec") or "").split(".")[0],
@@ -721,7 +733,9 @@ def _vinfo_from(vid, info):
         for h in _VHEIGHTS:  # v1440-20261111
             f = _vpick(fm, h, c)
             if not f: continue
-            if h >= 1440 and (f.get("height") or 0) < 1400: continue  # v1440-20261111: no fake 1440 from a 1080 file
+            # speed-20261113: never label a 360/480 file as 720/1080 (was happening when
+            # a client/helper list lacked the higher avc1 rung, or fell through to fmt 18).
+            if (f.get("height") or 0) < h: continue
             hdr = {kk: str(vv) for kk, vv in dict(f.get("http_headers") or info.get("http_headers") or {}).items()}
             if not (_ucache.get((vid, f"v{h}{c}")) or {}).get("url"): _ucache_save(vid, f"v{h}{c}", f["url"], hdr)
             res[str(h)] = {"fmt": f.get("format_id"), "h": f.get("height"), "vcodec": (f.get("vcodec") or "").split(".")[0],
@@ -738,21 +752,48 @@ def _ucache_path(vid, q):
     safe = re.sub(r"[^A-Za-z0-9_-]+", "_", f"{vid}_{q}")
     return UCACHE_DIR / f"{safe}.json"
 UC_MARGIN = int(cfg.get("UCACHE_MARGIN", "900"))  # perf-20261112: reuse a stream URL until ~15 min before googlevideo's expire
+# speed-20261113: YouTube itag -> pixel height. Used to reject a 360p/fmt-18 URL cached as 720/1080.
+_ITAG_H = {"18": 360, "22": 720, "160": 144, "133": 240, "134": 360, "135": 480, "136": 720, "137": 1080,
+           "264": 1440, "266": 2160, "298": 720, "299": 1080, "394": 144, "395": 240, "396": 360, "397": 480,
+           "398": 720, "399": 1080, "400": 1440, "278": 144, "242": 240, "243": 360, "244": 480, "247": 720,
+           "248": 1080, "271": 1440, "313": 2160, "302": 720, "303": 1080, "308": 1440, "315": 2160,
+           "91": 144, "92": 240, "93": 360, "94": 480, "95": 720, "96": 1080}
+def _q_video_h(q):
+    m = re.match(r"v(\d+)([ah]?)$", q or "")
+    return int(m.group(1)) if m and int(m.group(1)) in _VHEIGHTS else None
+def _url_itag_h(url):
+    try:
+        itag = (urllib.parse.parse_qs(urllib.parse.urlsplit(url).query).get("itag") or [""])[0]
+    except Exception:
+        return None
+    return _ITAG_H.get(str(itag))
+def _url_too_low(url, q):
+    """True when a cached/selected stream is clearly below the requested ladder rung (e.g. fmt 18 as 720p)."""
+    claim, actual = _q_video_h(q), _url_itag_h(url)
+    return bool(claim and actual and actual <= claim - 120)
 def _ucache_load(vid, q):
     key = (vid, q); c = _ucache.get(key)
     if c and c.get("url") and (c.get("expire") or 0) > time.time() + UC_MARGIN:
         if _live_url(c["url"]): _live_note(vid, "is_live"); _ucache_invalidate(vid, q); raise LiveUnsupported("is_live")
-        return c
+        if _url_too_low(c["url"], q): _ucache_invalidate(vid, q); c = None
+        else: return c
     p = _ucache_path(vid, q)
     if p.exists():
         try:
             c = json.loads(p.read_text())
             if c.get("url") and (c.get("expire") or 0) > time.time() + UC_MARGIN:
                 if _live_url(c["url"]): _live_note(vid, "is_live"); _ucache_invalidate(vid, q); raise LiveUnsupported("is_live")  # ms-v77: pre-v77 cached live manifest
-                _ucache[key] = c; return c
+                if _url_too_low(c["url"], q):
+                    _ucache_invalidate(vid, q)
+                else:
+                    _ucache[key] = c; return c
         except Exception: pass
     return None
 def _ucache_save(vid, q, url, headers):
+    if _url_too_low(url, q):
+        # keep the URL for this one response, but do not remember it as a higher rung
+        exp = _url_expire(url) or (int(time.time()) + 3600 + UC_MARGIN)
+        return {"url": url, "headers": headers or {}, "expire": exp, "cached_at": int(time.time()), "vid": vid, "q": q}
     exp = _url_expire(url) or (int(time.time()) + 3600 + UC_MARGIN)  # perf-20261112: no expire= in the URL -> keep ~1 h
     c = {"url": url, "headers": headers or {}, "expire": exp, "cached_at": int(time.time()), "vid": vid, "q": q}
     _ucache[(vid, q)] = c
@@ -945,6 +986,65 @@ def _ydl_info1(vid, fmt, kind):
             info = y.extract_info(f"https://www.youtube.com/watch?v={vid}", download=False); ok = True
             return info
         finally: _ydl_put(kind, fmt, y, ok)
+def _formats_max_h(fm, prefix=""):
+    hs = [f.get("height") or 0 for f in (fm or [])
+          if (f.get("vcodec") or "none") != "none" and (not prefix or (f.get("vcodec") or "").startswith(prefix))]
+    return max(hs) if hs else 0
+def _merge_format_infos(*infos):
+    if not infos:
+        return None
+    seen, fm = set(), []
+    for info in infos:
+        for f in info.get("formats") or []:
+            k = f.get("format_id") or id(f)
+            if k in seen:
+                continue
+            seen.add(k); fm.append(f)
+    best = max(infos, key=lambda i: _formats_max_h(i.get("formats"), "avc1"))
+    out = dict(best); out["formats"] = fm
+    return out
+def _fill_higher_rungs(vid, c, infos):
+    """Background: merge the other YouTube client so 1080 avc1 is cached without delaying a 720p start."""
+    try:
+        have = {k for k in ("vis", "def") if any(i.get("_ms_kind") == k for i in infos)}
+        for kind in _kinds(vid):
+            if kind in have:
+                continue
+            try:
+                infos.append(_ydl_info(vid, vfmt("v360" + (c or "")), kind))
+            except Exception:
+                continue
+            break
+        info = _merge_format_infos(*infos) if infos else None
+        if info:
+            _vinfo_from(vid, info)
+    except Exception as e:
+        print(f"fill higher rungs {vid} {type(e).__name__}", flush=True)
+def _ydl_video_info(vid, c, need=1080):
+    """Extract video formats; if visionos/helper lacks 720/1080 avc1, merge the default-client list."""
+    infos, err = [], None
+    need = int(need or 1080)
+    for kind in _kinds(vid):
+        try:
+            info = _ydl_info(vid, vfmt("v360" + (c or "")), kind)
+            try: info["_ms_kind"] = kind
+            except Exception: pass
+            infos.append(info)
+            mx = _formats_max_h(info.get("formats"), "avc1")
+            if mx >= max(need, 1080):
+                break
+            if mx >= 720 and need <= 720:
+                # default 720p pick is ready; fill 1080 in the background so start stays fast
+                threading.Thread(target=_fill_higher_rungs, args=(vid, c, list(infos)), daemon=True).start()
+                break
+        except ExtractBusy:
+            raise
+        except Exception as e:
+            err = e
+            _kind_bad(vid, kind)
+    if not infos:
+        raise err or RuntimeError("no info")
+    return _merge_format_infos(*infos) if len(infos) > 1 else infos[0]
 _FL_INF = {}; _FL_L = threading.Lock(); _FL_SEM = threading.BoundedSemaphore(max(1, int(cfg.get("FLAT_MAX", "2")))); _BG = threading.local()  # play2b-20261110
 def _flat_inproc(url, n=None, timeout=45):
     """Same JSON as `yt-dlp --flat-playlist -J [--playlist-end n] url`, without starting a new python + yt-dlp import."""
@@ -1003,6 +1103,10 @@ def _extract_inproc(vid, q="std"):
                 pick = rf[-1] if q.startswith("v") and len(rf) > 1 else rf[0]
                 u = pick.get("url"); hdr = pick.get("http_headers") or hdr
             if not u: raise RuntimeError("no media url")
+            if q.startswith("v") and _url_too_low(u, q):
+                # speed-20261113: this client fell through to fmt 18 / a lower rung; try the other client
+                print(f"xt {vid} q={q} client={kind} fmt={info.get('format_id')} too-low, next client", flush=True)
+                continue
             try: _vinfo_from(vid, info)  # latency2-20261110
             except Exception: pass
             _UKIND[(vid, q)] = kind
@@ -3157,11 +3261,24 @@ def _warm_worker():
             job = _WARMQ.pop(0) if _WARMQ else None
             if not _WARMQ: _WARMQ_EV.clear()
         if not job: continue
-        _fg_wait()  # speed-20261110
-        try: warm_url(*job, follow=True)  # lat-20261111
-        except Exception: pass
-if os.environ.get('MUSIC_WORKER_BG', '1') != '0':
-    threading.Thread(target=_warm_worker, daemon=True).start()
+        # speed-20261113: do not wait for foreground to go idle (that blocked prefetch
+        # while a song was playing, so random/next tracks always paid a cold ~2 s lookup).
+        # _XGate already keeps a slot for listeners.
+        try:
+            if job[1] == "vw":
+                t0 = time.time()
+                _vwarm(job[0], "h", need=720)
+                x = _VINFO.get((job[0], "h")) or {}
+                hs = ",".join(sorted((x.get("res") or {}), key=lambda z: int(z or 0)))
+                print(f"warm vw {job[0]} ms={int((time.time()-t0)*1000)} rungs={hs} err=ok", flush=True)
+            else:
+                r = warm_url(*job, follow=True)  # lat-20261111
+                if isinstance(r, dict):
+                    print(f"warm {job[1] if len(job)>1 else 'std'} {job[0]} ms={r.get('ms')} err={r.get('err') or 'ok'}", flush=True)
+        except Exception as e:
+            print(f"warm fail {job}: {type(e).__name__}", flush=True)
+# speed-20261113: every worker must drain /api/warm and search prefetch. Only quiet-warm stays on worker 0.
+threading.Thread(target=_warm_worker, daemon=True).start()
 WARM_PER_HOUR = max(0, int(cfg.get("WARM_PER_HOUR", "60") or 0)); _QW = {"n": 0, "hour": 0, "last": ""}  # perf2-20261112
 def _quiet_warm():
     """When nobody has started a song for 2 min: pre-resolve stream URLs of the most played and recently played songs
@@ -3188,12 +3305,34 @@ def _quiet_warm():
         except Exception as e: print(f"quiet warm skip {type(e).__name__}", flush=True)
 if os.environ.get('MUSIC_WORKER_BG', '1') != '0':
     threading.Thread(target=_quiet_warm, daemon=True, name="quiet-warm").start()
-def _warm_enqueue(ids, fq):
+def _warm_prefer(jobs):
+    """Move these (vid, q) jobs to the front, keeping order. In-flight work is already popped."""
     with _WARMQ_L:
         n = 0
-        for i in ids:
-            if (i, fq) not in _WARMQ and len(_WARMQ) < 40: _WARMQ.append((i, fq)); n += 1
-        if _WARMQ: _WARMQ_EV.set()
+        seen, prefer = set(), []
+        for j in jobs:
+            if not j or j in seen:
+                continue
+            seen.add(j)
+            if j not in _WARMQ:
+                n += 1
+            prefer.append(j)
+        rest = [j for j in _WARMQ if j not in seen]
+        _WARMQ[:] = (prefer + rest)[:40]
+        if _WARMQ:
+            _WARMQ_EV.set()
+    return n
+def _warm_enqueue(ids, fq, front=False):
+    jobs = [(i, fq) for i in ids if i]
+    if front:
+        return _warm_prefer(jobs)
+    with _WARMQ_L:
+        n = 0
+        for job in jobs:
+            if job not in _WARMQ and len(_WARMQ) < 40:
+                _WARMQ.append(job); n += 1
+        if _WARMQ:
+            _WARMQ_EV.set()
     return n
 def dl_start(qs):
     vid = resolve(qs.get("id", "") or "")
@@ -3244,6 +3383,8 @@ def _ms_adult_allowed(handler=None):
 
 class H(BaseHTTPRequestHandler):
     server_version = "music"; sys_version = ""
+    protocol_version = "HTTP/1.1"  # speed-20261113: keep-alive so reloads reuse the tunnel/origin socket
+    timeout = 30
     def end_headers(self):
         # Issue persistent per-browser client id for keyed sessions (household same-IP rate buckets).
         if getattr(self, "_ms_cid_is_new", False) and getattr(self, "_ms_cid", None):
@@ -3305,7 +3446,7 @@ class H(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
     def send(self, code, body, ctype="text/html; charset=utf-8"):
         b = body.encode() if isinstance(body, str) else body
-        if code == 200 and len(b) > 4096 and ctype.startswith(("text/html", "text/javascript")) and "gzip" in (self.headers.get("Accept-Encoding") or ""):
+        if code == 200 and len(b) > 1024 and ctype.startswith(("text/html", "text/javascript", "application/json", "text/css")) and "gzip" in (self.headers.get("Accept-Encoding") or ""):
             import gzip as _gz, hashlib as _hl
             _GZ = globals().setdefault("_GZC", {}); ck = (len(b), _hl.sha1(b).digest())
             if ck not in _GZ:
@@ -3566,7 +3707,7 @@ class H(BaseHTTPRequestHandler):
                 ids = [x for x in (qs.get("ids") or qs.get("id") or "").split(",") if VID.match(x)][:8]
                 fq = ("v" + qs.get("r", "360")) if qs.get("v") else qs.get("q", "std")
                 if not ids: return self.send(200, json.dumps({"ok": False, "err": "no ids"}), "application/json")
-                n = _warm_enqueue(ids, fq)
+                n = _warm_enqueue(ids, fq, front=True)
                 return self.send(200, json.dumps({"ok": True, "queued": n}), "application/json")
             if u.path == "/api/prefetch":
                 vid = qs.get("id", ""); fq = ("v" + qs.get("r", "360")) if qs.get("v") else qs.get("q", "std")
@@ -3631,7 +3772,7 @@ class H(BaseHTTPRequestHandler):
                 if u.path == "/video":
                     vc = "a" if qs.get("c") == "av1" else "h"; fq += vc
                     try:
-                        with _fg(vid): _vwarm(vid, vc)  # play4-20261111
+                        with _fg(vid): _vwarm(vid, vc, need=_q_video_h(fq) or 720)  # play4-20261111
                     except LiveUnsupported as e: return self._live409(vid, e.status)
                     except ExtractBusy: return self._busy503(vid)  # perf-20261112
                     except Exception: pass  # fall back to the per-rendition extraction below

@@ -177,8 +177,14 @@ def test_proxy_503_when_workers_down():
     front.close()
 
 
+def test_tune_clears_timeout():
+    s = socket.socket(); s.settimeout(1.0)
+    ms_cluster._tune(s)
+    assert s.gettimeout() is None
+    s.close()
+
 if __name__ == "__main__":
-    tests = [test_worker_count_and_ports, test_should_supervise, test_filelock_two_processes,
+    tests = [test_worker_count_and_ports, test_should_supervise, test_tune_clears_timeout, test_filelock_two_processes,
              test_store_sessions_across_processes, test_proxy_streams_and_balances,
              test_proxy_503_when_workers_down]
     failed = 0
