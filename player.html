@@ -737,6 +737,7 @@ function warmSearchResults(L){warmCancel();clearTimeout(window.__wsT);const ids=
 /* prefetch: warm URL for next 3 + download next 1–2 blobs ASAP so Next skips search+cold */
 async function prefetchNext(){const base=qi;const warmIds=[];for(let off=1;off<=3;off++){const n=queue[base+off];if(!n)continue;try{if(!n.id){const qq=n.q||n.title;if(!qq)continue;const x=await (await fetch(`/api/search?k=${K}&n=1&q=${encodeURIComponent(qq)}`)).json();if(qi!==base||queue[base+off]!==n)return;if(x.length)Object.assign(n,{id:x[0].id,dur:x[0].dur||n.dur,channel:n.channel||x[0].channel});else continue;save()}
 if(n.id){warmIds.push(n.id);if(off<=2)fetch(`/api/prefetch?k=${K}&id=${n.id}&q=${qual||'std'}`);if(mode=='v'&&off===1)fetch(`/api/prefetch?k=${K}&id=${n.id}&v=1&r=${vStartRes()}${window.__vAV1?'a':'h'}`)/* play2-20261110 */}}catch(e){}}if(warmIds.length)warmEnqueue(warmIds)}
+AUD.addEventListener('timeupdate',()=>{try{if(AUD.paused||!isFinite(AUD.duration)||AUD.duration<70)return;const left=AUD.duration-AUD.currentTime;if(left>60||left<4)return;if(window.__pf60===playGen)return;window.__pf60=playGen;prefetchNext()}catch(_){}});
 
 /* lyrics (LRCLIB, synced when available) + translate */
 let slpT=null,slpEnd=false,LY=[],LYorig=[],lyOn=localStorage.ly=='1',lyIdx=-1;

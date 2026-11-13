@@ -2014,6 +2014,28 @@ def import_text(text):
 # ---- chunked disk cache: googlevideo throttles open-ended ranges (~30KB/s); bounded 1MB ranges come at full speed
 # lat-20261111: HEAD_KB (default 96, was 256): a smaller first upstream read gets the first audio bytes to the player ~0.3-0.6 s sooner
 CACHE = ROOT / "cache"; CACHE.mkdir(exist_ok=True); CH = 1 << 20; _VRA = max(4, min(256, int(cfg.get("VIDEO_RA_MB", "24") or 24))); HEAD_B = max(32, min(1024, int(cfg.get("HEAD_KB", "96") or 96))) << 10; DIRECT_B = 256 << 10; _blobs = {}; _blk = threading.Lock()
+# head-20261113: persistent intro cache (Range bytes=0-N) shared by workers. Default 384 KB ~10-15 s of 200 kbps audio, 300 MB LRU.
+import ms_headcache as _HC
+_HC.init(ROOT / "lcache" / "heads", max_mb=max(32, min(2048, int(cfg.get("HEAD_CACHE_MB", "300") or 300))), head_kb=max(96, min(1024, int(cfg.get("HEAD_CACHE_KB", "384") or 384))))
+HEADC_B = _HC._default.head_bytes if _HC._default else (384 << 10)
+def _headc_fill(vid, fq):
+    """Background: resolve URL if needed, fetch the intro Range, store it. Returns True on a hit or a successful fill. Never raises."""
+    try:
+        if str(fq).startswith("v"): return False
+        _hit = _HC.get(vid, fq)
+        if _hit and int(_hit.get("n") or 0) >= min(int(_hit.get("size") or 0), HEADC_B): return True
+        ent = cached_entry(vid, fq)
+        fin, rh, d = _rget(ent.get("furl") or ent["url"], 0, HEADC_B - 1, timeout=15, hdrs=ent.get("headers") or {})
+        size = int(rh["Content-Range"].split("/")[1]); ctype = rh.get("Content-Type") or "audio/mp4"
+        try: ent["furl"] = fin; ent["ft"] = time.time()
+        except Exception: pass
+        return _HC.put(vid, fq, d, size, ctype)
+    except Exception as e:
+        try:
+            http = isinstance(e, urllib.error.HTTPError) and getattr(e, "code", 0) in (401, 403, 410)
+            if http: _ucache_invalidate(vid, fq, bad=True)
+        except Exception: pass
+        return False
 MAX_FETCH = int(cfg.get("MAX_FETCH", "8")); MAX_ACTIVE = int(cfg.get("MAX_ACTIVE_DL", "4")); MAX_FF = int(cfg.get("MAX_FFMPEG", "2"))
 _FETCH = threading.BoundedSemaphore(MAX_FETCH)   # global cap on parallel 1MB upstream fetches (all listeners combined)
 _FF = threading.BoundedSemaphore(MAX_FF)         # cap on concurrent ffmpeg mp3 transcodes (/stream, /dl)
@@ -2071,19 +2093,24 @@ class Blob:
         _fu = ent.get("furl") if time.time() - (ent.get("ft") or 0) < 3600 else None  # lat-20261111: post-redirect URL from warm
         if _fu: url = _fu
         # Small head probe: first bytes reach the player sooner; workers fill chunk 0. On 403/expired: singleflight refresh BEFORE any response headers.
-        for _hp in range(3):  # play3-20261111: cached URL -> fresh -> fresh from the other client
-            try: fin, rh, d0 = _rget(url, 0, HEAD_B - 1, hdrs=uh); break
-            except Exception as e:
-                if _fu and url == _fu:  # lat-20261111: stale redirect target -> plain URL, no re-extraction
-                    ent.pop("furl", None); url = ent["url"]; _fu = None
-                    try: fin, rh, d0 = _rget(url, 0, HEAD_B - 1, hdrs=uh); break
-                    except Exception as e2: e = e2
-                # 403/expired/DNS/TLS: invalidate + singleflight refresh BEFORE any response headers leave the server
-                http = isinstance(e, urllib.error.HTTPError) and getattr(e, "code", 0) in (401, 403, 410)
-                print(f"blob head {vid} {fq} try={_hp} {type(e).__name__} {getattr(e, 'code', '')}", flush=True)
-                _ucache_invalidate(vid, fq, bad=http)
-                if _hp == 2: raise
-                ent = cached_entry(vid, fq, force=True); url, uh = ent["url"], ent.get("headers") or {}
+        # head-20261113: serve a cached intro instantly; any miss/error falls through to _rget.
+        _hc0 = None if str(fq).startswith("v") else _HC.get(vid, fq)
+        if _hc0:
+            rh, d0, fin = {"Content-Type": _hc0["ctype"], "Content-Range": f"bytes 0-{_hc0['n']-1}/{_hc0['size']}"}, _hc0["data"], url
+        else:
+            for _hp in range(3):  # play3-20261111: cached URL -> fresh -> fresh from the other client
+                try: fin, rh, d0 = _rget(url, 0, HEAD_B - 1, hdrs=uh); break
+                except Exception as e:
+                    if _fu and url == _fu:  # lat-20261111: stale redirect target -> plain URL, no re-extraction
+                        ent.pop("furl", None); url = ent["url"]; _fu = None
+                        try: fin, rh, d0 = _rget(url, 0, HEAD_B - 1, hdrs=uh); break
+                        except Exception as e2: e = e2
+                    # 403/expired/DNS/TLS: invalidate + singleflight refresh BEFORE any response headers leave the server
+                    http = isinstance(e, urllib.error.HTTPError) and getattr(e, "code", 0) in (401, 403, 410)
+                    print(f"blob head {vid} {fq} try={_hp} {type(e).__name__} {getattr(e, 'code', '')}", flush=True)
+                    _ucache_invalidate(vid, fq, bad=http)
+                    if _hp == 2: raise
+                    ent = cached_entry(vid, fq, force=True); url, uh = ent["url"], ent.get("headers") or {}
         try: ent["furl"] = fin; ent["ft"] = time.time()  # lat-20261111
         except Exception: pass
         s.url = fin; s.uh = uh  # post-redirect URL + yt-dlp headers for later chunk fetches
@@ -2094,9 +2121,14 @@ class Blob:
         except Exception: pass
         with open(s.path, "wb") as f: f.truncate(s.size)
         s.f = open(s.path, "r+b"); s.fl = threading.Lock()
-        s.head = d0 if len(d0) == min(s.size, HEAD_B) else b""
-        if s.head and len(d0) == min(s.size, CH):
+        s.head = d0 if d0 and len(d0) >= min(s.size, 32 << 10) else b""
+        if s.head and len(d0) >= min(s.size, CH):
             s.f.seek(0); s.f.write(d0); s.have.add(0)
+        if s.head and not str(fq).startswith("v"):
+            try: _HC.put(vid, fq, s.head, s.size, s.ctype)
+            except Exception: pass
+            if not _hc0 and len(s.head) < min(s.size, HEADC_B):
+                threading.Thread(target=_headc_fill, args=(vid, fq), daemon=True).start()
         # vbuf-20261111: video (and long audio) keep a read-ahead window instead of pulling the whole file. Pulling every
         # rendition in full (seen: 360+480+720+1080 = 1.3 GB in 2 min for one long video) saturated the phone's Wi-Fi and
         # starved the tunnel upload, which is what made video buffer. Window = VIDEO_RA_MB ahead of the newest read.
@@ -3290,6 +3322,21 @@ def _quiet_warm():
             if not WARM_PER_HOUR: continue
             h = int(time.time() // 3600)
             if h != _QW["hour"]: _QW.update(hour=h, n=0)
+            # head-20261113: keep stream URLs of already-cached intros warm (bounded) so a later tap needs no yt-dlp.
+            if _QW["n"] < WARM_PER_HOUR and not _FGN[0] and time.time() - _FG_LAST[0] >= 60:
+                try:
+                    refreshed = 0
+                    for jp in sorted((ROOT / "lcache" / "heads").glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:24]:
+                        if refreshed >= 3 or _QW["n"] >= WARM_PER_HOUR or _FGN[0]: break
+                        try:
+                            meta = json.loads(jp.read_text()); vid, fq = meta.get("vid") or "", meta.get("q") or "std"
+                            if not vid or str(fq).startswith("v"): continue
+                            c = _ucache_load(vid, fq)
+                            if c and (c.get("expire") or 0) > time.time() + 1200: continue
+                            _QW["n"] += 1; refreshed += 1
+                            warm_url(vid, fq)
+                        except Exception: pass
+                except Exception: pass
             if _QW["n"] >= WARM_PER_HOUR or _FGN[0] or _XG.act or time.time() - _FG_LAST[0] < 120 or time.time() - _BOTC[0] < 1800: continue
             d = _plays_load(); top = sorted((d.get("counts") or {}).items(), key=lambda kv: -int(kv[1] or 0))[:40]
             cand = list(dict.fromkeys([k for k, _ in top] + [x.get("id") for x in reversed(d.get("recent") or [])][:30]))
@@ -3299,7 +3346,7 @@ def _quiet_warm():
                 if not v or not VID.match(v) or live_known(v) or _ucache_load(v, "std"): continue
                 if _disk_blob(v, "std"): continue  # already on disk: plays with no lookup at all
                 _QW["n"] += 1; done += 1; _QW["last"] = v
-                try: warm_url(v, "std")
+                try: warm_url(v, "std"); _headc_fill(v, "std")
                 except Exception: pass
                 time.sleep(5)
         except Exception as e: print(f"quiet warm skip {type(e).__name__}", flush=True)
@@ -3714,10 +3761,15 @@ class H(BaseHTTPRequestHandler):
                 if VID.match(vid) and ((vid, fq) in _blobs or active_dls() + _pend[0] < MAX_ACTIVE):
                     def _pf(vid=vid, fq=fq):
                         try:
+                            if not str(fq).startswith("v") and _HC.get(vid, fq):
+                                _headc_fill(vid, fq); return
                             _fg_wait(15)  # speed-20261110
                             bl = get_blob(vid, fq)
                             # pull ~3MB into disk cache so Next/autoplay starts in ~1s
                             try: bl.read(0, min(bl.size - 1, (3 << 20) - 1))
+                            except Exception: pass
+                            try:
+                                if not str(fq).startswith("v") and getattr(bl, "head", None): _HC.put(vid, fq, bl.head, bl.size, bl.ctype)
                             except Exception: pass
                         finally: _pend[0] -= 1
                     _pend[0] += 1; threading.Thread(target=_pf, daemon=True).start()
@@ -3769,6 +3821,37 @@ class H(BaseHTTPRequestHandler):
                 vid = resolve(qs.get("id", ""))
                 if not vid: return self.send(404, "not found", "text/plain")
                 fq = ("v" + qs.get("r", "360")) if u.path == "/video" else qs.get("q", "std")
+                # head-20261113: audio intro from disk first (TTFB = local read). Remainder still comes from get_blob / upstream.
+                if u.path == "/audio":
+                    _rg0 = re.match(r"bytes=(\d*)-(\d*)", self.headers.get("Range", "") or "")
+                    _a0 = int(_rg0.group(1)) if _rg0 and _rg0.group(1) else 0
+                    _hc = _HC.get(vid, fq) if _a0 == 0 else None
+                    if _hc:
+                        _sz, _ct, _hd = _hc["size"], _hc["ctype"], _hc["data"]
+                        _b0 = int(_rg0.group(2)) if _rg0 and _rg0.group(2) else _sz - 1
+                        if _rg0 and not _rg0.group(1) and _rg0.group(2): _a0, _b0 = max(0, _sz - int(_rg0.group(2))), _sz - 1
+                        if _a0 < _sz:
+                            _b0 = min(_b0, _sz - 1)
+                            self.send_response(206 if _rg0 else 200); self.send_header("Content-Type", _ct); self.send_header("Accept-Ranges", "bytes")
+                            self.send_header("Content-Length", str(_b0 - _a0 + 1))
+                            if _rg0: self.send_header("Content-Range", f"bytes {_a0}-{_b0}/{_sz}")
+                            self.send_header("X-MS-Head", "1"); self.end_headers()
+                            _hi = min(_b0, len(_hd) - 1); _p = _a0
+                            try:
+                                if _a0 <= _hi:
+                                    self.wfile.write(_hd[_a0:_hi + 1]); _p = _hi + 1
+                                if _p <= _b0:
+                                    bl = None
+                                    try:
+                                        with _fg(vid): bl = get_blob(vid, fq)
+                                    except Exception:
+                                        bl = None
+                                    if bl:
+                                        while _p <= _b0:
+                                            d = bl.read(_p, _b0); self.wfile.write(d); _p += len(d)
+                            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, IOError):
+                                pass
+                            return
                 if u.path == "/video":
                     vc = "a" if qs.get("c") == "av1" else "h"; fq += vc
                     try:
@@ -3793,6 +3876,9 @@ class H(BaseHTTPRequestHandler):
                 if rg and not rg.group(1) and rg.group(2): a, b = max(0, bl.size - int(rg.group(2))), bl.size - 1
                 if a >= bl.size: self.send_response(416); self.send_header("Content-Range", f"bytes */{bl.size}"); self.end_headers(); return
                 b = min(b, bl.size - 1)
+                try:
+                    if u.path == "/audio" and getattr(bl, "head", None): _HC.put(vid, fq, bl.head, bl.size, bl.ctype)
+                except Exception: pass
                 self.send_response(206 if rg else 200); self.send_header("Content-Type", bl.ctype); self.send_header("Accept-Ranges", "bytes")
                 self.send_header("Content-Length", str(b - a + 1))
                 if rg: self.send_header("Content-Range", f"bytes {a}-{b}/{bl.size}")
@@ -3833,7 +3919,7 @@ class H(BaseHTTPRequestHandler):
                     _cl = json.loads((_msc.CLUSTER_JSON).read_text(encoding="utf-8")) if _msc.CLUSTER_JSON.exists() else {}
                 except Exception:
                     _cl = {}
-                return self.send(200, json.dumps({"active_dl": active_dls(), "blobs": len(_blobs), "max_fetch": MAX_FETCH, "max_active": MAX_ACTIVE, "xt": _XG.info(), "ucache": len(_ucache), "lookup_helper": {k: v for k, v in _LK.items() if k not in ("key", "url")} | {"on": bool(_LK["url"]), "up": bool(_LK["url"]) and time.time() >= _LK["down_until"]}, "quiet_warm": dict(_QW), "rooms": len(ROOMS),
+                return self.send(200, json.dumps({"active_dl": active_dls(), "blobs": len(_blobs), "max_fetch": MAX_FETCH, "max_active": MAX_ACTIVE, "xt": _XG.info(), "ucache": len(_ucache), "lookup_helper": {k: v for k, v in _LK.items() if k not in ("key", "url")} | {"on": bool(_LK["url"]), "up": bool(_LK["url"]) and time.time() >= _LK["down_until"]}, "quiet_warm": dict(_QW), "head_cache": _HC.stats(), "rooms": len(ROOMS),
                     "worker": os.environ.get("MUSIC_WORKER_ID"), "workers": _cl.get("n") or 1, "worker_ports": _cl.get("ports") or []}), "application/json")
             if u.path == "/api/home":
                 return self.send(200, json.dumps(home_feed(qs.get("langs", "")[:40], qs.get("lk_ids", "")[:900], qs.get("seed", "")[:20], qs.get("hist", "")[:900])), "application/json")
