@@ -3828,27 +3828,21 @@ class H(BaseHTTPRequestHandler):
                     _hc = _HC.get(vid, fq) if _a0 == 0 else None
                     if _hc:
                         _sz, _ct, _hd = _hc["size"], _hc["ctype"], _hc["data"]
+                        _hn = len(_hd)
                         _b0 = int(_rg0.group(2)) if _rg0 and _rg0.group(2) else _sz - 1
                         if _rg0 and not _rg0.group(1) and _rg0.group(2): _a0, _b0 = max(0, _sz - int(_rg0.group(2))), _sz - 1
-                        if _a0 < _sz:
+                        # radio-20261113: only serve a range that is already fully on disk.
+                        # A full-file Range (bytes=0-) used to advertise Content-Length=total, write the
+                        # intro, then fall off the connection if get_blob failed — premature EOF at the
+                        # 384 KB boundary, so <audio> stalled and radio never got an 'ended' event.
+                        if _a0 < _sz and _hn > 0 and _b0 <= _hn - 1:
                             _b0 = min(_b0, _sz - 1)
                             self.send_response(206 if _rg0 else 200); self.send_header("Content-Type", _ct); self.send_header("Accept-Ranges", "bytes")
                             self.send_header("Content-Length", str(_b0 - _a0 + 1))
                             if _rg0: self.send_header("Content-Range", f"bytes {_a0}-{_b0}/{_sz}")
                             self.send_header("X-MS-Head", "1"); self.end_headers()
-                            _hi = min(_b0, len(_hd) - 1); _p = _a0
                             try:
-                                if _a0 <= _hi:
-                                    self.wfile.write(_hd[_a0:_hi + 1]); _p = _hi + 1
-                                if _p <= _b0:
-                                    bl = None
-                                    try:
-                                        with _fg(vid): bl = get_blob(vid, fq)
-                                    except Exception:
-                                        bl = None
-                                    if bl:
-                                        while _p <= _b0:
-                                            d = bl.read(_p, _b0); self.wfile.write(d); _p += len(d)
+                                self.wfile.write(_hd[_a0:_b0 + 1])
                             except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, IOError):
                                 pass
                             return
