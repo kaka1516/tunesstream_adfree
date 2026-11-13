@@ -2628,11 +2628,32 @@ def similar(t, a):
             s = g("https://labs.api.listenbrainz.org/similar-artists/json?algorithm=session_based_days_7500_session_300_contribution_5_threshold_10_limit_100_filter_True_skip_30&artist_mbids=" + mb[0]["id"])
             out = [{"id": None, "q": f"{x['name']} top song", "title": f"{x['name']} (similar artist)", "channel": x["name"], "dur": None, "sim": "listenbrainz"} for x in s[:8]]
     _simc[key] = (out, time.time()); return out
-ROOMS = {}
+ROOMS = {}  # last snapshot (stats only); the real store is a shared file so every worker sees the same rooms
+_ROOMS_F = CACHE / "rooms.json"; _rooms_tl = threading.Lock()
+try:
+    from ms_users import _FileLock as _RoomFL
+    _rooms_fl = _RoomFL(str(CACHE / "rooms.lock"))
+except Exception:
+    _rooms_fl = None
 def room(qs):
-    """Listen-together: host pushes {id,title,channel,t,p}; guests poll and follow. Rooms expire after 2h idle."""
+    """Listen-together: host pushes {id,title,channel,t,p}; guests poll and follow. Rooms expire after 2h idle.
+    rooms-20261113: stored in cache/rooms.json under a file lock - with MUSIC_WORKERS>1 host and guest hit different workers."""
+    with _rooms_tl:
+        if _rooms_fl: _rooms_fl.acquire()
+        try:
+            try: R = json.loads(_ROOMS_F.read_text(encoding="utf-8"))
+            except Exception: R = {}
+            if not isinstance(R, dict): R = {}
+            out = _room(qs, R)
+            tmp = _ROOMS_F.with_name("rooms.json.%d.tmp" % os.getpid())
+            tmp.write_text(json.dumps(R), encoding="utf-8"); os.replace(tmp, _ROOMS_F)
+            ROOMS.clear(); ROOMS.update(R)
+            return out
+        finally:
+            if _rooms_fl: _rooms_fl.release()
+def _room(qs, ROOMS):
     now = time.time()
-    for c in [c for c, r in ROOMS.items() if now - r["ts"] > 7200]: ROOMS.pop(c, None)
+    for c in [c for c, r in ROOMS.items() if now - r.get("ts", 0) > 7200]: ROOMS.pop(c, None)
     code = re.sub(r"[^A-Z0-9]", "", qs.get("r", "").upper())[:8]; op = qs.get("op", "get")
     if op == "new":
         code = secrets.token_hex(3).upper(); hk = secrets.token_urlsafe(8)
