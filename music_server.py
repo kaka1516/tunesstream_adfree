@@ -551,6 +551,81 @@ def _search(q, n=8):
     if res: _scache[key] = (res, time.time()); _sdisk_put(key, res)  # speed-20261110
     _search_warm(res)
     return res
+def search_shorts(q, n=15):
+    """Short-form only. Does not change regular search or radio."""
+    q = (q or "").strip()
+    if not q or q.lower() in ("shorts", "#shorts"):
+        qq = "#shorts"
+    else:
+        qq = q if re.search(r"#shorts", q, re.I) else (q + " #shorts")
+    try: n = max(1, min(int(n or 15), 30))
+    except Exception: n = 15
+    return _single(("sh", qq.lower(), n), lambda: _search_shorts(qq, n))
+def _search_shorts(qq, n=15):
+    key = ("sh", qq.lower(), n)
+    c = _scache.get(key)
+    if c and time.time() - c[1] < 1800:
+        return c[0]
+    try:
+        _d = _sdisk_get(key)
+        if _d:
+            _scache[key] = (_d, time.time()); return _d
+    except Exception:
+        pass
+    def _take(out, acc, limit):
+        raw = json.loads(out or '{"entries":[]}') if (out or "").strip() else {}
+        if not isinstance(raw, dict):
+            raw = {}
+        seen = {x["id"] for x in acc}
+        for e in (raw.get("entries") or []):
+            i = e.get("id") or ""
+            if not VID.match(i) or i in seen:
+                continue
+            try:
+                ls = _live_status(e); _live_note(i, ls)
+                if ls in _LIVE_BAD: continue
+            except Exception:
+                pass
+            dur = e.get("duration")
+            try: dur = int(dur) if dur is not None else None
+            except Exception: dur = None
+            if dur is not None and dur > 180:
+                continue
+            try:
+                w, h = int(e["width"]), int(e["height"])
+                if w > h and (dur or 0) > 90:
+                    continue
+            except Exception:
+                pass
+            acc.append({"id": i, "title": e.get("title", "?"), "dur": dur, "channel": e.get("channel") or e.get("uploader") or "", "short": True})
+            seen.add(i)
+            if len(acc) >= limit:
+                break
+        return acc
+    def _run(args, pe=None, timeout=30):
+        return _flat_out(args[0], pe, timeout, lambda left: subprocess.run(YTDLP + args, capture_output=True, text=True, timeout=max(5, left), creationflags=NOFLAGS, encoding="utf-8", errors="replace").stdout)
+    res = []
+    res = _take(_run([f"ytsearch{max(n, 20)}:{qq}", "--flat-playlist", "-J", "--no-warnings"]), res, n)
+    if len(res) < n:
+        if qq in ("#shorts", "shorts"):
+            url = "https://www.youtube.com/hashtag/shorts"
+        else:
+            url = "https://www.youtube.com/results?" + urllib.parse.urlencode({"search_query": qq})
+        pe = str(max(n, 15) + 10)
+        try:
+            res = _take(_run([url, "--flat-playlist", "-J", "--no-warnings", "--playlist-end", pe], pe, 30), res, n)
+        except Exception:
+            pass
+    if len(res) < max(5, n // 2) and qq == "#shorts":
+        try:
+            res = _take(_run([f"ytsearch{max(n, 20)}:music #shorts", "--flat-playlist", "-J", "--no-warnings"]), res, n)
+        except Exception:
+            pass
+    if res:
+        _scache[key] = (res, time.time())
+        try: _sdisk_put(key, res)
+        except Exception: pass
+    return res
 def _search_warm(res):
     """speed-20261113: resolve stream URLs for the first few hits so a click starts in ~0.1 s, not ~2 s."""
     ids = [x["id"] for x in (res or []) if isinstance(x, dict) and VID.match(x.get("id") or "")][:3]
@@ -3886,7 +3961,11 @@ class H(BaseHTTPRequestHandler):
                         d = bl.read(p, b); self.wfile.write(d); p += len(d)
                 except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, IOError): pass
                 return
-            if u.path == "/api/search": return self.send(200, json.dumps(search(qs.get("q", ""), int(qs.get("n", "15")))), "application/json")
+            if u.path == "/api/search":
+                _n = int(qs.get("n", "15") or 15)
+                if (qs.get("shorts") or "") in ("1", "true", "yes"):
+                    return self.send(200, json.dumps(search_shorts(qs.get("q", ""), _n)), "application/json")
+                return self.send(200, json.dumps(search(qs.get("q", ""), _n)), "application/json")
             if u.path == "/" and not qs.get("q"): return self.send(200, _MSU.with_boot(_page(), getattr(_REQ, "user", None)))  # login-state-20261110
             if u.path == "/":
                 q = qs.get("q", ""); rows = ""
