@@ -42,12 +42,23 @@ def main():
         pg.wait_for_function("() => typeof rmOpen==='function' && document.getElementById('rmtab')", timeout=30000)
         # allow a one-time SW upgrade reload to finish before we click
         try:
-            pg.wait_for_function("() => !!(sessionStorage.msSwReloaded || (window.__swV && window.__swV==='ms-v93') || typeof rmOpen==='function')", timeout=8000)
+            pg.wait_for_function("() => !!(sessionStorage.msSwReloaded || (window.__swV && window.__swV==='ms-v94') || typeof rmOpen==='function')", timeout=8000)
         except Exception:
             pass
         time.sleep(0.8)
         if pg.evaluate("() => typeof rmOpen!=='function' || !document.getElementById('rmtab')"):
             pg.wait_for_function("() => typeof rmOpen==='function' && document.getElementById('rmtab')", timeout=30000)
+        # leftover Continue-where-you-left-off banner (from prior e2e) must not intercept the Rooms click
+        try:
+            pg.evaluate("""() => {
+              const d=document.getElementById('resume20');
+              if(!d) return false;
+              const b=d.querySelector('[data-x]');
+              if(b) b.click(); else d.remove();
+              return true;
+            }""")
+        except Exception:
+            pass
 
         vis = pg.evaluate(
             """() => {

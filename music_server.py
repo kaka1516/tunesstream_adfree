@@ -982,6 +982,35 @@ def _ucache_invalidate(vid, q, bad=False):
     _ucache.pop((vid, q), None)
     try: _ucache_path(vid, q).unlink(missing_ok=True)
     except Exception: pass
+def _media_fresh(vid, fq):
+    """Client play() failed: drop cached URLs and blobs so the next /audio resolve is new."""
+    qs = []
+    if fq:
+        qs.append(fq)
+    if not str(fq or "").startswith("v"):
+        qs.extend(["std", "hi"])
+    seen = set()
+    for q in qs:
+        if not q or q in seen:
+            continue
+        seen.add(q)
+        _ucache_invalidate(vid, q)
+        try:
+            with _blk:
+                bl = _blobs.pop((vid, q), None)
+        except Exception:
+            bl = None
+        if bl is not None:
+            try:
+                bl.f.close()
+            except Exception:
+                pass
+        for path in (CACHE / f"{vid}_{q}.bin", _blob_ok_path(vid, q)):
+            try:
+                path.unlink(missing_ok=True)
+            except Exception:
+                pass
+    print(f"media-fresh vid={vid} fq={fq}", flush=True)
 # --- play2-20261110: fast + reliable yt-dlp lookups -------------------------------------------------------------
 _VIS_ON = _flag("YTDLP_VISIONOS", "1")
 _KBAD = {}            # vid -> {kind: ts}: that client's URL failed (403 / error) for this video recently -> try the other first
@@ -4417,6 +4446,9 @@ class H(BaseHTTPRequestHandler):
                 vid = resolve(qs.get("id", ""))
                 if not vid: return self.send(404, "not found", "text/plain")
                 fq = ("v" + qs.get("r", "360")) if u.path == "/video" else qs.get("q", "std")
+                if (qs.get("fresh") or "").lower() in ("1", "true", "yes"):
+                    try: _media_fresh(vid, fq)
+                    except Exception as _fe: print(f"media-fresh fail {vid} {type(_fe).__name__}", flush=True)
                 # head-20261113: audio intro from disk first (TTFB = local read). Remainder still comes from get_blob / upstream.
                 if u.path == "/audio":
                     _rg0 = re.match(r"bytes=(\d*)-(\d*)", self.headers.get("Range", "") or "")
@@ -4464,8 +4496,23 @@ class H(BaseHTTPRequestHandler):
                     except LiveUnsupported as e:
                         return self._live409(vid, e.status)
                     except ExtractBusy: return self._busy503(vid)  # perf-20261112
-                    except Exception:
-                        if _try == 2: return self.send(502, "upstream error", "text/plain")
+                    except Exception as e:
+                        if _try == 2:
+                            alt = "hi" if fq == "std" else ("std" if fq == "hi" else None)
+                            if u.path == "/audio" and alt and not getattr(self, "_ms_altq", 0):
+                                print(f"audio altq vid={vid} {fq}->{alt} after {type(e).__name__}", flush=True)
+                                self._ms_altq = 1; fq = alt
+                                try:
+                                    with _fg(vid): bl = get_blob(vid, fq)
+                                    break
+                                except LiveUnsupported as e2:
+                                    return self._live409(vid, e2.status)
+                                except ExtractBusy:
+                                    return self._busy503(vid)
+                                except Exception as e2:
+                                    e = e2
+                            print(f"audio 502 vid={vid} fq={fq} err={type(e).__name__}: {str(e)[:90]}", flush=True)
+                            return self.send(502, "upstream error", "text/plain")
                         time.sleep(0.4 * (_try + 1))
                 rg = re.match(r"bytes=(\d*)-(\d*)", self.headers.get("Range", "") or "")
                 a = int(rg.group(1)) if rg and rg.group(1) else 0
