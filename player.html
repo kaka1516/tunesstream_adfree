@@ -1,4 +1,4 @@
-﻿<!doctype html><html lang=en><head><!-- adult-viz-20261111 --><!-- ms-v90-stall --><meta charset=utf-8><meta name=ms-build content=ms-v90-stall><script>/* login-20261110: session expired / signed out -> login page */(function(){const F=window.fetch;if(!F)return;window.fetch=function(){return F.apply(this,arguments).then(r=>{try{if(r.status===401&&!window.__msLogin&&(r.headers.get('content-type')||'').indexOf('json')>=0&&new URL(r.url,location.href).origin===location.origin){window.__msLogin=1;location.href='/login?next='+encodeURIComponent(location.pathname+location.search)}}catch(_){}return r})}})()</script><script>/* login-state-20261110: apply the signed-in user's saved state before the player reads localStorage */(function(){
+﻿<!doctype html><html lang=en><head><!-- adult-viz-20261111 --><!-- ms-v90-stall --><meta charset=utf-8><meta name=ms-build content=ms-v90-stall><script>/* login-20261110: session expired / signed out -> login page */(function(){const F=window.fetch;if(!F)return;window.fetch=function(){return F.apply(this,arguments).then(r=>{try{if(r.status===401&&!window.__msLogin&&!(window.__msListen&&window.__msListen.guest)&&location.pathname!=='/listen'&&location.pathname!=='/together'&&(r.headers.get('content-type')||'').indexOf('json')>=0&&new URL(r.url,location.href).origin===location.origin){window.__msLogin=1;location.href='/login?next='+encodeURIComponent(location.pathname+location.search)}}catch(_){}return r})}})()</script><script>/* login-state-20261110: apply the signed-in user's saved state before the player reads localStorage */(function(){
 const B=window.__msBoot;if(!B||!B.keys)return;if(new URLSearchParams(location.search).get('u'))return;
 const LS=window.localStorage,K=/* audit-20261111 */(window.__msKeysOf=function(B,x){const D=new Set(B.deny||[]),ok=k=>typeof k==='string'&&/^[A-Za-z0-9_.:-]{1,64}$/.test(k)&&!D.has(k)&&!/^(__|local\.|dev\.)/.test(k);const s=new Set(B.keys||[]);if(B.generic){try{Object.keys(x||{}).forEach(k=>{if(ok(k))s.add(k)});for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(ok(k))s.add(k)}}catch(e){}}return [...s]})(B,(B.state&&B.state.ls)||{}),H=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)+'.'+s.length};
 const gm=()=>{try{return JSON.parse(LS.getItem('__msSync')||'{}')||{}}catch(e){return{}}},sm=m=>{try{LS.setItem('__msSync',JSON.stringify(m))}catch(e){}};
@@ -237,6 +237,56 @@ html[data-theme=paper] #home .hcard .at{opacity:.7}
 <div id=lyw><div class=lybar><span style="font-weight:800"><svg class=ti viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/></svg> Lyrics</span><button id=lyf class="pill on" title="Auto-scroll to the sung line">&#8597; Follow</button><span class="pill lyoff" role=group aria-label="Lyrics timing"><button id=lyoffm aria-label="Lyrics earlier by 0.5 seconds" title="Lyrics earlier">&minus;</button><button id=lyoffv aria-label="Lyrics timing offset, tap to reset">+0.0s</button><button id=lyoffp aria-label="Lyrics later by 0.5 seconds" title="Lyrics later (if they run ahead)">+</button></span><label class=pill><svg class=ti viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg> Translate <select id=lytl aria-label="Translate lyrics"><option value="">Original</option><option value=en>English</option><option value=hi>Hindi</option><option value=te>Telugu</option><option value=ta>Tamil</option><option value=kn>Kannada</option><option value=ml>Malayalam</option><option value=bn>Bengali</option><option value=mr>Marathi</option><option value=pa>Punjabi</option><option value=ur>Urdu</option><option value=es>Spanish</option><option value=fr>French</option><option value=de>German</option><option value=ko>Korean</option><option value=ja>Japanese</option><option value=ar>Arabic</option></select></label></div><div id=lyr></div></div>
 
 </section>
+<style id=ms-together>
+html.ms-guest #f,html.ms-guest #tabs,html.ms-guest #home,html.ms-guest #dyn,html.ms-guest #imp,html.ms-guest #impd,
+html.ms-guest #whyl,html.ms-guest #nlk,html.ms-guest #ndl,html.ms-guest #npoff,html.ms-guest #rad,html.ms-guest .mixr,
+html.ms-guest #shtab,html.ms-guest #libx,html.ms-guest #libi,html.ms-guest #libf,html.ms-guest #empty{display:none!important}
+html.ms-guest main{min-height:40px}
+#rmp{display:none;position:fixed;inset:0;background:#000c;z-index:47;place-items:center;padding:12px}
+#rmp.open{display:grid}
+#rmp>div{background:rgba(24,24,30,.96);border:1px solid var(--line,#333);border-radius:22px;box-shadow:0 30px 80px #000b;width:min(92vw,440px);max-height:min(86vh,720px);overflow:auto;padding:16px 18px 18px;color:var(--txt,#fff);font-size:14px;line-height:1.45}
+#rmp h2{margin:0 0 4px;font-size:18px;display:flex;align-items:center;gap:8px}
+#rmp h2 button{margin-left:auto;background:none;border:0;color:inherit;font-size:26px;line-height:1;cursor:pointer;min-width:44px;min-height:44px}
+#rmp .hint{color:var(--sub,#aaa);font-size:12px;margin:0 0 12px}
+#rmp .now{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px 12px;margin:0 0 12px}
+#rmp .now .t{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rmp .now .s{font-size:12px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rmp .rowbtns{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
+#rmp .rowbtns button,#rmp .go,#rmsend,#rmpriv,#rmjoin{min-height:40px;padding:0 14px;border-radius:20px;border:0;background:#fff;color:#111;font:700 13px system-ui,sans-serif;cursor:pointer}
+#rmp .rowbtns button.ghost,#rmleave{background:rgba(255,255,255,.12);color:inherit}
+#rmp .rowbtns button.on{background:var(--acc,#7c5cff);color:#fff}
+#rmlist button.rmr{display:block;width:100%;text-align:left;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:inherit;border-radius:14px;padding:10px 12px;margin:6px 0;cursor:pointer;font:inherit}
+#rmlist button.rmr:hover,#rmlist button.rmr.here{background:rgba(255,255,255,.1)}
+#rmlist button.rmr b{display:block}
+#rmlist button.rmr span{display:block;font-size:12px;opacity:.7}
+#rmchat{height:160px;overflow:auto;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 10px;margin:8px 0;font-size:13px}
+#rmchat .m{margin:0 0 6px;word-wrap:break-word}
+#rmchat .m b{opacity:.8;margin-right:4px}
+#rmform{display:flex;gap:8px}
+#rmform input,#rmnm input{flex:1;min-height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:inherit;padding:0 12px;font:inherit}
+#rmnm{display:none;margin:0 0 12px}
+#rmnm.on{display:block}
+#rmgbar{display:none;position:fixed;top:0;left:0;right:0;z-index:42;background:#1b1b22;color:#fff;text-align:center;font-size:12px;padding:6px 8px 6px;padding-top:calc(6px + env(safe-area-inset-top,0px))}
+html.ms-guest #rmgbar{display:block}
+html.ms-guest{padding-top:28px}
+</style>
+<div id=rmp role=dialog aria-label="Listen together" aria-modal=true><div>
+<h2>Listen together <button type=button id=rmx aria-label=Close>&times;</button></h2>
+<p class=hint>Anyone in a room can play, pause, skip and seek. Chat is in the room. Voice is optional and never stops the song.</p>
+<div id=rmnm><form id=rmnmf><input id=rmnmi maxlength=24 minlength=2 placeholder="Your display name" autocomplete=nickname aria-label="Display name"><button type=submit class=go id=rmjoin>Join</button></form></div>
+<div id=rmnow style="display:none"></div>
+<div class=rowbtns id=rmacts style="display:none">
+<button type=button id=rmleave class=ghost>Leave room</button>
+<button type=button id=rmvc class=ghost>Join voice</button>
+<button type=button id=rmmic class=ghost style="display:none">Unmute mic</button>
+</div>
+<div id=rmchat aria-live=polite style="display:none"></div>
+<form id=rmform style="display:none"><input id=rmin maxlength=200 placeholder="Message…" autocomplete=off aria-label="Room chat"><button type=submit id=rmsend>Send</button></form>
+<div class=hint style="margin-top:14px">Rooms — tap to join any time</div>
+<div id=rmlist></div>
+<div class=rowbtns><button type=button id=rmpriv class=ghost>Create a private room</button></div>
+</div></div>
+<div id=rmgbar>Listening as a guest — <a href="/login" style="color:inherit">sign in</a> for your library. You can still listen, chat and talk in the room.</div>
 <div id=toast></div><div id=offb>Offline &ndash; only Saved songs will play</div><div id=help><div><b>Keyboard shortcuts</b><br><kbd>Space</kbd>/<kbd>K</kbd> play/pause &nbsp; <kbd>N</kbd>/<kbd>P</kbd> next/prev<br><kbd>&larr;</kbd>/<kbd>&rarr;</kbd> seek 10s &nbsp; <kbd>J</kbd>/<kbd>L</kbd> seek 10s<br><kbd>&uarr;</kbd>/<kbd>&darr;</kbd> move in the list &nbsp; <kbd>Enter</kbd> play highlighted<br><kbd>+</kbd>/<kbd>-</kbd> volume &nbsp; <kbd>Shift</kbd>+<kbd>&uarr;</kbd>/<kbd>&darr;</kbd> volume &nbsp; <kbd>M</kbd> mute<br><kbd>Y</kbd> lyrics &nbsp; <kbd>V</kbd> video &nbsp; <kbd>F</kbd> fullscreen<br><kbd>S</kbd> shuffle &nbsp; <kbd>R</kbd> repeat &nbsp; <kbd>Q</kbd> up next<br><kbd>/</kbd> search &nbsp; arrows pick a suggestion, <kbd>Enter</kbd> uses it<br><kbd>Esc</kbd> close &nbsp; <kbd>?</kbd> this help<br><kbd>0</kbd>-<kbd>9</kbd> jump to 0-90%<br><br><b>Ad-free audio</b><br>Streams use yt-dlp <code>bestaudio</code> — YouTube player ads are never in the pipe. If a song fails, that is usually an extractor break (auto-updated on start / heal), not an adblocker miss. SponsorBlock (SB) only skips in-video sponsors/intros you choose.</div></div><audio id=aud preload=auto crossorigin=anonymous></audio>
 <div id=impd><div><b style="font-size:18px">Import playlist</b><p style="color:var(--sub);font-size:13px">YouTube / YouTube Music playlist URL, Spotify playlist/album link, or one song per line ("Artist - Title" or YouTube URLs). Amazon/Apple Music: paste track names. Or load .m3u / .csv / .txt.</p>
 <textarea id=impt rows=8></textarea><input type=file id=impf accept=".m3u,.m3u8,.csv,.txt" style="margin:10px 0"><div style="display:flex;gap:8px;justify-content:flex-end"><button id=impc style="padding:10px 16px">Cancel</button><button id=impgo class=go>Import &amp; play</button></div></div></div>
@@ -698,7 +748,7 @@ $('impf').onchange=async e=>{const f=e.target.files[0];if(!f)return;let t=await 
 if(/\.m3u8?$/i.test(f.name))t=t.split(/\r?\n/).map(l=>l.startsWith('#EXTINF')?l.replace(/^#EXTINF:[^,]*,/,''):(l.startsWith('#')||/^[a-z]:\\|^\//i.test(l)?'':l)).join('\n');$('impt').value=t};
 $('impgo').onclick=async()=>{const t=$('impt').value.trim();if(!t)return;$('impgo').textContent='Importing...';try{const L=await (await fetch(`/api/import?k=${K}`,{method:'POST',body:t})).json();
 if(L.error=='amazon'){$('impt').value='';$('impt').placeholder=L.msg;alert(L.msg)}else if(L.error||!L.length)toast('Nothing imported');else{queue=L;qi=0;view='queue';tabs();play();toast(`Imported ${L.length} tracks`);$('impd').style.display='none'}}catch(e){toast('Import failed')}$('impgo').innerHTML='Import &amp; play'};
-document.addEventListener('keydown',e=>{if(window.__shOpen){if(e.key=='Escape'){e.preventDefault();if(window.__shArmed){window.__shArmed=0;history.back()}else if(window.closeShorts)closeShorts();return}if(e.key=='ArrowUp'||e.key=='ArrowDown'){e.preventDefault();e.stopPropagation();if(window.shNext)shNext(e.key=='ArrowDown'?1:-1);return}if(e.code=='Space'){e.preventDefault();const v=$('shv');if(v){v.paused?v.play().catch(()=>{}):v.pause()}return}return}if(e.key=='Escape'){if($('thd')&&$('thd').classList.contains('open'))return;const mo=document.querySelectorAll('.menu.open');if(mo.length){mo.forEach(x=>x.classList.remove('open'));document.querySelectorAll('#list li.open-m').forEach(x=>x.classList.remove('open-m'));return}$('help').classList.remove('open');$('impd').style.display='none';if(document.activeElement!=$('q'))$('np').classList.remove('open')}
+document.addEventListener('keydown',e=>{if(window.__shOpen){if(e.key=='Escape'){e.preventDefault();if(window.__shArmed){window.__shArmed=0;history.back()}else if(window.closeShorts)closeShorts();return}if(e.key=='ArrowUp'||e.key=='ArrowDown'){e.preventDefault();e.stopPropagation();if(window.shNext)shNext(e.key=='ArrowDown'?1:-1);return}if(e.code=='Space'){e.preventDefault();const v=$('shv');if(v){v.paused?v.play().catch(()=>{}):v.pause()}return}return}if(e.key=='Escape'){if($('thd')&&$('thd').classList.contains('open'))return;const mo=document.querySelectorAll('.menu.open');if(mo.length){mo.forEach(x=>x.classList.remove('open'));document.querySelectorAll('#list li.open-m').forEach(x=>x.classList.remove('open-m'));return}$('help').classList.remove('open');try{$('rmp').classList.remove('open')}catch(_){};$('impd').style.display='none';if(document.activeElement!=$('q'))$('np').classList.remove('open')}
 if(e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;const k=e.key.toLowerCase(),V=$('vol');
 const setV=v=>{V.value=Math.max(0,Math.min(1,v));V.oninput({target:V});toast('Volume '+Math.round(V.value*100)+'%')};
 if(e.code=='Space'||k=='k'){e.preventDefault();pp()}else if(e.code=='ArrowRight'||k=='l'&&!e.shiftKey){if(k=='l'){}M.currentTime+=10}else if(e.code=='ArrowLeft'||k=='j')M.currentTime-=10;
@@ -934,20 +984,128 @@ AUD.addEventListener('timeupdate',()=>{if(!('mediaSession'in navigator)||!isFini
 try{navigator.mediaSession.setActionHandler('seekforward',()=>M.currentTime+=10);navigator.mediaSession.setActionHandler('seekbackward',()=>M.currentTime-=10)}catch(e){}
 /* share + deep link (?play=ID) */
 $('shr').onclick=async()=>{const r=cur();if(!r||!r.id)return;const u=`${location.origin}/?k=${K}&play=${r.id}`;try{if(navigator.share)await navigator.share({title:r.title,url:u});else{await navigator.clipboard.writeText(u);toast('Link copied')}}catch(e){}};
-/* listen together: host pushes state, guests follow (drift-corrected) */
-const SP=new URLSearchParams(location.search);let RM=JSON.parse(sessionStorage.rm||'null'),rmT=null;const ME=Math.random().toString(36).slice(2,8);
-function rmUi(n){$('rmb').innerHTML=RM?`&#128101; ${RM.hk?'Hosting':'Joined'} ${RM.r}${n!=null?' &middot; '+n:''}`:'&#128101; Together';tog('rmb',!!RM)}
-async function roomPush(force){if(!RM||!RM.hk)return;const r=cur();if(!r||!r.id)return;try{const j=await (await fetch(`/api/room?k=${K}&op=set&r=${RM.r}&hk=${RM.hk}&id=${r.id}&t=${AUD.currentTime.toFixed(1)}&p=${AUD.paused?0:1}&title=${encodeURIComponent(r.title)}&channel=${encodeURIComponent(r.channel||'')}`)).json();rmUi(j.listeners)}catch(e){}}
-async function roomPull(){if(!RM||RM.hk)return;try{const j=await (await fetch(`/api/room?k=${K}&op=get&r=${RM.r}&me=${ME}`)).json();if(j.error){toast('Room closed');roomLeave();return}rmUi(j.listeners);if(!j.id)return;
-const c=cur();if(!c||c.id!=j.id){queue=[{id:j.id,title:j.title,channel:j.channel}];qi=0;await play(j.t);return}
-if(Math.abs(AUD.currentTime-j.t)>2.5)AUD.currentTime=j.t;if(j.p&&AUD.paused)AUD.play().catch(()=>toast('Tap play to join audio'));if(!j.p&&!AUD.paused)AUD.pause()}catch(e){}}
-function roomStart(){clearInterval(rmT);rmT=setInterval(()=>RM&&(RM.hk?roomPush():roomPull()),RM&&RM.hk?3000:2000);sessionStorage.rm=JSON.stringify(RM);rmUi();if(!RM.hk)roomPull()}
-function roomLeave(){clearInterval(rmT);RM=null;sessionStorage.rm='null';rmUi()}
-['play','pause','seeked'].forEach(ev=>AUD.addEventListener(ev,()=>roomPush()));
-$('rmb').onclick=async()=>{if(RM){if(confirm('Leave room '+RM.r+'?'))roomLeave();return}const code=prompt('Listen together\n\nEnter a room code to join, or leave empty to host a new room:','');if(code===null)return;
-if(code.trim()){RM={r:code.trim().toUpperCase()};roomStart();toast('Joined room '+RM.r)}else{const j=await (await fetch(`/api/room?k=${K}&op=new`)).json();RM=j;roomStart();roomPush();const u=`${location.origin}/?k=${K}&room=${j.r}`;
-try{if(navigator.share)await navigator.share({title:'Listen with me',url:u});else{await navigator.clipboard.writeText(u);toast('Room '+j.r+' link copied')}}catch(e){toast('Room code: '+j.r)}}};
-if(SP.get('room')){RM={r:SP.get('room').toUpperCase()};roomStart();toast('Joining room '+RM.r+' - tap play if silent')}else if(RM)roomStart();
+/* listen together: shared control, permanent rooms, chat, optional voice. Call failures never touch AUD. */
+const SP=new URLSearchParams(location.search);let RM=JSON.parse(sessionStorage.rm||'null'),rmT=null,rmApplying=0,rmNeedPush=0,rmV=0,rmPushV=0,rmChatAt=0,rmPanelOn=0,rmListAt=0;
+const L0=window.__msListen||{};
+const ME=(L0.gid?('g'+L0.gid):Math.random().toString(36).slice(2,10)).slice(0,16);
+function rmName(){try{return (window.__msBoot&&window.__msBoot.user)||(window.__msListen&&window.__msListen.name)||ME}catch(e){return ME}}
+function rmIsGuest(){try{return !!(window.__msListen&&window.__msListen.guest)}catch(e){return false}}
+function rmApi(op,extra){const post=/^(chat|set|guest|sig|leave|new|get)$/.test(op||'');const q=new URLSearchParams(post?{k:K||'',op:op,_:String(Date.now())}:{k:K||'',op:op||'get',_:String(Date.now()),...(extra||{})});return fetch('/api/room?'+q,{method:post?'POST':'GET',credentials:'same-origin',headers:{'Content-Type':'application/json','Cache-Control':'no-cache'},body:post?JSON.stringify(Object.assign({op:op||'get'},extra||{})):undefined,cache:'no-store'}).then(r=>r.json()).catch(()=>null)}
+function rmUi(n,by){const el=$('rmb');if(!el)return;if(!RM){el.innerHTML='&#128101; Together';el.title='Listen together';tog('rmb',false);return}
+el.innerHTML='&#128101; '+(RM.name?esc(RM.name):('Room '+esc(RM.r)))+(n!=null?' · '+n:'')+(by?' · '+esc(by):'');
+el.title='Anyone in the room can control playback';tog('rmb',true)}
+function rmOpen(){const p=$('rmp');if(!p)return;p.classList.add('open');rmPanelOn=1;roomList();if(RM)roomPull()}
+function rmClose(){const p=$('rmp');if(p)p.classList.remove('open');rmPanelOn=0}
+function rmShowName(on,code){const b=$('rmnm');if(!b)return;b.classList.toggle('on',!!on);b.dataset.r=code||'';if(on)try{$('rmnmi').focus()}catch(_){}}
+async function roomPush(){if(!RM||!RM.r)return;if(rmApplying){rmNeedPush=1;return}const r=cur();if(!r||!r.id)return;try{
+const j=await rmApi('set',{r:RM.r,id:r.id,t:AUD.currentTime.toFixed(1),p:AUD.paused?0:1,title:r.title||'',channel:r.channel||'',me:ME,by:rmName()});
+if(!j)return;if(j.error==='no room'){toast('Room closed');roomLeave();return}if(j.error)return;
+if(j.v){rmPushV=j.v;rmV=j.v}rmUi(j.listeners,j.by);if(rmPanelOn)rmPaintNow(j)}catch(e){}}
+async function roomPull(){if(!RM||!RM.r)return;try{
+const j=await rmApi('get',{r:RM.r,me:ME,vc:VC.on?1:0});
+if(!j)return;if(j.error==='join first'){if(rmIsGuest()&&!rmNameok()){rmShowName(1,RM.r);rmOpen();return}toast('Join the room to listen');return}
+if(j.error==='no room'){toast('Room closed');roomLeave();return}if(j.error)return;
+RM.name=j.name||RM.name;rmUi(j.listeners,j.by);if($('rmp')&&$('rmp').classList.contains('open'))rmPanelOn=1;if(rmPanelOn){rmPaintNow(j);rmPaintChat(j.chat)}else if(j.chat)$('rmchat')&&rmPaintChat(j.chat)
+try{await vcOnSignals(j)}catch(_){}
+if(!j.id)return;
+if(j.v&&j.v<=rmV)return;
+if(j.v&&j.v===rmPushV){rmV=j.v;return}
+rmV=j.v||rmV;rmApplying=1;
+try{const c=cur();if(!c||c.id!=j.id){queue=[{id:j.id,title:j.title,channel:j.channel}];qi=0;await play(j.t);return}
+if(Math.abs(AUD.currentTime-j.t)>2.5)AUD.currentTime=j.t;if(j.p&&AUD.paused)AUD.play().catch(()=>toast('Tap play to join audio'));if(!j.p&&!AUD.paused)AUD.pause()}
+finally{setTimeout(()=>{rmApplying=0;if(rmNeedPush){rmNeedPush=0;roomPush()}},600)}
+}catch(e){}}
+function rmPaintNow(j){const el=$('rmnow'),acts=$('rmacts'),ch=$('rmchat'),fo=$('rmform');if(!el)return;
+if(!RM){el.style.display=acts.style.display=ch.style.display=fo.style.display='none';return}
+el.style.display='block';acts.style.display='flex';ch.style.display='block';fo.style.display='flex';
+const mem=(j.members||[]).map(esc).join(', ');
+el.className='now';el.innerHTML='<div class=t>'+esc(j.title||'Nothing playing yet')+'</div><div class=s>'+esc(j.channel||'')+'</div><div class=s>In '+esc(j.name||RM.r)+' · '+(j.listeners||0)+' listening'+(mem?(' · '+mem):'')+(j.by?(' · last: '+esc(j.by)):'')+'</div><div class=s>Anyone in the room can control playback</div>'}
+function rmPaintChat(chat){const el=$('rmchat');if(!el||!chat)return;const near=el.scrollHeight-el.scrollTop-el.clientHeight<48;
+const last=chat.length?chat[chat.length-1].id:0;if(last===rmChatAt&&el.childNodes.length)return;rmChatAt=last;
+el.innerHTML=(chat||[]).map(m=>'<div class=m><b>'+esc(m.u)+'</b> '+esc(m.m)+'</div>').join('');
+if(near||!el.dataset.ready){el.scrollTop=el.scrollHeight;el.dataset.ready='1'}}
+async function roomList(){try{const j=await rmApi('list');if(!j||!j.rooms)return;const el=$('rmlist');if(!el)return;
+el.innerHTML=j.rooms.map(r=>{const here=RM&&RM.r===r.r;const now=r.title?(r.title+(r.channel?(' — '+r.channel):'')):(r.perm?'Nothing playing yet':'Idle');
+const mem=(r.members||[]).join(', ');
+return '<button type=button class="rmr'+(here?' here':'')+'" data-r="'+esc(r.r)+'"><b>'+esc(r.name||r.r)+(r.perm?'':' · private')+'</b><span>'+(r.listeners||0)+' listening'+(mem?(' · '+esc(mem)):'')+' · '+esc(now)+'</span></button>'}).join('');
+el.querySelectorAll('button.rmr').forEach(b=>b.onclick=()=>roomJoin(b.dataset.r))}catch(e){}}
+function rmNameok(){const n=rmName();return n&&n!==ME&&String(n).length>=2}
+async function roomJoin(code,fromName){code=(code||'').toUpperCase();if(!code)return;
+if(rmIsGuest()&&!fromName&&!rmNameok()){rmShowName(1,code);return}
+if(rmIsGuest()){const name=rmName();const j=await rmApi('guest',{r:code,name:name});if(!j||j.error){toast((j&&j.error)||'Could not join');return}
+try{if(window.__msListen){window.__msListen.name=name;window.__msListen.room=code}}catch(_){}
+RM={r:code,name:j.name||code};rmShowName(0);roomStart();toast('Joined '+(j.name||code)+' — anyone can control');if(rmPanelOn){rmPaintNow(j);rmPaintChat(j.chat);roomList()}return}
+if(RM&&RM.r===code)return;RM={r:code};roomStart();toast('Joined room '+code+' — anyone can control');roomList()}
+function roomStart(){clearInterval(rmT);rmT=setInterval(()=>{if(!RM)return;roomPull();if(rmPanelOn&&Date.now()-rmListAt>4000){rmListAt=Date.now();roomList()}},2000);
+sessionStorage.rm=JSON.stringify(RM);rmUi();roomPull()}
+function roomLeave(){try{if(RM)rmApi('leave',{r:RM.r,me:ME})}catch(_){}try{vcHang()}catch(_){}clearInterval(rmT);RM=null;sessionStorage.rm='null';rmV=0;rmPushV=0;rmChatAt=0;rmUi();rmPaintNow({});try{$('rmchat').innerHTML='';$('rmchat').dataset.ready=''}catch(_){};if(rmPanelOn)roomList()}
+['play','pause','seeked'].forEach(ev=>AUD.addEventListener(ev,()=>{if(!rmApplying)roomPush()}));
+$('rmb').onclick=()=>{const p=$('rmp');if(p&&p.classList.contains('open'))rmClose();else rmOpen()};
+$('rmx').onclick=rmClose;$('rmp').addEventListener('click',e=>{if(e.target===$('rmp'))rmClose()});
+$('rmleave').onclick=()=>{if(RM&&confirm('Leave '+(RM.name||RM.r)+'?'))roomLeave()};
+$('rmpriv').onclick=async()=>{if(rmIsGuest()){toast('Sign in to create a private room');return}const j=await rmApi('new');if(!j||j.error){toast((j&&j.error)||'Could not create room');return}
+RM=j;roomStart();roomPush();const u=location.origin+'/listen?room='+j.r;try{if(navigator.share)await navigator.share({title:'Listen with me',url:u});else{await navigator.clipboard.writeText(u);toast('Private room link copied')}}catch(e){toast('Room code: '+j.r)}roomList()};
+$('rmnmf').onsubmit=async ev=>{ev.preventDefault();const n=($('rmnmi').value||'').trim();if(n.length<2){toast('Enter a display name');return}
+try{if(window.__msListen)window.__msListen.name=n}catch(_){}await roomJoin($('rmnm').dataset.r||(window.__msListen&&window.__msListen.room)||'',true)};
+$('rmform').onsubmit=async ev=>{ev.preventDefault();if(!RM)return;const m=($('rmin').value||'').trim();if(!m)return;$('rmin').value='';
+const j=await rmApi('chat',{r:RM.r,m:m,me:ME,by:rmName()});if(j&&j.error){toast(j.error==='slow down'?'Easy on the chat':'Message not sent');return}if(j&&j.chat)rmPaintChat(j.chat)};
+$('rmpriv').style.display=rmIsGuest()?'none':'inline-block';
+if(SP.get('room')||(L0.room)){const code=(SP.get('room')||L0.room||'').toUpperCase();if(code){if(rmIsGuest()&&!rmNameok()){RM=null;rmShowName(1,code);rmOpen()}else{RM={r:code};roomStart();if(location.pathname==='/listen')rmOpen()}}}
+else if(RM)roomStart();
+if(location.pathname==='/listen'){try{$('np').classList.add('open')}catch(_){};setTimeout(rmOpen,200)}
+
+/* voice: mesh WebRTC, public STUN, mic only after Unmute. Isolated from AUD. */
+const VC={on:false,mute:true,stream:null,pcs:{},aud:{},pendIce:{}};
+const ICE={iceServers:[{urls:'stun:stun.cloudflare.com:3478'},{urls:'stun:stun.l.google.com:19302'}]};
+function vcToast(m){try{toast(m)}catch(_){}}
+async function vcJoin(){if(VC.on)return;if(!RM){vcToast('Join a room first');return}
+try{if(!window.RTCPeerConnection){vcToast('Voice is not supported in this browser');return}
+VC.on=true;VC.mute=true;$('rmvc').textContent='Leave voice';$('rmvc').classList.add('on');$('rmmic').style.display='inline-block';$('rmmic').textContent='Unmute mic';
+vcToast('Voice on — you can hear others. Tap Unmute mic to talk');await roomPull()}
+catch(e){VC.on=false;vcToast('Voice unavailable');}}
+async function vcHang(){VC.on=false;try{Object.keys(VC.pcs).forEach(vcClose)}catch(_){}
+try{if(VC.stream)VC.stream.getTracks().forEach(t=>t.stop())}catch(_){}
+VC.stream=null;VC.mute=true;VC.pcs={};VC.aud={};
+try{$('rmvc').textContent='Join voice';$('rmvc').classList.remove('on');$('rmmic').style.display='none';$('rmmic').textContent='Unmute mic'}catch(_){}}
+async function vcMic(){if(!VC.on)return;
+try{if(VC.mute){if(!VC.stream){VC.stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false})}
+VC.stream.getAudioTracks().forEach(t=>t.enabled=true);VC.mute=false;$('rmmic').textContent='Mute mic';$('rmmic').classList.add('on');
+for(const id of Object.keys(VC.pcs)){await vcAddMic(id)}}
+else{if(VC.stream)VC.stream.getAudioTracks().forEach(t=>t.enabled=false);VC.mute=true;$('rmmic').textContent='Unmute mic';$('rmmic').classList.remove('on')}}
+catch(e){vcToast('Microphone blocked')}}
+async function vcAddMic(id){const pc=VC.pcs[id];if(!pc||!VC.stream)return;
+try{for(const tr of VC.stream.getAudioTracks()){const trx=(pc.getTransceivers()||[]).find(x=>x.sender&&(!x.sender.track||x.sender.track.kind==='audio'));if(trx)await trx.sender.replaceTrack(tr);else if(!pc.getSenders().some(s=>s.track&&s.track.kind==='audio'))pc.addTrack(tr,VC.stream)}}catch(_){}}
+function vcClose(id){try{const pc=VC.pcs[id];if(pc){try{pc.onicecandidate=pc.ontrack=pc.onconnectionstatechange=null}catch(_){};pc.close()}}catch(_){}
+delete VC.pcs[id];try{const a=VC.aud[id];if(a){a.srcObject=null;a.remove()}delete VC.aud[id]}catch(_){}}
+async function vcEnsure(id,offer){if(!VC.on||id===ME)return null;
+let pc=VC.pcs[id];
+try{if(!pc||pc.signalingState==='closed'){pc=new RTCPeerConnection(ICE);try{pc.addTransceiver('audio',{direction:'sendrecv'})}catch(_){}VC.pcs[id]=pc;
+pc.onicecandidate=e=>{if(e.candidate)rmApi('sig',{r:RM.r,me:ME,to:id,typ:'ice',data:JSON.stringify(e.candidate)}).catch(()=>{})};
+pc.onconnectionstatechange=()=>{try{if(pc.connectionState==='failed'||pc.connectionState==='disconnected'){/* music keeps playing */}}catch(_){}};
+pc.ontrack=ev=>{try{let a=VC.aud[id];if(!a){a=new Audio();a.autoplay=true;a.playsInline=true;a.setAttribute('data-room-voice','1');VC.aud[id]=a}
+a.srcObject=ev.streams[0]||new MediaStream(ev.track?[ev.track]:[]);a.play().catch(()=>{})}catch(_){}};
+if(VC.stream&&!VC.mute)await vcAddMic(id)}
+if(offer){if(pc.signalingState==='have-local-offer'&&String(ME)>String(id)){try{await pc.setLocalDescription({type:'rollback'})}catch(_){}}
+if(pc.signalingState==='stable'&&!pc.remoteDescription){await pc.setRemoteDescription({type:'offer',sdp:offer})}
+if(pc.signalingState==='have-remote-offer'){const ans=await pc.createAnswer();await pc.setLocalDescription(ans);try{await vcFlushIce(id,pc)}catch(_){};
+await rmApi('sig',{r:RM.r,me:ME,to:id,typ:'answer',data:ans.sdp})}}
+else if(!pc.localDescription&&!pc.remoteDescription&&pc.signalingState==='stable'&&String(ME)<String(id)){const off=await pc.createOffer();await pc.setLocalDescription(off);
+await rmApi('sig',{r:RM.r,me:ME,to:id,typ:'offer',data:off.sdp})}
+return pc}catch(e){try{if(!pc||pc.signalingState==='closed'||(!pc.localDescription&&!pc.remoteDescription&&pc.signalingState==='stable'))vcClose(id)}catch(_){}return (VC.pcs[id]||pc||null)}}
+async function vcOnSignals(j){if(!VC.on||!j)return;
+const peers=j.voice||[];
+for(const id of peers){if(id!==ME&&!VC.pcs[id])await vcEnsure(id)}
+for(const id of Object.keys(VC.pcs)){if(id!==ME&&peers.indexOf(id)<0)vcClose(id)}
+for(const s of (j.sig||[])){
+try{if(s.typ==='hang'){vcClose(s.fr);continue}
+if(s.typ==='offer'){await vcEnsure(s.fr,s.data);continue}
+const pc=VC.pcs[s.fr]||await vcEnsure(s.fr);
+if(!pc)continue;
+if(s.typ==='answer'){if(!pc.remoteDescription){await pc.setRemoteDescription({type:'answer',sdp:s.data});await vcFlushIce(s.fr,pc)}}
+else if(s.typ==='ice'){try{const c=JSON.parse(s.data);if(pc.remoteDescription)await pc.addIceCandidate(c);else{VC.pendIce[s.fr]=VC.pendIce[s.fr]||[];VC.pendIce[s.fr].push(c)}}catch(_){}}}catch(_){}}
+async function vcFlushIce(id,pc){const L=VC.pendIce[id]||[];delete VC.pendIce[id];for(const c of L){try{await pc.addIceCandidate(c)}catch(_){}}}}
+$('rmvc').onclick=()=>{try{VC.on?vcHang():vcJoin()}catch(e){try{vcHang()}catch(_){};vcToast('Voice unavailable')}};
+$('rmmic').onclick=()=>{try{vcMic()}catch(e){vcToast('Microphone blocked')}};
 if(SP.get('play')&&/^[\w-]{11}$/.test(SP.get('play'))){queue=[{id:SP.get('play'),title:'Loading...',channel:''}];qi=0;fetch(`/api/search?k=${K}&n=1&q=${SP.get('play')}`).then(x=>x.json()).then(x=>{if(x[0]&&x[0].id==SP.get('play')){Object.assign(queue[0],x[0]);meta(queue[0])}}).catch(()=>{});meta(queue[0]);$('np').classList.add('open')}
 
 
@@ -1219,7 +1377,7 @@ html[data-theme=sakura] #np::after{content:"\266A  SAKURA MODE  \266A"}
 html[data-theme=paper]{--ink:#faf4ed;--ink2:#f2e9e1;--paper:#26233a;--tom:#d7827e;--mus:#ea9d34;--cob:#286983;--sub:#5c5675;--card:#fffaf3;--acc:var(--tom);--txt:#26233a}
 html[data-theme=paper] body{background-image:radial-gradient(#26233a10 1px,transparent 1.2px)}
 html[data-theme=paper] #list li{border-bottom-color:#dfdad9}html[data-theme=paper] #list li::before{color:#9893a5}
-html[data-theme=paper] #mini,html[data-theme=paper] .menu,html[data-theme=paper] #sug,html[data-theme=paper] #impd>div,html[data-theme=paper] #help>div{background:#fffaf3;color:#26233a}
+html[data-theme=paper] #mini,html[data-theme=paper] .menu,html[data-theme=paper] #sug,html[data-theme=paper] #impd>div,html[data-theme=paper] #help>div,html[data-theme=paper] #rmp>div{background:#fffaf3;color:#26233a}
 
 /* UAT High: Paper menu + 390 strip/mix (Designer exact) */
 html[data-theme=paper] .menu{background:#fffaf3!important;color:#26233a!important;border:2px solid #26233a;box-shadow:6px 6px 0 #26233a,6px 6px 0 2px var(--tom)}
@@ -2554,7 +2712,7 @@ const ind=document.createElement('div');ind.id='ptr';ind.setAttribute('aria-hidd
 const PULL=70,SW=70,EDGE=24;let S=null,busy=false,lpT=0,lpFired=0,lastTap={t:0,side:''};
 function hScroll(el){for(let e=el;e&&e!==document.body&&e!==document.documentElement;e=e.parentElement){const s=getComputedStyle(e);if((s.overflowX==='auto'||s.overflowX==='scroll')&&e.scrollWidth>e.clientWidth+4)return true}return false}
 function vScrolled(el,stop){for(let e=el;e&&e!==stop&&e!==document.body;e=e.parentElement){const s=getComputedStyle(e);if((s.overflowY==='auto'||s.overflowY==='scroll')&&e.scrollHeight>e.clientHeight+2&&e.scrollTop>0)return true}return false}
-const noGest=t=>!!t.closest('input,textarea,select,[contenteditable=""],[contenteditable=true],#seekw,#vol,.row2,#vbar,.menu.open,#dlm,#thd,#help,#diagp,#impd,#acctpop,[data-noswipe]');
+const noGest=t=>!!t.closest('input,textarea,select,[contenteditable=""],[contenteditable=true],#seekw,#vol,.row2,#vbar,.menu.open,#dlm,#thd,#help,#diagp,#impd,#acctpop,#rmp,[data-noswipe]');
 function setInd(y,spin){ind.classList.toggle('spin',!!spin);ind.style.opacity=y>4?Math.min(1,y/PULL):0;ind.style.transform='translateY('+(Math.min(y,PULL+20)-50+12)+'px) rotate('+(y*4)+'deg)'}
 function refresh(){if(busy)return;busy=true;setInd(PULL,true);const t0=Date.now();let p;
  try{const home=$('home');const q=(($('q')&&$('q').value)||'').trim();

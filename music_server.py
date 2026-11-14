@@ -2659,38 +2659,352 @@ try:
     _rooms_fl = _RoomFL(str(CACHE / "rooms.lock"))
 except Exception:
     _rooms_fl = None
-def room(qs):
-    """Listen-together: host pushes {id,title,channel,t,p}; guests poll and follow. Rooms expire after 2h idle.
-    rooms-20261113: stored in cache/rooms.json under a file lock - with MUSIC_WORKERS>1 host and guest hit different workers."""
+# listen-20261114: 10 permanent rooms + shared control + chat + guest sessions + WebRTC signaling.
+# Voice uses in-page RTCPeerConnection mesh and public STUN only (no PeerServer/LiveKit/TURN).
+# simple-peer / PeerJS / LiveKit were considered; they need an extra signaling server or a large vendor file.
+_PERM_ROOMS = (
+    ("MAIN", "Main Stage"), ("CHILL", "Chill Out"), ("NIGHT", "Late Night"), ("PARTY", "Party"),
+    ("FOCUS", "Focus"), ("FRESH", "Fresh"), ("CLASSIC", "Classics"), ("ACOUSTIC", "Acoustic"),
+    ("BEATS", "Beats"), ("AFTERHR", "After Hours"),
+)
+_GUEST_COOKIE, _GUEST_TTL = "ms_guest", 7200
+_CHAT_MAX, _CHAT_LEN, _SIG_MAX, _SIG_LEN = 100, 200, 40, 8192
+_GUEST_MEDIA = frozenset({"/audio", "/video", "/stream", "/art", "/api/playable", "/api/vinfo", "/api/busy", "/api/warm", "/api/prefetch"})
+def _room_code(s):
+    return re.sub(r"[^A-Z0-9]", "", (s or "").upper())[:8]
+def _clean_name(s):
+    s = re.sub(r"[\x00-\x1f\x7f<>\"'&]", "", str(s or ""))
+    s = re.sub(r"\s+", " ", s).strip()[:24]
+    return s if len(s) >= 2 else ""
+def _n_ts(v):
+    if isinstance(v, dict):
+        try: return float(v.get("t") or 0)
+        except Exception: return 0.0
+    try: return float(v or 0)
+    except Exception: return 0.0
+def _n_name(v):
+    if isinstance(v, dict): return _clean_name(v.get("u") or "") or "listener"
+    return "listener"
+def _n_touch(r, mid, name, now, vc=None):
+    r.setdefault("n", {})
+    prev = r["n"].get(mid) if isinstance(r["n"].get(mid), dict) else {}
+    ent = {"t": now, "u": _clean_name(name) or _n_name(prev) or "listener"}
+    if vc is None:
+        if prev.get("vc"): ent["vc"] = 1
+    elif vc:
+        ent["vc"] = 1
+    r["n"][mid] = ent
+    for k in [k for k, v in list(r["n"].items()) if now - _n_ts(v) > 180]:
+        r["n"].pop(k, None)
+def _n_live(r, now, win=15):
+    out = []
+    for mid, v in (r.get("n") or {}).items():
+        if now - _n_ts(v) < win:
+            out.append({"id": mid, "u": _n_name(v), "vc": 1 if isinstance(v, dict) and v.get("vc") else 0})
+    return out
+def _room_activity(r):
+    last = float(r.get("ts") or 0)
+    for v in (r.get("n") or {}).values():
+        last = max(last, _n_ts(v))
+    chat = r.get("chat") or []
+    if chat:
+        try: last = max(last, float(chat[-1].get("t") or 0))
+        except Exception: pass
+    return last
+def _blank_room(code, name, perm=False, now=None):
+    now = now or time.time()
+    return {"hk": secrets.token_urlsafe(8), "ts": now, "id": None, "t": 0, "p": False, "title": "", "channel": "",
+            "n": {}, "v": 0, "by": "", "name": name, "perm": 1 if perm else 0, "chat": [], "sig": [], "qids": [], "cid": 0}
+def _seed_perm(R, now=None):
+    now = now or time.time()
+    for code, name in _PERM_ROOMS:
+        r = R.get(code)
+        if not r or not isinstance(r, dict):
+            R[code] = _blank_room(code, name, True, now)
+        else:
+            r["perm"] = 1
+            if not r.get("name"): r["name"] = name
+            r.setdefault("v", 0); r.setdefault("by", ""); r.setdefault("chat", []); r.setdefault("sig", [])
+            r.setdefault("qids", []); r.setdefault("n", {}); r.setdefault("cid", 0)
+def _expire_adhoc(R, now):
+    for c in [c for c, r in R.items() if isinstance(r, dict) and not r.get("perm") and now - _room_activity(r) > 7200]:
+        R.pop(c, None)
+def _room_public(r, code, now):
+    live = _n_live(r, now)
+    return {"r": code, "name": r.get("name") or code, "perm": 1 if r.get("perm") else 0,
+            "listeners": len(live), "members": [x["u"] for x in live], "id": r.get("id"),
+            "title": r.get("title") or "", "channel": r.get("channel") or "", "p": bool(r.get("p")),
+            "by": r.get("by") or "", "v": int(r.get("v") or 0)}
+def _cookie_val(handler, name):
+    try: raw = handler.headers.get("Cookie") or ""
+    except Exception: return ""
+    m = re.search(r"(?:^|;\s*)" + re.escape(name) + r"=([^;]+)", raw)
+    return urllib.parse.unquote(m.group(1).strip()) if m else ""
+def _b64e(b):
+    if isinstance(b, str): b = b.encode()
+    return _b64.urlsafe_b64encode(b).rstrip(b"=").decode()
+def _guest_issue(gid, room, name, exp):
+    payload = _b64e(json.dumps({"g": gid, "r": room, "n": name, "e": int(exp)}, separators=(",", ":")))
+    mac = _ms_hmac.new((KEY or "").encode(), b"ms-guest-v1:" + payload.encode(), _hsl.sha256).hexdigest()
+    return payload + "." + mac
+def _guest_read(handler):
+    if not handler: return None
+    raw = _cookie_val(handler, _GUEST_COOKIE)
+    if not raw or "." not in raw: return None
+    payload, mac = raw.rsplit(".", 1)
+    expect = _ms_hmac.new((KEY or "").encode(), b"ms-guest-v1:" + payload.encode(), _hsl.sha256).hexdigest()
+    if len(mac) != len(expect) or not secrets.compare_digest(mac, expect): return None
+    try: d = json.loads(_b64u(payload))
+    except Exception: return None
+    try:
+        if int(d.get("e") or 0) < time.time(): return None
+    except Exception: return None
+    name = _clean_name(d.get("n")); code = _room_code(d.get("r"))
+    gid = re.sub(r"[^A-Za-z0-9]", "", str(d.get("g") or ""))[:16]
+    if not name or not code or not gid: return None
+    return {"g": gid, "r": code, "n": name, "e": int(d["e"])}
+def _set_guest_cookie(handler, token, ttl, clear=False):
+    if not handler: return
+    if clear:
+        val = f"{_GUEST_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax; HttpOnly" + ("; Secure" if _req_https(handler) else "")
+    else:
+        val = f"{_GUEST_COOKIE}={token}; Path=/; Max-Age={int(ttl)}; SameSite=Lax; HttpOnly" + ("; Secure" if _req_https(handler) else "")
+    hdrs = list(getattr(handler, "_ms_hdrs", None) or [])
+    hdrs.append(("Set-Cookie", val))
+    handler._ms_hdrs = hdrs
+def _slide_guest(handler, who, now, room=None):
+    if not who or who.get("kind") != "guest": return
+    if room is not None:
+        room.setdefault("gst", {}); room["gst"][who["g"]] = now + _GUEST_TTL
+    if not handler: return
+    tok = _guest_issue(who["g"], who["r"], who["u"], now + _GUEST_TTL)
+    _set_guest_cookie(handler, tok, _GUEST_TTL)
+def _who(handler, qs=None, R=None):
+    u = getattr(_REQ, "user", None)
+    if isinstance(u, dict) and u.get("u"):
+        un = _clean_name(u["u"]) or str(u["u"])[:24]
+        return {"kind": "user", "u": un, "id": ("u" + re.sub(r"[^A-Za-z0-9]", "", u["u"]))[:16]}
+    g = _guest_ok(handler, R)
+    if g:
+        return {"kind": "guest", "u": g["n"], "id": ("g" + g["g"])[:16], "r": g["r"], "e": g["e"], "g": g["g"]}
+    return None
+def _room_media_ids(code):
+    code = _room_code(code)
+    if not code: return []
+    with _rooms_tl:
+        if _rooms_fl: _rooms_fl.acquire()
+        try:
+            try: R = json.loads(_ROOMS_F.read_text(encoding="utf-8"))
+            except Exception: R = {}
+            r = R.get(code) or {}
+            ids = []
+            if VID.match(str(r.get("id") or "")): ids.append(r["id"])
+            for x in r.get("qids") or []:
+                if VID.match(str(x)) and x not in ids: ids.append(x)
+            return ids
+        finally:
+            if _rooms_fl: _rooms_fl.release()
+def _guest_alive(g):
+    if not g: return False
+    code, gid = g.get("r"), g.get("g")
+    if not code or not gid: return False
+    with _rooms_tl:
+        if _rooms_fl: _rooms_fl.acquire()
+        try:
+            try: R = json.loads(_ROOMS_F.read_text(encoding="utf-8"))
+            except Exception: R = {}
+            r = R.get(code) or {}
+            gst = r.get("gst") or {}
+            try: exp = float(gst.get(gid) or 0)
+            except Exception: exp = 0
+            return exp > time.time()
+        finally:
+            if _rooms_fl: _rooms_fl.release()
+def _guest_gst_ok(g, R=None):
+    if not g: return False
+    if R is not None:
+        r = R.get(g.get("r")) or {}
+        try: return float((r.get("gst") or {}).get(g.get("g")) or 0) > time.time()
+        except Exception: return False
+    return _guest_alive(g)
+def _guest_ok(handler, R=None):
+    g = _guest_read(handler)
+    return g if _guest_gst_ok(g, R) else None
+def _guest_allowed(handler, path, qs):
+    """Narrow guest surface: room API + streaming/art for the guest's current room track only."""
+    if path in ("/listen", "/together", "/api/room"):
+        return True
+    if path not in _GUEST_MEDIA:
+        return False
+    g = _guest_ok(handler)
+    if not g: return False
+    if path == "/api/warm":
+        ids = [x for x in (qs.get("ids") or qs.get("id") or "").split(",") if x]
+    else:
+        ids = [qs.get("id") or ""] if (qs.get("id") or "") else []
+    if not ids: return False
+    allowed = set(_room_media_ids(g["r"]))
+    return bool(allowed) and all(v in allowed for v in ids)
+def _room_state(r, code, now, chat=True, mid=None, pop_sig=False):
+    live = _n_live(r, now)
+    try: ts = float(r.get("ts") or now)
+    except Exception: ts = now
+    try: t0 = float(r.get("t") or 0)
+    except Exception: t0 = 0.0
+    t = t0 + ((now - ts) if r.get("p") else 0)
+    sig = []
+    if pop_sig and mid:
+        keep = []
+        for s in r.get("sig") or []:
+            try: st = float(s.get("t") or 0)
+            except Exception: st = 0
+            if now - st > 30: continue
+            if s.get("to") == mid and s.get("fr") != mid:
+                sig.append({"to": s.get("to"), "fr": s.get("fr"), "typ": s.get("typ"), "data": s.get("data") or ""})
+            else:
+                keep.append(s)
+        r["sig"] = keep
+    return {"id": r.get("id"), "t": t, "p": bool(r.get("p")), "title": r.get("title") or "", "channel": r.get("channel") or "",
+            "age": now - ts, "listeners": len(live), "members": [x["u"] for x in live],
+            "voice": [x["id"] for x in live if x.get("vc")], "v": int(r.get("v") or 0), "by": r.get("by") or "",
+            "name": r.get("name") or code, "r": code, "perm": 1 if r.get("perm") else 0, "shared": 1,
+            "chat": list(r.get("chat") or []) if chat else [], "sig": sig}
+def room(qs, handler=None):
+    """Listen-together: any member can control; guests follow by version. Permanent rooms never expire.
+    rooms-20261114: shared locked file, chat, WebRTC signal inbox, guest cookie (room-scoped)."""
     with _rooms_tl:
         if _rooms_fl: _rooms_fl.acquire()
         try:
             try: R = json.loads(_ROOMS_F.read_text(encoding="utf-8"))
             except Exception: R = {}
             if not isinstance(R, dict): R = {}
-            out = _room(qs, R)
+            out = _room(qs, R, handler)
             tmp = _ROOMS_F.with_name("rooms.json.%d.tmp" % os.getpid())
-            tmp.write_text(json.dumps(R), encoding="utf-8"); os.replace(tmp, _ROOMS_F)
+            tmp.write_text(json.dumps(R, separators=(",", ":")), encoding="utf-8"); os.replace(tmp, _ROOMS_F)
             ROOMS.clear(); ROOMS.update(R)
             return out
         finally:
             if _rooms_fl: _rooms_fl.release()
-def _room(qs, ROOMS):
+def _room(qs, ROOMS, handler=None):
     now = time.time()
-    for c in [c for c, r in ROOMS.items() if now - r.get("ts", 0) > 7200]: ROOMS.pop(c, None)
-    code = re.sub(r"[^A-Z0-9]", "", qs.get("r", "").upper())[:8]; op = qs.get("op", "get")
+    _seed_perm(ROOMS, now)
+    _expire_adhoc(ROOMS, now)
+    op = (qs.get("op") or "get").lower()
+    code = _room_code(qs.get("r", ""))
+    who = _who(handler, qs, ROOMS)
+    authed = bool(handler and _req_authok(handler) and not (who and who.get("kind") == "guest"))
+    if not authed and who and who.get("kind") == "user":
+        authed = True
+    if op == "list":
+        perm = []
+        for code0, _name in _PERM_ROOMS:
+            r = ROOMS.get(code0)
+            if r: perm.append(_room_public(r, code0, now))
+        other = []
+        for c, r in ROOMS.items():
+            if not isinstance(r, dict) or r.get("perm"): continue
+            other.append(_room_public(r, c, now))
+        me = None
+        if who:
+            me = {"u": who["u"], "guest": who.get("kind") == "guest", "r": who.get("r") or ""}
+        return {"ok": 1, "rooms": perm + other, "me": me, "shared": 1}
+    if op == "guest":
+        name = _clean_name(qs.get("name") or qs.get("by") or "")
+        if not name: return {"error": "name required"}
+        if not code or code not in ROOMS: return {"error": "no room"}
+        if handler and limited("guestnew:" + _public_ip_key(handler), n=16, win=600):
+            return {"error": "slow down"}
+        gid = (who.get("g") if who and who.get("kind") == "guest" else None) or secrets.token_hex(8)
+        if who and who.get("kind") == "guest" and who.get("r") and who.get("r") != code:
+            oldr = ROOMS.get(who["r"])
+            if oldr: (oldr.get("gst") or {}).pop(gid, None); (oldr.get("n") or {}).pop(("g" + gid)[:16], None)
+        _set_guest_cookie(handler, _guest_issue(gid, code, name, now + _GUEST_TTL), _GUEST_TTL)
+        r = ROOMS[code]
+        r.setdefault("gst", {}); r["gst"][gid] = now + _GUEST_TTL
+        _n_touch(r, ("g" + gid)[:16], name, now)
+        st = _room_state(r, code, now, chat=True)
+        st.update(ok=1, n=name, guest=1)
+        return st
     if op == "new":
-        code = secrets.token_hex(3).upper(); hk = secrets.token_urlsafe(8)
-        ROOMS[code] = {"hk": hk, "ts": now, "id": None, "t": 0, "p": False, "title": "", "channel": "", "n": {}}
-        return {"r": code, "hk": hk}
+        if not authed:
+            return {"error": "login required"}
+        code = secrets.token_hex(3).upper()
+        r = _blank_room(code, "Private", False, now)
+        ROOMS[code] = r
+        return {"r": code, "hk": r["hk"], "v": 0, "shared": 1, "name": "Private"}
     r = ROOMS.get(code)
     if not r: return {"error": "no room"}
+    guest_here = bool(who and who.get("kind") == "guest" and who.get("r") == code)
+    member = bool(authed or guest_here)
+    if not member:
+        return {"error": "join first"}
+    mid_c = re.sub(r"[^A-Za-z0-9_]", "", str(qs.get("me") or ""))[:16]
+    mid = mid_c or (who["id"] if who else "x")
+    uname = (who["u"] if who else _clean_name(qs.get("by") or qs.get("me") or "") or "listener")
+    if op == "leave":
+        (r.get("n") or {}).pop(mid, None)
+        if who and who.get("kind") == "guest":
+            (r.get("gst") or {}).pop(who.get("g"), None)
+            _set_guest_cookie(handler, "", 0, clear=True)
+        return {"ok": 1, "left": 1}
+    if op == "chat":
+        if handler and (limited("roomchat:" + code + ":" + mid, n=20, win=60) or limited("roomchatf:" + code + ":" + mid, n=8, win=10)):
+            return {"error": "slow down"}
+        msg = re.sub(r"[\x00-\x1f\x7f]", "", str(qs.get("m") or qs.get("msg") or "")).strip()[:_CHAT_LEN]
+        if not msg: return {"error": "empty"}
+        r.setdefault("chat", [])
+        cid = int(r.get("cid") or 0) + 1; r["cid"] = cid
+        r["chat"].append({"id": cid, "t": now, "u": uname, "m": msg})
+        r["chat"] = r["chat"][-_CHAT_MAX:]
+        _n_touch(r, mid, uname, now)
+        _slide_guest(handler, who, now, r)
+        return {"ok": 1, "id": cid, "chat": r["chat"], "listeners": len(_n_live(r, now))}
+    if op in ("sig", "signal"):
+        if handler and limited("roomsig:" + code + ":" + mid, n=120, win=15):
+            return {"error": "slow down"}
+        typ = re.sub(r"[^a-z]", "", (qs.get("typ") or "")[:12])
+        if typ not in ("offer", "answer", "ice", "hang"): return {"error": "bad typ"}
+        to = re.sub(r"[^A-Za-z0-9_]", "", str(qs.get("to") or ""))[:16]
+        if not to: return {"error": "bad to"}
+        data = str(qs.get("data") or "")[:_SIG_LEN]
+        if typ != "hang" and not data: return {"error": "empty"}
+        r.setdefault("sig", [])
+        r["sig"].append({"to": to, "fr": mid, "typ": typ, "data": data, "t": now})
+        r["sig"] = [s for s in r["sig"] if now - float(s.get("t") or 0) < 30][-_SIG_MAX:]
+        _n_touch(r, mid, uname, now, vc=True)
+        _slide_guest(handler, who, now, r)
+        return {"ok": 1}
     if op == "set":
-        if not secrets.compare_digest(qs.get("hk", ""), r["hk"]): return {"error": "not host"}
-        r.update(ts=now, id=qs.get("id") if VID.match(qs.get("id", "")) else r["id"], t=float(qs.get("t", 0) or 0), p=qs.get("p") == "1", title=qs.get("title", "")[:200], channel=qs.get("channel", "")[:100])
-        return {"ok": 1, "listeners": sum(1 for v in r["n"].values() if now - v < 15)}
-    r["n"][qs.get("me", "?")[:16]] = now
-    return {"id": r["id"], "t": r["t"] + ((now - r["ts"]) if r["p"] else 0), "p": r["p"], "title": r["title"], "channel": r["channel"], "age": now - r["ts"], "listeners": sum(1 for v in r["n"].values() if now - v < 15)}
+        if handler and limited("roomset:" + code + ":" + mid, n=30, win=10):
+            return {"error": "slow down"}
+        vid = qs.get("id") if VID.match(qs.get("id") or "") else r.get("id")
+        try: t = float(qs.get("t", 0) or 0)
+        except Exception: t = 0.0
+        t = max(0.0, min(t, 86400.0))
+        p = str(qs.get("p", "")) in ("1", "true", "True")
+        title = (qs.get("title") or "")[:200]
+        channel = (qs.get("channel") or "")[:100]
+        r["v"] = int(r.get("v") or 0) + 1
+        r.update(ts=now, id=vid, t=t, p=p, title=title, channel=channel, by=uname)
+        if vid:
+            qids = [x for x in (r.get("qids") or []) if VID.match(str(x)) and x != vid]
+            r["qids"] = ([vid] + qids)[:8]
+        _n_touch(r, mid, uname, now)
+        _slide_guest(handler, who, now, r)
+        live = _n_live(r, now)
+        return {"ok": 1, "v": r["v"], "by": uname, "listeners": len(live), "members": [x["u"] for x in live], "shared": 1}
+    # get
+    if str(qs.get("vc", "")) in ("1", "true"):
+        _n_touch(r, mid, uname, now, vc=True)
+    elif str(qs.get("vc", "")) in ("0", "false"):
+        _n_touch(r, mid, uname, now, vc=False)
+        ent = r.get("n", {}).get(mid)
+        if isinstance(ent, dict): ent.pop("vc", None)
+    else:
+        _n_touch(r, mid, uname, now)
+    _slide_guest(handler, who, now, r)
+    pop = str(qs.get("vc", "")) in ("1", "true")
+    return _room_state(r, code, now, chat=True, mid=mid, pop_sig=pop)
 _hits = {}
 _hits_lock = threading.Lock()
 def limited(key, n=120, win=60):
@@ -3819,11 +4133,45 @@ class H(BaseHTTPRequestHandler):
         if not f.exists(): return self.send(404, "", "text/plain")
         if path.endswith((".png", ".ico", ".svg")): self._cc = "public, max-age=604800"
         return self.send(200, f.read_bytes(), "text/javascript; charset=utf-8" if path.endswith(".js") else ("image/svg+xml" if path.endswith(".svg") else "image/png"))
+    def _listen_page(self, qs):
+        """Public Listen together entry. Logged-in users get their normal boot; others get guest mode."""
+        self._cc = "no-store, no-cache, must-revalidate"
+        user = getattr(_REQ, "user", None)
+        if not (_req_authok(self) and isinstance(user, dict) and user.get("u")):
+            user = None
+        body = _MSU.with_boot(_page(), user)
+        g = _guest_read(self)
+        info = {"guest": not bool(user), "room": _room_code(qs.get("room") or (g or {}).get("r") or ""),
+                "name": (user.get("u") if user else None) or (g or {}).get("n") or "", "gid": (g or {}).get("g") or ""}
+        tag = b"<script>window.__msListen=" + json.dumps(info, separators=(",", ":")).replace("<", "\\u003c").encode() + b";if(window.__msListen.guest)document.documentElement.classList.add('ms-guest')</script>"
+        if b"window.__msListen=" not in body:
+            i = body.find(b"</script>")
+            body = body[:i + 9] + tag + body[i + 9:] if i >= 0 else tag + body
+        return self.send(200, body)
     def do_POST(self):
         if not self.guard(): return
         u = urllib.parse.urlparse(self.path); qs = {k: v[0] for k, v in urllib.parse.parse_qs(u.query).items()}
         if u.path.startswith("/api/auth/") or u.path in ("/api/users", "/api/state"):  # login-20261110 / login-state-20261110
             return _MSU.handle_post(self, u.path, getattr(_REQ, "user", None), getattr(_REQ, "trusted", False))
+        if u.path == "/api/room":
+            n = min(int(self.headers.get("Content-Length", 0) or 0), 16384)
+            raw = self.rfile.read(n).decode("utf-8", "replace") if n else ""
+            bodyj = {}
+            try:
+                bodyj = json.loads(raw) if raw else {}
+            except Exception:
+                bodyj = {}
+            if isinstance(bodyj, dict):
+                for bk, bv in bodyj.items():
+                    if isinstance(bv, (dict, list)): continue
+                    if bv is None: continue
+                    qs[bk] = ("1" if bv is True else "0" if bv is False else str(bv))
+                if "data" in bodyj and bodyj["data"] is not None:
+                    qs["data"] = bodyj["data"] if isinstance(bodyj["data"], str) else json.dumps(bodyj["data"])
+            op = (qs.get("op") or "get").lower()
+            if op in ("list", "guest") or _req_authok(self) or _guest_ok(self):
+                return self.send(200, json.dumps(room(qs, self)), "application/json")
+            return _MSU.deny(self)
         if not _req_authok(self): return _MSU.deny(self)  # login-20261110
         body = self.rfile.read(min(int(self.headers.get("Content-Length", 0)), 500000)).decode("utf-8", "replace")
         if u.path == "/api/played":
@@ -3906,10 +4254,21 @@ class H(BaseHTTPRequestHandler):
         if u.path.startswith("/skins/"): return self.skin(u.path)
         if u.path.startswith(("/vendor/", "/assets/")): return self.vendor(u.path)
         if u.path in PWA: return self.pwa(u.path, qs)
+        if u.path in ("/listen", "/together"):
+            return self._listen_page(qs)
         if u.path == "/api/admin/ytdlp":
             if not _req_authok(self): return _MSU.deny(self)  # login-20261110
             return self.send(200, json.dumps(ytdlp_status()), "application/json")
-        if not _req_authok(self): return _MSU.deny(self)  # login-20261110
+        if not _req_authok(self):
+            # listen-20261114: guest cookie / public list only; never weaken login for other pages
+            if u.path == "/" and _room_code(qs.get("room", "")):
+                self.send_response(302)
+                self.send_header("Location", "/listen?room=" + _room_code(qs.get("room", "")))
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Length", "0")
+                self.end_headers(); return
+            if not _guest_allowed(self, u.path, qs):
+                return _MSU.deny(self)  # login-20261110
         k = qs.get("k", "") if _keyok(qs.get("k", "")) else ""  # sec-20261110: never embed KEY for keyless/trusted clients
         try:
             if u.path == "/api/vinfo":
@@ -4189,7 +4548,7 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/api/similar":
                 try: return self.send(200, json.dumps(similar(qs.get("t", "")[:200], qs.get("a", "")[:100])), "application/json")
                 except Exception: return self.send(200, "[]", "application/json")
-            if u.path == "/api/room": return self.send(200, json.dumps(room(qs)), "application/json")
+            if u.path == "/api/room": return self.send(200, json.dumps(room(qs, self)), "application/json")
         except Exception as e:
             try:
                 (ROOT / "cache" / "last500.txt").write_text(

@@ -7,8 +7,12 @@ with sync_playwright() as p:
   pg.goto(B+"/login",wait_until="domcontentloaded")
   pg.evaluate("async p=>{await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({u:'loadtest',p}),credentials:'same-origin'})}",Path("/tmp/loadtest.pw").read_text().strip())
   pg.goto(B+"/",wait_until="domcontentloaded"); pg.wait_for_function("()=>typeof K!=='undefined'")
-  r=pg.evaluate("""async()=>{const j=async u=>(await fetch(u,{cache:'no-store'})).json();const n=await j('/api/room?k='+K+'&op=new');let bad=0,set=0,got=0,ids=new Set();
-   for(let i=0;i<40;i++){const s=await j('/api/room?k='+K+'&op=set&r='+n.r+'&hk='+n.hk+'&id=4NRXx6U8ABQ&t='+i+'&p=1&title=x');if(s.ok)set++;else bad++;
+  r=pg.evaluate("""async()=>{const j=async u=>(await fetch(u,{cache:'no-store'})).json();
+   const lst=await j('/api/room?k='+K+'&op=list');
+   const n=await j('/api/room?k='+K+'&op=new');let bad=0,set=0,got=0,shared=0;
+   for(let i=0;i<40;i++){const s=await j('/api/room?k='+K+'&op=set&r='+n.r+'&id=4NRXx6U8ABQ&t='+i+'&p=1&title=x');if(s.ok)set++;else bad++;
      const g=await j('/api/room?k='+K+'&r='+n.r+'&me=guest1');if(g.id==='4NRXx6U8ABQ')got++;else bad++}
-   return {bad,set,got,listeners:(await j('/api/room?k='+K+'&op=set&r='+n.r+'&hk='+n.hk+'&id=4NRXx6U8ABQ&t=1&p=1')).listeners}}""")
+   const s2=await (await fetch('/api/room',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'set',r:'MAIN',id:'4NRXx6U8ABQ',t:2,p:1,title:'zoo'})})).json();
+   if(s2.ok)shared++;
+   return {bad,set,got,shared,nlist:(lst.rooms||[]).length,listeners:s2.listeners}}""")
   print("ROOM", json.dumps(r)); b.close()
