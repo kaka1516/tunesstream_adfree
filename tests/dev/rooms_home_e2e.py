@@ -42,7 +42,7 @@ def main():
         pg.wait_for_function("() => typeof rmOpen==='function' && document.getElementById('rmtab')", timeout=30000)
         # allow a one-time SW upgrade reload to finish before we click
         try:
-            pg.wait_for_function("() => !!(sessionStorage.msSwReloaded || (window.__swV && (window.__swV==='ms-v94' || window.__swV==='ms-v95')) || typeof rmOpen==='function')", timeout=8000)
+            pg.wait_for_function("() => !!(sessionStorage.msSwReloaded || (window.__swV && (window.__swV==='ms-v94' || window.__swV==='ms-v95' || window.__swV==='ms-v96')) || typeof rmOpen==='function')", timeout=8000)
         except Exception:
             pass
         time.sleep(0.8)

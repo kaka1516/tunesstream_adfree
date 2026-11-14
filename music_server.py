@@ -636,8 +636,31 @@ def _search_shorts(qq, n=15):
         except Exception: pass
     return res
 _SHFEED = {}
-def shorts_feed(seeds, ex=None, n=20, page=0):
-    """Personalized Shorts feed: several #shorts searches from seeds (artists/titles), mixed and deduped, cached ~20 min."""
+_SH_BG = {"on": 0}
+_SH_LOCK = threading.Lock()
+def _sh_disk_path():
+    return CACHE / "shorts_feed.json"
+def _sh_disk_load():
+    try:
+        j = json.loads(_sh_disk_path().read_text(encoding="utf-8"))
+        items = [x for x in (j.get("items") or []) if isinstance(x, dict) and VID.match(x.get("id") or "")]
+        if items:
+            return items, float(j.get("ts") or 0)
+    except Exception:
+        pass
+    return [], 0.0
+def _sh_disk_save(items):
+    items = [x for x in (items or []) if isinstance(x, dict) and VID.match(x.get("id") or "")][:40]
+    if not items:
+        return
+    try:
+        f = _sh_disk_path(); tmp = f.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"items": items, "ts": time.time()}, ensure_ascii=False), encoding="utf-8")
+        os.replace(tmp, f)
+    except Exception:
+        pass
+def _shorts_compute(seeds, ex, n, page):
+    """Run the seeded #shorts searches (parallel, ~10 s cap) and return a deduped page."""
     n = max(8, min(int(n or 20), 30))
     page = max(0, int(page or 0))
     seeds = [re.sub(r"\s+", " ", (s or "").strip()) for s in (seeds or []) if (s or "").strip()]
@@ -649,23 +672,16 @@ def shorts_feed(seeds, ex=None, n=20, page=0):
     for extra in ("music #shorts", "songs #shorts", "trending #shorts", "new music #shorts", "dance #shorts"):
         if extra not in qs:
             qs.append(extra)
-    key = ("shfeed", tuple(qs), tuple(exs[:40]), n, page)
-    c = _SHFEED.get(key)
-    if c and time.time() - c[1] < 1200:
-        return c[0]
     seen = set(exs)
     acc = []
-    # rotate which queries we hit so later pages stay fresh
     rot = (page * 3) % max(1, len(qs))
     order = qs[rot:] + qs[:rot]
     take = order[: 6 if page == 0 else 4]
-    # stall-20261114: the searches ran one after another (6 x 3-6 s = a 20-30 s blank Shorts tab on a cold cache).
-    # Run them together and keep whatever arrived within ~10 s, in the original order.
     import concurrent.futures as _cf
     _ex = _cf.ThreadPoolExecutor(max_workers=min(4, len(take) or 1))
     _fs = [_ex.submit(search_shorts, q, 15) for q in take]
     _t_end = time.time() + 10
-    while time.time() < _t_end:  # stop early once the finished searches already fill the page
+    while time.time() < _t_end:
         _done, _pend = _cf.wait(_fs, timeout=max(0.05, _t_end - time.time()), return_when=_cf.FIRST_COMPLETED)
         if not _pend: break
         try:
@@ -689,11 +705,144 @@ def shorts_feed(seeds, ex=None, n=20, page=0):
             acc.append(item); seen.add(i)
             if len(acc) >= n:
                 break
-    if acc:
-        if len(_SHFEED) > 200:
-            _SHFEED.clear()
-        _SHFEED[key] = (acc, time.time())
     return acc
+def _sh_refresh_bg(seeds, ex, n, page, key):
+    if _SH_BG.get("on"):
+        return
+    def _go():
+        try:
+            acc = _shorts_compute(seeds, ex, n, page)
+            if acc:
+                with _SH_LOCK:
+                    if len(_SHFEED) > 200:
+                        _SHFEED.clear()
+                    _SHFEED[key] = (acc, time.time())
+                if page == 0:
+                    _sh_disk_save(acc)
+                print(f"shorts warm n={len(acc)} page={page}", flush=True)
+        except Exception as e:
+            print(f"shorts warm fail {type(e).__name__}", flush=True)
+        finally:
+            _SH_BG["on"] = 0
+    _SH_BG["on"] = 1
+    threading.Thread(target=_go, daemon=True, name="shorts-warm").start()
+def shorts_feed(seeds, ex=None, n=20, page=0, warm_only=False):
+    """Serve a persisted/memory Shorts page immediately; refresh in the background when stale."""
+    n = max(8, min(int(n or 20), 30))
+    page = max(0, int(page or 0))
+    seeds = [re.sub(r"\s+", " ", (s or "").strip()) for s in (seeds or []) if (s or "").strip()]
+    seeds = list(dict.fromkeys(s for s in seeds if len(s) > 1))[:8]
+    exs = [x for x in (ex or []) if VID.match(x or "")]
+    qs = []
+    for s0 in seeds:
+        qs.append(s0 if re.search(r"shorts", s0, re.I) else (s0 + " #shorts"))
+    for extra in ("music #shorts", "songs #shorts", "trending #shorts", "new music #shorts", "dance #shorts"):
+        if extra not in qs:
+            qs.append(extra)
+    key = ("shfeed", tuple(qs), tuple(exs[:40]), n, page)
+    now = time.time()
+    c = _SHFEED.get(key)
+    if c and now - c[1] < 1200 and c[0]:
+        if warm_only and now - c[1] > 300:
+            _sh_refresh_bg(seeds, exs, n, page, key)
+        return c[0]
+    disk, dts = _sh_disk_load()
+    stale = (c[0] if c and c[0] else None) or None
+    if not stale and disk and page == 0:
+        seen = set(exs)
+        stale = []
+        for x in disk:
+            i = x.get("id") or ""
+            if i in seen: continue
+            stale.append(x); seen.add(i)
+            if len(stale) >= n: break
+    if page == 0 and stale:
+        # sh-20261114: first open is instant from disk/memory; refresh if stale or this is just a warm ping
+        if (c is None) or (c and now - c[1] >= 1200) or warm_only or (disk and now - dts >= 900):
+            _sh_refresh_bg(seeds, exs, n, page, key)
+        return stale[:n]
+    if warm_only:
+        _sh_refresh_bg(seeds, exs, n, page, key)
+        return stale or []
+    acc = _shorts_compute(seeds, exs, n, page)
+    if acc:
+        with _SH_LOCK:
+            if len(_SHFEED) > 200:
+                _SHFEED.clear()
+            _SHFEED[key] = (acc, time.time())
+        if page == 0:
+            _sh_disk_save(acc)
+    return acc
+def find_alt(vid, title, channel, dur=0):
+    """When an official upload is dead, find another upload of the same song (title+artist, prefer audio/topic/lyric, duration ~10%)."""
+    vid = vid or ""
+    t, a = _ly_clean(title or "", channel or "")
+    if not t:
+        return {}
+    try:
+        dur = float(dur or 0)
+    except Exception:
+        dur = 0
+    def _tok(s):
+        s = re.sub(r"[^a-z0-9\s]", " ", (s or "").lower())
+        stop = {"the","a","an","and","or","of","to","in","on","for","with","official","video","audio","lyric","lyrics","music","hd","4k","feat","ft","by"}
+        return [w for w in s.split() if len(w) > 1 and w not in stop]
+    qt, qa = _tok(t), _tok(a)
+    def _score(x):
+        i = (x or {}).get("id") or ""
+        if not VID.match(i) or i == vid or _dead_until(i) or x.get("list"):
+            return None
+        xd = x.get("dur")
+        try:
+            xd = float(xd) if xd is not None else 0
+        except Exception:
+            xd = 0
+        if dur >= 20 and xd >= 8:
+            if abs(xd - dur) > max(0.10 * dur, 8):
+                return None
+        title_l = (x.get("title") or "").lower()
+        ch_l = (x.get("channel") or "").lower()
+        xt, xa = _tok(x.get("title")), _tok(x.get("channel"))
+        if qt:
+            hit = sum(1 for w in qt if w in xt or w in xa)
+            if hit < max(1, int(round(0.6 * len(qt)))):
+                return None
+            sc = hit
+        else:
+            sc = 0
+        if "topic" in ch_l: sc += 5
+        if re.search(r"\baudio\b", title_l): sc += 3
+        if re.search(r"\blyric", title_l): sc += 2
+        if "official" in title_l and "video" not in title_l: sc += 2
+        orig = f"{t} {title or ''}".lower()
+        if re.search(r"\b(live|concert|remix|cover|slowed|karaoke|sped|8d)\b", title_l) and not re.search(r"\b(live|concert|remix|cover|slowed|karaoke)\b", orig):
+            sc -= 4
+        if dur and xd:
+            sc -= min(3, abs(xd - dur) / max(dur, 1) * 10)
+        return (sc, x)
+    queries = [f"{t} {a}".strip(), f"{t} {a} audio".strip(), f"{t} {a} lyrics".strip()]
+    seen, best = set(), []
+    for q in queries:
+        if not q or q.lower() in seen: continue
+        seen.add(q.lower())
+        try:
+            res = search(q, 12) or []
+        except Exception:
+            res = []
+        for x in res:
+            s = _score(x)
+            if s:
+                best.append(s)
+        if best and max(z[0] for z in best) >= 5:
+            break
+    if not best:
+        return {}
+    best.sort(key=lambda z: -z[0])
+    if best[0][0] < 1:
+        return {}
+    x = best[0][1]
+    return {"id": x["id"], "title": x.get("title") or t, "channel": x.get("channel") or a, "dur": x.get("dur"), "alt": 1, "of": vid}
+
 def _search_warm(res):
 
     """speed-20261113: resolve stream URLs for the first few hits so a click starts in ~0.1 s, not ~2 s."""
@@ -2525,25 +2674,51 @@ def _ly_mismatch(query, body):
     if qind >= 2 and bcjk >= 8 and bind < 2: return True
     if qcjk < 2 and qind < 2 and bcjk >= 12 and len(re.findall(r"[A-Za-z]", body)) < 12: return True
     return False
+def _ly_clean(t, a):
+    """Strip '(Official Music Video)', feat./ft., trailing pipes, VEVO / - Topic, then split 'Artist - Title'."""
+    t2 = re.sub(r"\s*[\(\[][^)\]]*(official|video|audio|lyric|visuali[sz]er|4k|hd|\bmv\b|m/?v)[^)\]]*[\)\]]", "", t or "", flags=re.I)
+    t2 = re.sub(r"\s*[\(\[]\s*(feat\.?|ft\.?).+?[\)\]]", "", t2, flags=re.I)
+    t2 = re.sub(r"\s+(feat\.?|ft\.?)\s+.+$", "", t2, flags=re.I)
+    t2 = re.sub(r"\s*\|.*$", "", t2).strip()
+    t2 = re.sub(r"\s{2,}", " ", t2)
+    a = a or ""
+    if " - " in t2 and (not a or a.lower().endswith("vevo") or "topic" in a.lower()):
+        a, t2 = t2.split(" - ", 1)
+    elif " - " in t2:
+        a, t2 = t2.split(" - ", 1)
+    a = re.sub(r"(VEVO|\s*-\s*Topic)$", "", a or "", flags=re.I).strip()
+    return t2.strip(), a
 def lyrics(t, a, d):
+    # ly-20261114: query lrclib + Musixmatch/NetEase together; prefer lrclib; hard ~6s cap
     base = "https://lrclib.net/api/"; hd = {"User-Agent": "music-stream (personal)"}
-    t2 = re.sub(r"\s*[\(\[][^)\]]*(official|video|audio|lyric|4k|hd|visualizer|mv)[^)\]]*[\)\]]", "", t, flags=re.I)
-    if " - " in t2 and (not a or a.lower().endswith("vevo") or "topic" in a.lower()): a, t2 = t2.split(" - ", 1)
-    elif " - " in t2: a2, t3 = t2.split(" - ", 1); a, t2 = a2, t3
-    a = re.sub(r"(VEVO| - Topic)$", "", a or "").strip(); t2 = re.sub(r"\s*\|.*$", "", t2).strip()
-    try:
-        r = json.load(urllib.request.urlopen(urllib.request.Request(base + "search?" + urllib.parse.urlencode({"track_name": t2, "artist_name": a}), headers=hd), timeout=8))
-        if not r: r = json.load(urllib.request.urlopen(urllib.request.Request(base + "search?" + urllib.parse.urlencode({"q": f"{a} {t2}"}), headers=hd), timeout=8))
-    except Exception: r = []
-    r = [x for x in r if not _ly_mismatch(f"{t2} {a}".strip(), (x.get("syncedLyrics") or "") + (x.get("plainLyrics") or "") + (x.get("trackName") or ""))]
-    if not r or not any(x.get("syncedLyrics") for x in r):
+    t2, a = _ly_clean(t, a)
+    box = {}
+    def _lrc():
+        r = []
+        try:
+            r = json.load(urllib.request.urlopen(urllib.request.Request(base + "search?" + urllib.parse.urlencode({"track_name": t2, "artist_name": a}), headers=hd), timeout=5)) or []
+            if not r:
+                r = json.load(urllib.request.urlopen(urllib.request.Request(base + "search?" + urllib.parse.urlencode({"q": f"{a} {t2}"}), headers=hd), timeout=4)) or []
+        except Exception:
+            r = box.get("r") or []
+        box["r"] = r
+    def _sl():
         try:
             import syncedlyrics
-            box = {}  # hard 10s cap: syncedlyrics providers can hang and stall the request thread
-            th = threading.Thread(target=lambda: box.update(r=syncedlyrics.search(f"{t2} {a}".strip(), providers=["Musixmatch", "NetEase"], synced_only=True)), daemon=True)
-            th.start(); th.join(10); lrc = box.get("r")
-            if lrc and not _ly_mismatch(f"{t2} {a}".strip(), lrc): return {"synced": lrc, "plain": "", "name": t2, "artist": a, "src": "syncedlyrics"}
-        except Exception: pass
+            box["sl"] = syncedlyrics.search(f"{t2} {a}".strip(), providers=["Musixmatch", "NetEase"], synced_only=True)
+        except Exception:
+            pass
+    th1 = threading.Thread(target=_lrc, daemon=True); th2 = threading.Thread(target=_sl, daemon=True)
+    th1.start(); th2.start()
+    deadline = time.time() + 6
+    th1.join(max(0.05, deadline - time.time()))
+    r = box.get("r") or []
+    r = [x for x in r if not _ly_mismatch(f"{t2} {a}".strip(), (x.get("syncedLyrics") or "") + (x.get("plainLyrics") or "") + (x.get("trackName") or ""))]
+    if not (r and any(x.get("syncedLyrics") or x.get("plainLyrics") for x in r)):
+        th2.join(max(0.05, deadline - time.time()))
+        lrc = box.get("sl")
+        if lrc and not _ly_mismatch(f"{t2} {a}".strip(), lrc):
+            return {"synced": lrc, "plain": "", "name": t2, "artist": a, "src": "syncedlyrics"}
     if not r: return {}
     # v66: don't pick a live/tribute/remix cut for a studio upload (its timing differs), and prefer the
     # version most LRCLIB entries agree on (same duration + same first line) when no duration is close.
@@ -2598,7 +2773,32 @@ def _tr_nocache_partial(fn):
         if any(str(l).strip() and not str(o or "").strip() for l, o in zip(lines, out)): return _TrPartial(out)
         return out
     return w
-lyrics = _dc("ly2", lyrics); translate = _dc("tr", _tr_nocache_partial(translate))
+def _dc_ly(ns, fn, miss_ttl=1800):
+    """Like _dc, but also cache empty results briefly so a miss is not re-fetched every open."""
+    def w(*a):
+        pth = LCD / f"{ns}_{hashlib.sha1(json.dumps([ns, a], ensure_ascii=False).encode()).hexdigest()}.json"
+        if pth.exists():
+            try:
+                r = json.loads(pth.read_text(encoding="utf-8"))
+                if isinstance(r, dict) and r.get("_miss"):
+                    if time.time() - float(r.get("_at") or 0) < miss_ttl:
+                        return {}
+                elif r:
+                    return r
+            except Exception:
+                pass
+        r = fn(*a)
+        try:
+            if r and (r.get("synced") or r.get("plain") or r.get("langmismatch")):
+                pth.write_text(json.dumps(r, ensure_ascii=False), encoding="utf-8")
+            else:
+                pth.write_text(json.dumps({"_miss": 1, "_at": time.time()}), encoding="utf-8")
+                return {}
+        except Exception:
+            pass
+        return r or {}
+    return w
+lyrics = _dc_ly("ly2", lyrics); translate = _dc("tr", _tr_nocache_partial(translate))
 # ---- lyrics2-20261111: language-aware lyrics pick (Telugu song must not get Tamil/Hindi lyrics) ----
 _LYSC = {"te": r"[\u0C00-\u0C7F]", "ta": r"[\u0B80-\u0BFF]", "hi": r"[\u0900-\u097F]", "kn": r"[\u0C80-\u0CFF]", "ml": r"[\u0D00-\u0D7F]"}
 _LYN = {"te": "Telugu", "ta": "Tamil", "hi": "Hindi", "kn": "Kannada", "ml": "Malayalam"}
@@ -2619,19 +2819,30 @@ def lyrics_l(t, a, d, lang):
     duration matches; romanized/English-only entries inherit the language of a same-name same-length sibling."""
     if lang not in _LYN: return lyrics(t, a, d)
     base = "https://lrclib.net/api/"; hd = {"User-Agent": "music-stream (personal)"}; LN = _LYN[lang]
-    t2 = re.sub(r"\s*[\(\[][^)\]]*(official|video|audio|lyric|4k|hd|visualizer|mv)[^)\]]*[\)\]]", "", t, flags=re.I)
-    if " - " in t2 and (not a or a.lower().endswith("vevo") or "topic" in a.lower()): a, t2 = t2.split(" - ", 1)
-    elif " - " in t2: a2, t3 = t2.split(" - ", 1); a, t2 = a2, t3
-    a = re.sub(r"(VEVO| - Topic)$", "", a or "").strip(); t2 = re.sub(r"\s*\|.*$", "", t2).strip()
-    seen, r = set(), []
-    for p in ({"track_name": t2, "artist_name": a}, {"q": f"{a} {t2}"}, {"q": f"{t2} {LN}"}, {"track_name": t2}):
-        if not p.get("track_name", p.get("q", "")).strip() or ("artist_name" in p and not a): continue
-        try: res = json.load(urllib.request.urlopen(urllib.request.Request(base + "search?" + urllib.parse.urlencode(p), headers=hd), timeout=8))
-        except Exception: res = []
-        for x in res or []:
-            if x.get("id") in seen: continue
-            seen.add(x.get("id")); r.append(x)
-        if sum(1 for x in r if x.get("syncedLyrics")) >= 40: break
+    t2, a = _ly_clean(t, a)
+    box = {}
+    def _lrc():
+        seen, r = set(), []
+        for p in ({"track_name": t2, "artist_name": a}, {"q": f"{a} {t2}"}, {"q": f"{t2} {LN}"}, {"track_name": t2}):
+            if not p.get("track_name", p.get("q", "")).strip() or ("artist_name" in p and not a): continue
+            try: res = json.load(urllib.request.urlopen(urllib.request.Request(base + "search?" + urllib.parse.urlencode(p), headers=hd), timeout=5))
+            except Exception: res = []
+            for x in res or []:
+                if x.get("id") in seen: continue
+                seen.add(x.get("id")); r.append(x)
+            if sum(1 for x in r if x.get("syncedLyrics")) >= 40: break
+        box["r"] = r
+    def _sl():
+        try:
+            import syncedlyrics
+            box["sl"] = syncedlyrics.search(f"{t2} {LN}".strip(), providers=["Musixmatch", "NetEase"], synced_only=True)
+        except Exception:
+            pass
+    th1 = threading.Thread(target=_lrc, daemon=True); th2 = threading.Thread(target=_sl, daemon=True)
+    th1.start(); th2.start()
+    deadline = time.time() + 6
+    th1.join(max(0.05, deadline - time.time()))
+    r = box.get("r") or []
     r = [x for x in r if not _ly_mismatch(f"{t2} {a}".strip(), (x.get("syncedLyrics") or "") + (x.get("plainLyrics") or "") + (x.get("trackName") or ""))]
     for x in r: x["_lg"] = _ly_lang((x.get("syncedLyrics") or x.get("plainLyrics") or "") + " " + (x.get("albumName") or ""))
     _nm = lambda x: re.sub(r"[^a-z0-9]", "", (x.get("trackName") or "").lower())
@@ -2641,13 +2852,10 @@ def lyrics_l(t, a, d, lang):
             if sib: x["_lg"] = max(set(sib), key=sib.count)
     ok = [x for x in r if x["_lg"] == lang] or [x for x in r if not x["_lg"]]
     if not ok or not any(x.get("syncedLyrics") for x in ok):
-        try:
-            import syncedlyrics
-            box = {}
-            th = threading.Thread(target=lambda: box.update(r=syncedlyrics.search(f"{t2} {LN}".strip(), providers=["Musixmatch", "NetEase"], synced_only=True)), daemon=True)
-            th.start(); th.join(10); lrc = box.get("r")
-            if lrc and _ly_lang(lrc) in (lang, "") and not _ly_mismatch(t2, lrc): return {"synced": lrc, "plain": "", "name": t2, "artist": a, "src": "syncedlyrics", "lang": _ly_lang(lrc) or lang}
-        except Exception: pass
+        th2.join(max(0.05, deadline - time.time()))
+        lrc = box.get("sl")
+        if lrc and _ly_lang(lrc) in (lang, "") and not _ly_mismatch(t2, lrc):
+            return {"synced": lrc, "plain": "", "name": t2, "artist": a, "src": "syncedlyrics", "lang": _ly_lang(lrc) or lang}
     if not ok:
         oth = [x for x in r if x["_lg"] and x["_lg"] != lang]
         if not oth: return {}
@@ -2668,7 +2876,7 @@ def _ly_sort(r, t, d):
     _agree = lambda x: _ag.get(id(x), 0)
     if d: return sorted(r, key=lambda x: (not x.get("syncedLyrics"), _pen(x), abs((x.get("duration") or 0) - d) > 4, -min(_agree(x), 5) if abs((x.get("duration") or 0) - d) > 4 else 0, abs((x.get("duration") or 0) - d)))
     return sorted(r, key=lambda x: (not x.get("syncedLyrics"), _pen(x), -min(_agree(x), 5)))
-lyrics_l = _dc("ly3", lyrics_l)
+lyrics_l = _dc_ly("ly3", lyrics_l)
 # ---- /lyrics2-20261111 ----
 
 PWA = {"/manifest.webmanifest", "/sw.js", "/icon-192.png", "/icon-512.png", "/favicon.ico", "/icon.svg", "/famkey.js", "/famlang.js"}  # server3-20261111 (no /game.js)
@@ -3920,8 +4128,28 @@ def _quiet_warm():
                 except Exception: pass
                 time.sleep(5)
         except Exception as e: print(f"quiet warm skip {type(e).__name__}", flush=True)
+def _shorts_keeper():
+    """sh-20261114: precompute a default Shorts feed on boot and refresh it when the server is idle."""
+    time.sleep(4)
+    try:
+        shorts_feed([], n=20, page=0)
+    except Exception as e:
+        print(f"shorts boot fail {type(e).__name__}", flush=True)
+    while True:
+        time.sleep(180)
+        try:
+            idle = (time.time() - _MEDIA_AT[0]) if _MEDIA_AT[0] else 10**9
+            if _MEDIA_AT[0] and idle < 60:
+                continue
+            _items, ts = _sh_disk_load()
+            if _items and time.time() - ts < 900:
+                continue
+            shorts_feed([], n=20, page=0, warm_only=True)
+        except Exception as e:
+            print(f"shorts keep fail {type(e).__name__}", flush=True)
 if os.environ.get('MUSIC_WORKER_BG', '1') != '0':
     threading.Thread(target=_quiet_warm, daemon=True, name="quiet-warm").start()
+    threading.Thread(target=_shorts_keeper, daemon=True, name="shorts-keep").start()
 def _warm_prefer(jobs):
     """Move these (vid, q) jobs to the front, keeping order. In-flight work is already popped."""
     with _WARMQ_L:
@@ -4381,13 +4609,13 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/api/chips": return self.send(200, json.dumps(chips(qs.get("a", "").split("|")[:3])), "application/json")
             if u.path == "/api/import": return self.send(200, json.dumps(import_safe(qs.get("t", ""))), "application/json")
             if u.path == "/api/lyrics":
-                # v64: hard ~4 s cap per request; lookup keeps running in background and lands in the disk cache for next time
+                # ly-20261114: hard ~6 s cap; lookup keeps running in background and lands in the disk cache for next time
                 _la = (qs.get("t", "")[:200], qs.get("a", "")[:100], int(float(qs.get("d", "0") or 0))) + ((qs.get("l"),) if qs.get("l") in _LYN else ()); _lb = {}  # lyrics2-20261111: optional language
                 _LYF = globals().setdefault("_LYF", {}); _lf = _LYF.get(_la)
                 if _lf is None or not _lf[0].is_alive():
                     _lt = threading.Thread(target=lambda: (_lb.update(r=(lyrics_l if len(_la) > 3 else lyrics)(*_la)), _LYF.pop(_la, None)), daemon=True); _LYF[_la] = (_lt, _lb); _lt.start()
                 else: _lt, _lb = _lf  # singleflight: join the lookup already running for this song
-                _lt.join(4.0)
+                _lt.join(6.0)
                 if "r" not in _lb: return self.send(200, json.dumps({"timeout": 1}), "application/json")
                 try: return self.send(200, json.dumps(_lb["r"] or {}), "application/json")
                 except Exception: return self.send(200, "{}", "application/json")
@@ -4592,7 +4820,17 @@ class H(BaseHTTPRequestHandler):
                 _pgno = int(qs.get("page", "0") or 0)
                 _seeds = [x for x in (qs.get("seeds") or "").split(",") if x.strip()]
                 _ex = [x for x in (qs.get("ex") or "").split(",") if x.strip()]
-                return self.send(200, json.dumps(shorts_feed(_seeds, _ex, _n, _pgno)), "application/json")
+                _warm = (qs.get("warm") or "") in ("1", "true", "yes")
+                return self.send(200, json.dumps(shorts_feed(_seeds, _ex, _n, _pgno, _warm)), "application/json")
+            if u.path == "/api/alt":
+                vid = qs.get("id", "")[:20]
+                title = qs.get("t", "")[:200]
+                ch = qs.get("a", "")[:100]
+                try: dur = float(qs.get("d", "0") or 0)
+                except Exception: dur = 0
+                if not (title or VID.match(vid)):
+                    return self.send(400, json.dumps({"ok": False, "err": "need title or id"}), "application/json")
+                return self.send(200, json.dumps(find_alt(vid, title, ch, dur)), "application/json")
             if u.path == "/" and not qs.get("q"):
                 self._cc = "no-store, no-cache, must-revalidate"
                 return self.send(200, _MSU.with_boot(_page(), getattr(_REQ, "user", None)))  # login-state-20261110 radio2-20261113
