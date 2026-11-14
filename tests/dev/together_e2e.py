@@ -87,7 +87,14 @@ def main():
         ok("B follows A's track", followed, {"A": wait_id(pa, 1000), "B": wait_id(pb, 1000)})
         time.sleep(2.5)
 
-        pb.evaluate("() => { const a=document.getElementById('aud'); if(a && !a.paused) a.pause(); }")
+        pb.evaluate("""() => {
+          const a=document.getElementById('aud');
+          if(!a || a.paused) return {already:true, want:a&&a.dataset.wantPlay};
+          const btn=document.getElementById('pp');
+          if(btn) btn.click();
+          else { a.dataset.wantPlay='0'; a.pause(); }
+          return {paused:a.paused, want:a.dataset.wantPlay};
+        }""")
         t0 = time.time(); paused = False
         while time.time() - t0 < 12:
             aa = pa.evaluate("() => !!(document.getElementById('aud')||{}).paused")
@@ -166,7 +173,14 @@ def main():
         st = pg.evaluate("async () => (await fetch('/api/search?q=hello',{credentials:'same-origin'})).status")
         ok("guest search denied", st in (401, 403), {"status": st})
         # guest pause should reach A
-        pg.evaluate("() => { const a=document.getElementById('aud'); if(a && !a.paused) a.pause(); }")
+        pg.evaluate("""() => {
+          const a=document.getElementById('aud');
+          if(!a || a.paused) return {already:true, want:a&&a.dataset.wantPlay};
+          const btn=document.getElementById('pp');
+          if(btn) btn.click();
+          else { a.dataset.wantPlay='0'; a.pause(); }
+          return {paused:a.paused, want:a.dataset.wantPlay};
+        }""")
         t0 = time.time(); gpaused = False
         while time.time() - t0 < 12:
             if pa.evaluate("() => !!(document.getElementById('aud')||{}).paused"):

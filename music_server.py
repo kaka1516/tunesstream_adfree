@@ -353,8 +353,10 @@ def _single(key, fn):
         if ent is None: ent = _sf[key] = [threading.Event(), None, None]; lead = True
         else: lead = False
     if not lead:
-        ent[0].wait(90)
+        if not ent[0].wait(90):
+            raise TimeoutError("singleflight timeout")
         if ent[2] is not None: raise ent[2]
+        if ent[1] is None: raise RuntimeError("singleflight empty")
         return ent[1]
     try: ent[1] = fn(); return ent[1]
     except Exception as e: ent[2] = e; raise
@@ -1317,6 +1319,8 @@ def _extract_inproc(vid, q="std"):
         except (LiveUnsupported, ExtractBusy): raise  # perf-20261112
         except Exception as e:
             e1 = e
+            try: _note_extract_err(vid, e)
+            except Exception: pass
             if "confirm you" not in str(e): _kind_bad(vid, kind)  # play5-20261111
             if kind == "vis" and "confirm you" not in str(e): _vis_health(False)  # play5-20261111: bot-check is IP-wide, not a visionos fault
             print(f"xt {vid} q={q} client={kind} ms={int((time.time() - t0) * 1000)} fail {type(e).__name__}: {str(e)[:90]}", flush=True)
@@ -1327,10 +1331,38 @@ def _extract_inproc(vid, q="std"):
             out = subprocess.run(YTDLP + ["-f", fmt, "-g", "--no-warnings", f"https://www.youtube.com/watch?v={vid}"],
                                  capture_output=True, text=True, timeout=60, creationflags=NOFLAGS)
         lines = (out.stdout or "").strip().splitlines()
-        if not lines: raise RuntimeError(f"extract failed: {e1}") from e1
+        if not lines:
+            try: _note_extract_err(vid, e1)
+            except Exception: pass
+            raise RuntimeError(f"extract failed: {e1}") from e1
         if _live_url(lines[0]): _live_note(vid, "is_live"); raise LiveUnsupported("is_live")
         return lines[0], {"User-Agent": "Mozilla/5.0"}
+_DEAD = {}  # vid -> unix expiry; "not available" / removed, not bot-checks
+_DEAD_RE = re.compile(r"This video is not available|Video unavailable|Private video|has been removed|is not available", re.I)
+def _dead_until(vid):
+    t = _DEAD.get(vid or "")
+    if not t: return 0
+    if time.time() >= t:
+        _DEAD.pop(vid, None); return 0
+    return t
+def _mark_dead(vid, why="", ttl=1800):
+    if not vid: return
+    _DEAD[vid] = time.time() + ttl
+    if len(_DEAD) > 2000:
+        now = time.time()
+        for k, exp in list(_DEAD.items()):
+            if exp < now: _DEAD.pop(k, None)
+    for q in ("std", "hi"):
+        try: _ucache_invalidate(vid, q)
+        except Exception: pass
+    print(f"vid-dead {vid} {why} ttl={ttl}", flush=True)
+def _note_extract_err(vid, err):
+    msg = str(err or "")
+    if vid and _DEAD_RE.search(msg):
+        _mark_dead(vid, "not-available")
 def cached_entry(vid, q="std", force=False):
+    if _dead_until(vid):
+        raise RuntimeError(f"extract skipped: {vid} known unavailable")
     lk = live_known(vid)
     if lk: raise LiveUnsupported(lk)  # ms-v77: fail fast, no repeated extraction for a known live stream
     if not force:
@@ -4379,6 +4411,8 @@ class H(BaseHTTPRequestHandler):
                 if VID.match(vid) and ((vid, fq) in _blobs or active_dls() + _pend[0] < max(1, MAX_ACTIVE - 1)):
                     def _pf(vid=vid, fq=fq):
                         try:
+                            if _dead_until(vid):
+                                return
                             if not str(fq).startswith("v") and _HC.get(vid, fq):
                                 _headc_fill(vid, fq); return
                             if active_dls() >= max(1, MAX_ACTIVE - 1):
@@ -4388,7 +4422,11 @@ class H(BaseHTTPRequestHandler):
                                     pass
                                 return
                             _fg_wait(15)  # speed-20261110
-                            bl = get_blob(vid, fq)
+                            try:
+                                bl = get_blob(vid, fq)
+                            except Exception as e:
+                                print(f"prefetch {vid} {fq} fail {type(e).__name__}", flush=True)
+                                return
                             # pull ~3MB into disk cache so Next/autoplay starts in ~1s
                             try: bl.read(0, min(bl.size - 1, (3 << 20) - 1))
                             except Exception: pass
@@ -4597,6 +4635,9 @@ class H(BaseHTTPRequestHandler):
                 except Exception: return self.send(200, "[]", "application/json")
             if u.path == "/api/room": return self.send(200, json.dumps(room(qs, self)), "application/json")
         except Exception as e:
+            if isinstance(e, (BrokenPipeError, ConnectionResetError, ConnectionAbortedError)):
+                self.close_connection = True
+                return
             try:
                 (ROOT / "cache" / "last500.txt").write_text(
                     time.strftime("%Y-%m-%d %H:%M:%S ") + str((getattr(self, "command", "") or "") + " " + (urllib.parse.urlparse(self.path).path or "/")) + "\n" + __import__("traceback").format_exc(),
@@ -4604,7 +4645,11 @@ class H(BaseHTTPRequestHandler):
                 )
             except Exception:
                 pass
-            return self.send(500, "error: " + type(e).__name__, "text/plain")
+            try:
+                return self.send(500, "error: " + type(e).__name__, "text/plain")
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, OSError):
+                self.close_connection = True
+                return
         self.send(404, "no", "text/plain")
     def _radio_out(self, res):  # perf-20261112: send the list, then warm the next 2 songs' stream URLs in the background
         r = self.send(200, json.dumps(res), "application/json")

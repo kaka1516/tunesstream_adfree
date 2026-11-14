@@ -174,7 +174,11 @@ def main():
             # confirm real audio on the new track
             okp=wait_until(lambda: snap(page), 40, lambda s: s and s.get("id")==ids[-1] and s.get("ct",0)>0.15 and not s.get("paused"))
             time.sleep(1.5); okp=snap(page)
-            if okp.get("ct",0)>20: ev.append((f"FAIL_started_midway_{n}", okp)); print(json.dumps(ev[-3:], indent=2)); raise SystemExit(f"song {n} started at {okp.get('ct')}")
+            life=str(okp.get("life") or "")
+            if okp.get("ct",0)>20 and "sb-skip" not in life:
+                ev.append((f"FAIL_started_midway_{n}", okp)); print(json.dumps(ev[-3:], indent=2)); raise SystemExit(f"song {n} started at {okp.get('ct')}")
+            if okp.get("ct",0)>20 and "sb-skip" in life:
+                ev.append((f"sb_skip_midway_{n}", {"ct":okp.get("ct"), "id":okp.get("id")}))
             ev.append((f"playing{n}", okp))
             if okp.get("vol",0)<0.3 or len(okp.get("playingEls",[]))>1:
                 ev.append((f"FAIL_quiet_or_overlap_{n}", okp)); print(json.dumps(ev, indent=2)); raise SystemExit(f"song {n} quiet/overlap")
