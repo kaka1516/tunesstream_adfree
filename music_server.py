@@ -657,11 +657,26 @@ def shorts_feed(seeds, ex=None, n=20, page=0):
     rot = (page * 3) % max(1, len(qs))
     order = qs[rot:] + qs[:rot]
     take = order[: 6 if page == 0 else 4]
-    for q in take:
+    # stall-20261114: the searches ran one after another (6 x 3-6 s = a 20-30 s blank Shorts tab on a cold cache).
+    # Run them together and keep whatever arrived within ~10 s, in the original order.
+    import concurrent.futures as _cf
+    _ex = _cf.ThreadPoolExecutor(max_workers=min(4, len(take) or 1))
+    _fs = [_ex.submit(search_shorts, q, 15) for q in take]
+    _t_end = time.time() + 10
+    while time.time() < _t_end:  # stop early once the finished searches already fill the page
+        _done, _pend = _cf.wait(_fs, timeout=max(0.05, _t_end - time.time()), return_when=_cf.FIRST_COMPLETED)
+        if not _pend: break
+        try:
+            if sum(len(f.result() or []) for f in _fs if f.done() and not f.exception()) >= n * 2: break
+        except Exception: pass
+    _ex.shutdown(wait=False)
+    for _f in _fs:
         if len(acc) >= n:
             break
+        if not _f.done():
+            continue
         try:
-            batch = search_shorts(q, 15)
+            batch = _f.result()
         except Exception:
             continue
         for x in batch or []:
@@ -2199,7 +2214,8 @@ _FF = threading.BoundedSemaphore(MAX_FF)         # cap on concurrent ffmpeg mp3 
 _pend = [0]
 def active_dls(): return sum(1 for b in list(_blobs.values()) if not b.err and len(b.have) < b.n)
 _tl = threading.local()
-_ARA = max(0, min(64, int(cfg.get("AUDIO_RA_MB", "6") or 0)))  # perf2-20261112: audio read-ahead window (MB); 0 = old whole-file prefetch
+_ARA = max(0, min(64, int(cfg.get("AUDIO_RA_MB", "6") or 0)))
+MEDIA_WRITE_TIMEOUT = max(60, int(cfg.get("MEDIA_WRITE_TIMEOUT", "3600") or 3600))  # stall-20261114: seconds a paused player may leave a media response unread  # perf2-20261112: audio read-ahead window (MB); 0 = old whole-file prefetch
 _V4_ALWAYS = _flag("STREAM_IPV4", "0")  # perf2-20261112: force IPv4 for every stream fetch (default: only for IPv4-bound URLs)
 class _HTTPS4(_hc.HTTPSConnection):  # perf2-20261112
     def connect(s):
@@ -3756,6 +3772,8 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(b - a + 1 if size else 0))
         if rg: self.send_header("Content-Range", f"bytes {a}-{b}/{size}")
         self.end_headers()
+        try: self.connection.settimeout(MEDIA_WRITE_TIMEOUT)  # stall-20261114: see the /audio body loop
+        except Exception: pass
         try:
             with f.open("rb") as fh:
                 fh.seek(a)
@@ -3813,6 +3831,24 @@ class H(BaseHTTPRequestHandler):
             except Exception: j = {}
             return self.send(200, json.dumps(record_play(j.get("id") or qs.get("id", ""), j.get("title") or qs.get("title") or "", j.get("channel") or qs.get("channel") or "", j.get("dur") if j.get("dur") is not None else qs.get("dur"), j.get("c") or "")), "application/json")
 
+        if u.path == "/api/clog":  # stall-20261114: tiny client playback-event log (stall/error/recovery) so reports come with evidence
+            if limited("clog:" + _client_limit_key(self), 30, 60): return self.send(429, "slow down", "text/plain")
+            try: j = json.loads(body) if body else {}
+            except Exception: j = {}
+            evs = j.get("ev") if isinstance(j, dict) else None
+            if isinstance(evs, list) and evs:
+                who = ((getattr(_REQ, "user", None) or {}).get("u") or "-")[:24]
+                ln = []
+                for e in evs[:40]:
+                    if not isinstance(e, dict): continue
+                    ln.append(json.dumps({"ts": time.strftime("%Y-%m-%d %H:%M:%S"), "u": who, "dev": str(j.get("dev", ""))[:12], "b": str(j.get("b", ""))[:16],
+                                          **{k: (v if isinstance(v, (int, float, bool)) or v is None else str(v)[:80]) for k, v in list(e.items())[:12]}}))
+                try:
+                    lf = ROOT / "clog.log"
+                    if lf.exists() and lf.stat().st_size > (4 << 20): os.replace(lf, ROOT / "clog.log.1")
+                    with open(lf, "a", encoding="utf-8") as fh: fh.write("\n".join(ln) + "\n")
+                except Exception: pass
+            return self.send(200, "{}", "application/json")
         if u.path == "/api/admin/update-ytdlp":
             if not _owner_authok(self): return self.send(403, "forbidden", "text/plain")  # cookie-20261110: key or owner cookie
             return self.send(200, json.dumps(ytdlp_update_nightly("manual")), "application/json")
@@ -4088,11 +4124,19 @@ class H(BaseHTTPRequestHandler):
                     ext = "m4a" if "mp4" in (bl.ctype or "") else ("webm" if "webm" in (bl.ctype or "") else "audio")
                     self.send_header("Content-Disposition", f'attachment; filename="{re.sub(r"[^A-Za-z0-9_-]", "_", vid)[:40]}.{ext}"')
                 self.end_headers()
+                # stall-20261114: the 30 s keep-alive socket timeout also limited each WRITE. When the browser's media
+                # buffer is full it stops reading for minutes (normal, esp. screen-off); the write timed out after 30 s,
+                # the response was cut mid-song and playback stopped "in between". Media bodies may wait as long as needed.
+                try: self.connection.settimeout(MEDIA_WRITE_TIMEOUT)
+                except Exception: pass
                 try:
                     p = a
                     while p <= b:
                         d = bl.read(p, b); self.wfile.write(d); p += len(d)
-                except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, IOError): pass
+                except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, IOError): self.close_connection = True
+                finally:
+                    try: self.connection.settimeout(self.timeout)
+                    except Exception: pass
                 return
             if u.path == "/api/search":
                 _n = int(qs.get("n", "15") or 15)
