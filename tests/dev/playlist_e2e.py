@@ -134,9 +134,15 @@ def main():
             b.close(); raise SystemExit(1)
         pg.goto(BASE + "/", wait_until="domcontentloaded", timeout=45000)
         pg.wait_for_function("() => typeof play==='function' && typeof plNew==='function'", timeout=30000)
+        try:
+            if pg.locator("#resume20 button[data-x]").count():
+                pg.locator("#resume20 button[data-x]").first.click(timeout=3000)
+                pg.wait_for_selector("#resume20", state="detached", timeout=5000)
+        except Exception:
+            pg.evaluate("() => { const d=document.getElementById('resume20'); if(d) d.remove(); }")
         build = pg.evaluate("() => (document.querySelector('meta[name=ms-build]')||{}).content||''")
         who = pg.evaluate("() => (window.__msBoot&&window.__msBoot.user)||''")
-        ok("signed in on ms-v99", who == "loadtest" and str(build).startswith("ms-v99"), {"user": who, "build": build})
+        ok("signed in on current build", who == "loadtest" and str(build).startswith("ms-v"), {"user": who, "build": build})
         # wait for playlist UI + server cache
         pg.wait_for_function("() => !!document.getElementById('pltab') && !!document.getElementById('plnew')", timeout=10000)
         ok("Playlists tab and New playlist on main screen", True, {"pltab": True})

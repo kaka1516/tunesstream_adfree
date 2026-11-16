@@ -4285,6 +4285,66 @@ def _ms_adult_allowed(handler=None):
     user = getattr(_REQ, "user", None) or {}
     return bool(user.get("adult_viz"))
 
+def _radio_prep(res, n=3, budget=2.4):
+    """Pre-resolve and validate the next 2-3 radio tracks. Known-dead / live / blocked
+    ids are replaced via find_alt, or dropped, so the client never reaches them."""
+    items = res if isinstance(res, list) else None
+    if not items:
+        return res
+    out, t0, checked = [], time.time(), 0
+    for x in items:
+        if not isinstance(x, dict):
+            continue
+        vid = str(x.get("id") or "")
+        if not VID.match(vid):
+            continue
+        def _replace(cur, why=""):
+            alt = find_alt(cur.get("id") or "", cur.get("title") or "", cur.get("channel") or "", cur.get("dur") or 0)
+            if alt and alt.get("id") and VID.match(str(alt["id"])):
+                ncur = dict(cur)
+                for k in ("id", "title", "channel", "dur"):
+                    if alt.get(k):
+                        ncur[k] = alt[k]
+                ncur["alt"] = 1
+                ncur["of"] = cur.get("id")
+                if why:
+                    ncur["alt_why"] = why
+                return ncur
+            return None
+        if live_known(vid) or _dead_until(vid):
+            nx = _replace(x, "dead-or-live")
+            if not nx:
+                continue
+            x, vid = nx, nx["id"]
+        if checked < n and (time.time() - t0) < budget:
+            checked += 1
+            ok = False
+            try:
+                ok = bool(_headc_fill(vid, "std"))
+                if not ok:
+                    try:
+                        ok = bool(cached_entry(vid, "std"))
+                    except Exception as e:
+                        try: _note_extract_err(vid, e)
+                        except Exception: pass
+                        ok = False
+            except Exception as e:
+                try: _note_extract_err(vid, e)
+                except Exception: pass
+                ok = False
+            if not ok:
+                nx = _replace(x, "unresolvable")
+                if not nx:
+                    continue
+                x, vid = nx, nx["id"]
+                try:
+                    if not (_headc_fill(vid, "std") or cached_entry(vid, "std")):
+                        continue
+                except Exception:
+                    continue
+        out.append(x)
+    return out
+
 class H(BaseHTTPRequestHandler):
     server_version = "music"; sys_version = ""
     protocol_version = "HTTP/1.1"  # speed-20261113: keep-alive so reloads reuse the tunnel/origin socket
@@ -4961,11 +5021,14 @@ class H(BaseHTTPRequestHandler):
                 self.close_connection = True
                 return
         self.send(404, "no", "text/plain")
-    def _radio_out(self, res):  # perf-20261112: send the list, then warm the next 2 songs' stream URLs in the background
+
+    def _radio_out(self, res):  # perf-20261112: validate next 2-3, send, then warm stream URLs
+        try: res = _radio_prep(res, 3, 2.4)
+        except Exception: pass
         r = self.send(200, json.dumps(res), "application/json")
         try:
             items = res if isinstance(res, list) else next((v for v in (res or {}).values() if isinstance(v, list) and v and isinstance(v[0], dict) and v[0].get("id")), [])
-            ids = [x["id"] for x in items if isinstance(x, dict) and VID.match(str(x.get("id") or ""))][:2]
+            ids = [x["id"] for x in items if isinstance(x, dict) and VID.match(str(x.get("id") or ""))][:3]
             if ids: _warm_enqueue(ids, "std")
         except Exception: pass
         return r

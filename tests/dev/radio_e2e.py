@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""10+ radio auto-advances with natural end (seek to end-10s, let it play out).
+"""15+ radio auto-advances with natural end (seek to end-10s, let it play out).
 Most transitions run with a real hidden tab (another page in front) and throttled
-network. Also checks system-pause-near-end recovery. Real audio. Never prints secrets."""
+network. Also checks a forced dead next-track (404), a forced mid-song error
+(advance after one retry when standby is ready), and system-pause-near-end
+recovery. Seeks the active media element (M), not a hardcoded #aud.
+Never prints secrets. Never claims to have heard audio."""
 import json, time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
@@ -10,7 +13,7 @@ BASE = "https://tunestream.dpdns.org"
 USER = "loadtest"
 SEED = "4NRXx6U8ABQ"
 import os
-N_ADV = int(os.environ.get("NADV","10"))
+N_ADV = int(os.environ.get("NADV","15"))
 VAR=os.environ.get("VAR","")
 
 def pw():
@@ -49,7 +52,13 @@ def snap(page):
             vol:a&&+a.volume.toFixed(2), muted:!!(a&&a.muted), ac:(typeof AC!=='undefined'&&AC)?AC.state:'none',
             playingEls:[...document.querySelectorAll('audio,video')].filter(e=>!e.paused&&!e.ended&&!e.muted).map(e=>e.id||e.tagName),
             endbar:!!(document.getElementById('endbar')&&document.getElementById('endbar').classList.contains('on')),
-            life:(window.__msLife||[]).slice(-6).map(e=>e.ev).join(',')
+            life:(window.__msLife||[]).slice(-8).map(e=>e.ev).join(','),
+            mid:(a&&(a.id||'')),
+            stId:(window.__msSt&&window.__msSt.id)||'',
+            stReady:!!(window.__msSt&&window.__msSt.ready),
+            stErr:!!(window.__msSt&&window.__msSt.err),
+            stOk:(()=>{try{const n=queue[qi+1];return !!(n&&typeof msStandbyOk==='function'&&msStandbyOk(n.id))}catch(_){return false}})(),
+            ahead:Math.max(0,((queue||[]).length-(qi||0)-1))
           };
         }"""
     )
@@ -139,7 +148,57 @@ def main():
         if not (first and first.get("id") and first.get("ct",0)>0.2):
             print(json.dumps(ev, indent=2)); raise SystemExit("radio did not start")
         ids.append(first["id"])
-        for n in range(2, N_ADV+2):  # songs 2..7 => 6 advances
+        # forced dead next-track: 11-char id whose media requests 404; client must alt-or-drop it
+        dead="ZZZZZdead01"
+        def _is_dead_req(url):
+            u=url or ""
+            return dead in u and "/api/alt" not in u
+        def _dead_route(route):
+            try:
+                if _is_dead_req(route.request.url):
+                    route.fulfill(status=404, body="e2e-dead", headers={"content-type":"text/plain","cache-control":"no-store"})
+                    return
+            except Exception:
+                pass
+            try: route.continue_()
+            except Exception:
+                try: route.abort("failed")
+                except Exception: pass
+        page.context.route("**/*", _dead_route)
+        page.route("**/*", _dead_route)
+        inj=page.evaluate(
+            """(dead) => {
+              const n={id:dead, title:'e2e-dead', channel:'', dur:180};
+              const at=Math.max(1, (typeof qi==='number'?qi:0)+1);
+              queue.splice(at, 0, n);
+              try{save()}catch(_){}
+              try{if(typeof msClearStandby==='function')msClearStandby()}catch(_){}
+              try{if(typeof msArmPreload==='function')msArmPreload()}catch(_){}
+              return {qi, ql:queue.length, next:(queue[qi+1]&&queue[qi+1].id)||'', ahead:queue.length-qi-1};
+            }""",
+            dead,
+        )
+        ev.append(("dead_injected", inj))
+        healed=wait_until(lambda: page.evaluate(
+            """(dead) => {
+              const next=(queue[qi+1]||{});
+              const still=queue.some((x,i)=>i>qi && x && x.id===dead);
+              const life=(window.__msLife||[]).slice(-12).map(e=>e.ev+':'+(e.id||'')).join(',');
+              return {still, next:next.id||'', alt:!!next.alt, orig:next.__origId||'', stId:(window.__msSt&&window.__msSt.id)||'', stErr:!!(window.__msSt&&window.__msSt.err), life, qi, ql:queue.length};
+            }""", dead), 20, lambda s: s and (not s.get("still") or (s.get("next") and s.get("next")!=dead) or s.get("alt") or (s.get("orig")==dead)))
+        ev.append(("dead_healed", healed))
+        try:
+            page.unroute("**/*", _dead_route)
+            page.context.unroute("**/*", _dead_route)
+        except Exception: pass
+        if not (healed and (not healed.get("still") or healed.get("next")!=dead or healed.get("alt") or healed.get("orig")==dead)):
+            ev.append(("FAIL_dead_stuck", snap(page), healed))
+            print(json.dumps(ev, indent=2)); raise SystemExit("dead next-track was not alt-replaced or dropped")
+        if healed and healed.get("next")==dead and healed.get("still"):
+            ev.append(("FAIL_dead_still_next", healed))
+            print(json.dumps(ev, indent=2)); raise SystemExit("dead id remained next in queue")
+
+        for n in range(2, N_ADV+2):  # songs 2..N_ADV+1 => N_ADV advances
             # wait for a clock and duration, then seek to end-10s and let it play out
             ready=wait_until(lambda: snap(page), 40, lambda s: s and s.get("id")==ids[-1] and s.get("dur",0)>12 and s.get("ct",0)>=0)
             if not (ready and ready.get("dur",0)>12):
@@ -154,11 +213,11 @@ def main():
                 ev.append(("offline_evt", page.evaluate("()=>{const a=M;a.currentTime=Math.min(a.duration-30,140);return new Promise(r=>setTimeout(()=>{window.dispatchEvent(new Event('offline'));r({ra:window.__resumeAt})},1500))}")))
             seeked=page.evaluate(
                 """() => {
-                  const a=document.getElementById('aud');
-                  if(!a||!isFinite(a.duration)||a.duration<12) return {ok:false, dur:a&&a.duration};
+                  const a=(typeof M!=='undefined'&&M)||document.getElementById('aud')||document.getElementById('aud2');
+                  if(!a||!isFinite(a.duration)||a.duration<12) return {ok:false, dur:a&&a.duration, mid:a&&a.id};
                   const to=Math.max(0, a.duration-10);
                   a.currentTime=to;
-                  return {ok:true, to:+to.toFixed(2), dur:+a.duration.toFixed(2), id:(typeof cur==='function'&&cur()&&cur().id)||''};
+                  return {ok:true, to:+to.toFixed(2), dur:+a.duration.toFixed(2), mid:a.id||'', id:(typeof cur==='function'&&cur()&&cur().id)||''};
                 }"""
             )
             ev.append((f"seek{n-1}", seeked, {"ct":snap(page).get("ct"), "hidden":hidden}))
@@ -185,20 +244,59 @@ def main():
             if not (okp and okp.get("ct",0)>0.15):
                 ev.append((f"FAIL_no_play_{n}", snap(page)))
                 print(json.dumps(ev, indent=2)); raise SystemExit(f"song {n} did not start real audio")
+        # forced mid-song error after t>5 with preloaded next ready: one retry already counted, then swap
+        mid_ready=wait_until(lambda: snap(page), 40, lambda s: s and s.get("id")==ids[-1] and s.get("dur",0)>12 and s.get("ct",0)>=0)
+        ev.append(("miderr_clock", mid_ready))
+        if mid_ready and mid_ready.get("dur",0)>12:
+            page.evaluate("""() => {
+              const a=(typeof M!=='undefined'&&M)||document.getElementById('aud');
+              if(a&&isFinite(a.duration)&&a.duration>12){
+                const to=Math.max(6, Math.min(12, a.duration/4));
+                a.currentTime=to;
+                try{window.__resumeAt=to}catch(_){}
+              }
+              try{if(typeof msArmPreload==='function')msArmPreload()}catch(_){}
+            }""")
+            armed=wait_until(lambda: snap(page), 25, lambda s: s and s.get("id")==ids[-1] and s.get("ct",0)>5 and (s.get("stOk") or s.get("stReady")))
+            ev.append(("miderr_armed", armed))
+            prev=ids[-1]
+            fired=page.evaluate("""() => {
+              const a=(typeof M!=='undefined'&&M)||document.getElementById('aud');
+              const r=(typeof cur==='function'&&cur())||{};
+              const n=(queue[qi+1]||{});
+              const pos=Math.max(a&&a.currentTime||0, +(window.__resumeAt||0));
+              const ok=!!(n.id && typeof msStandbyOk==='function' && msStandbyOk(n.id));
+              window.__msRt={id:r.id||'', n:1, t:Date.now()};
+              window.__resumeAt=pos;
+              try{a.dispatchEvent(new Event('error'))}catch(e){return {ok:false, err:String(e), pos, next:n.id, stOk:ok, mid:a&&a.id}}
+              return {ok:true, pos:+(+pos).toFixed(2), next:n.id||'', stOk:ok, mid:a&&a.id, want:a&&a.dataset.wantPlay};
+            }""")
+            ev.append(("miderr_fired", fired))
+            nxt=wait_until(lambda: snap(page), 25, lambda s: s and s.get("id") and s["id"]!=prev)
+            ev.append(("miderr_advanced", nxt))
+            if not (nxt and nxt.get("id") and nxt["id"]!=prev):
+                ev.append(("FAIL_miderr", snap(page), fired))
+                print(json.dumps(ev, indent=2)); raise SystemExit("mid-song error did not advance to preloaded next after one retry")
+            ids.append(nxt["id"])
+            okp=wait_until(lambda: snap(page), 40, lambda s: s and s.get("id")==ids[-1] and s.get("ct",0)>0.15 and not s.get("paused"))
+            ev.append(("miderr_playing", okp))
+            if okp.get("vol",0)<0.3 or len(okp.get("playingEls",[]))>1:
+                ev.append(("FAIL_miderr_overlap", okp)); print(json.dumps(ev, indent=2)); raise SystemExit("mid-song error advance quiet/overlap")
+
         # system pause near end (wantPlay left at 1, ended not fired): must auto-advance
         ready=wait_until(lambda: snap(page), 40, lambda s: s and s.get("id")==ids[-1] and s.get("dur",0)>12)
         ev.append(("sys_pause_ready", ready))
         if ready and ready.get("dur",0)>12:
             prev=ids[-1]
             sp=page.evaluate("""() => {
-              const a=document.getElementById('aud');
-              if(!a||!isFinite(a.duration)||a.duration<12) return {ok:false};
+              const a=(typeof M!=='undefined'&&M)||document.getElementById('aud')||document.getElementById('aud2');
+              if(!a||!isFinite(a.duration)||a.duration<12) return {ok:false, mid:a&&a.id};
               a.currentTime=Math.max(0, a.duration-3);
               return new Promise(r=>setTimeout(()=>{
                 const want=a.dataset.wantPlay;
                 a.pause(); /* do not clear wantPlay — system/background pause */
                 a.dataset.wantPlay=want||'1';
-                r({ok:true, ct:+a.currentTime.toFixed(2), dur:+a.duration.toFixed(2), want:a.dataset.wantPlay, paused:a.paused});
+                r({ok:true, ct:+a.currentTime.toFixed(2), dur:+a.duration.toFixed(2), want:a.dataset.wantPlay, paused:a.paused, mid:a.id||''});
               }, 400));
             }""")
             ev.append(("sys_pause_near", sp))
