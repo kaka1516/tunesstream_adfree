@@ -25,6 +25,12 @@ SONGS = [
     {"id": "jNQXAC9IVRw", "title": "E2E Song C", "channel": "E2E C", "dur": 30},
 ]
 
+def dismiss_resume(pg):
+    try:
+        pg.evaluate("() => { const d=document.getElementById('resume20'); if(d) d.remove(); }")
+    except Exception:
+        pass
+
 def login(pg):
     pg.goto(BASE + "/login", wait_until="domcontentloaded", timeout=45000)
     st = pg.evaluate(
@@ -134,12 +140,7 @@ def main():
             b.close(); raise SystemExit(1)
         pg.goto(BASE + "/", wait_until="domcontentloaded", timeout=45000)
         pg.wait_for_function("() => typeof play==='function' && typeof plNew==='function'", timeout=30000)
-        try:
-            if pg.locator("#resume20 button[data-x]").count():
-                pg.locator("#resume20 button[data-x]").first.click(timeout=3000)
-                pg.wait_for_selector("#resume20", state="detached", timeout=5000)
-        except Exception:
-            pg.evaluate("() => { const d=document.getElementById('resume20'); if(d) d.remove(); }")
+        dismiss_resume(pg)
         build = pg.evaluate("() => (document.querySelector('meta[name=ms-build]')||{}).content||''")
         who = pg.evaluate("() => (window.__msBoot&&window.__msBoot.user)||''")
         ok("signed in on current build", who == "loadtest" and str(build).startswith("ms-v"), {"user": who, "build": build})
@@ -218,6 +219,7 @@ def main():
         except Exception as e:
             ok("player more button visible", False, {"err": str(e)[:200], "info": pg.evaluate("() => ({np:!!document.getElementById('np')&&document.getElementById('np').classList.contains('open'), npmb:!!document.getElementById('npmb'), npladd:!!document.getElementById('npladd'), mobi:document.getElementById('np')&&document.getElementById('np').classList.contains('mobi')})")})
         else:
+            dismiss_resume(pg)
             pg.click("#npmb")
             pg.wait_for_selector("#npmore.open", timeout=8000)
             # npladd may be in the sheet

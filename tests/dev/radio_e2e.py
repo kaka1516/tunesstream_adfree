@@ -115,10 +115,14 @@ def throttle(page, on=True):
 def main():
     ev=[]
     with sync_playwright() as p:
+        desktop=bool(os.environ.get("DESKTOP"))
+        ua=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            if desktop else
+            "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
+        vp={"width":1280,"height":800} if desktop else {"width":390,"height":844}
         browser=p.chromium.launch(executable_path="/usr/bin/google-chrome", headless=True,
             args=["--autoplay-policy=no-user-gesture-required","--disable-dev-shm-usage"])
-        ctx=browser.new_context(viewport={"width":390,"height":844},
-            user_agent="Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
+        ctx=browser.new_context(viewport=vp, user_agent=ua)
         page=ctx.new_page()
         blank=ctx.new_page()
         blank.goto("about:blank")
@@ -127,6 +131,7 @@ def main():
         ev.append(("throttle", {"ok": throttle(page, True)}))
         s0=snap(page)
         ev.append(("boot", {"build":s0.get("build"), "sw":s0.get("sw"),
+            "desktop": desktop,
             "hasEndedTick": page.evaluate("()=>typeof endedTick==='function'"),
             "msNext": page.evaluate("()=>!!(navigator.mediaSession)")}))
         if False and s0.get("build") and "ms-v86" not in s0.get("build") and "ms-v85" not in s0.get("build"):
@@ -230,14 +235,18 @@ def main():
                 ev.append((f"FAIL_no_advance_{n}", snap(page), {"ids":ids}))
                 print(json.dumps(ev, indent=2)); raise SystemExit(f"did not auto-advance to song {n}")
             ids.append(nxt["id"])
-            # confirm real audio on the new track
-            okp=wait_until(lambda: snap(page), 40, lambda s: s and s.get("id")==ids[-1] and s.get("ct",0)>0.15 and not s.get("paused"))
+            # confirm real audio on the new track (or a later unique track if the next one was skipped as dead/slow)
+            okp=wait_until(lambda: snap(page), 40, lambda s: s and s.get("id") and s.get("ct",0)>0.15 and not s.get("paused") and (s["id"]==ids[-1] or s["id"] not in ids))
             time.sleep(1.5); okp=snap(page)
+            if okp and okp.get("id") and okp["id"] not in ids[:-1] and okp.get("ct",0)>0.15 and not okp.get("paused") and okp["id"]!=ids[-1]:
+                ev.append((f"stall_skip_{n}", {"from":ids[-1], "to":okp.get("id"), "ct":okp.get("ct"), "life":okp.get("life"), "title":okp.get("title")}))
+                ids[-1]=okp["id"]
             life=str(okp.get("life") or "")
-            if okp.get("ct",0)>20 and "sb-skip" not in life:
+            recovered=any(k in life for k in ("sb-skip","stall-swap","stall-skip","ended-watchdog","media-onErr"))
+            if okp.get("id")==ids[-1] and okp.get("ct",0)>20 and not recovered and not any(e[0].startswith("stall_skip_") and e[0].endswith(f"_{n}") for e in ev):
                 ev.append((f"FAIL_started_midway_{n}", okp)); print(json.dumps(ev[-3:], indent=2)); raise SystemExit(f"song {n} started at {okp.get('ct')}")
-            if okp.get("ct",0)>20 and "sb-skip" in life:
-                ev.append((f"sb_skip_midway_{n}", {"ct":okp.get("ct"), "id":okp.get("id")}))
+            if okp.get("ct",0)>20 and recovered:
+                ev.append((f"sb_skip_midway_{n}", {"ct":okp.get("ct"), "id":okp.get("id"), "life":life}))
             ev.append((f"playing{n}", okp))
             if okp.get("vol",0)<0.3 or len(okp.get("playingEls",[]))>1:
                 ev.append((f"FAIL_quiet_or_overlap_{n}", okp)); print(json.dumps(ev, indent=2)); raise SystemExit(f"song {n} quiet/overlap")

@@ -438,6 +438,45 @@ def _it_dur(s):
         for x in p: v = v * 60 + x
         return v
     except Exception: return None
+def _parse_views(s):
+    if s is None or s == "": return None
+    if isinstance(s, (int, float)):
+        return int(s) if s >= 0 else None
+    t = re.sub(r"[,\s]", "", str(s).lower())
+    t = re.sub(r"views?", "", t)
+    m = re.search(r"([\d.]+)([kmb])?", t)
+    if not m: return None
+    try: n = float(m.group(1))
+    except Exception: return None
+    return int(n * {"k": 1e3, "m": 1e6, "b": 1e9}.get(m.group(2) or "", 1))
+def _entry_meta(e):
+    """Normalize upload date / views from a yt-dlp flat entry or InnerTube search item. No network."""
+    if not isinstance(e, dict): return {}
+    ts = e.get("timestamp") or e.get("release_timestamp") or e.get("ts")
+    try: ts = int(ts) if ts not in (None, "") else None
+    except Exception: ts = None
+    ud = str(e.get("upload_date") or e.get("release_date") or e.get("uploaded") or "").replace("-", "")
+    uploaded = None
+    if len(ud) == 8 and ud.isdigit():
+        uploaded = ud[0:4] + "-" + ud[4:6] + "-" + ud[6:8]
+        if not ts:
+            try:
+                import datetime as _dt
+                ts = int(_dt.datetime(int(ud[0:4]), int(ud[4:6]), int(ud[6:8]), tzinfo=_dt.timezone.utc).timestamp())
+            except Exception:
+                pass
+    elif re.match(r"^\d{4}-\d{2}-\d{2}$", str(e.get("uploaded") or "")):
+        uploaded = e.get("uploaded")
+    views = _parse_views(e.get("view_count") if e.get("view_count") is not None else e.get("views"))
+    views_t = e.get("views_t") or ""
+    ago = (e.get("ago") or e.get("pub") or "").strip()
+    out = {}
+    if views is not None: out["views"] = views
+    if views_t: out["views_t"] = views_t
+    if ago: out["ago"] = ago
+    if uploaded: out["uploaded"] = uploaded
+    if ts: out["ts"] = ts
+    return out
 def _it_items(j):
     secs = (((j.get("contents") or {}).get("twoColumnSearchResultsRenderer") or {}).get("primaryContents") or {}).get("sectionListRenderer", {}).get("contents") or []
     for s in secs:
@@ -492,7 +531,10 @@ def _fast_search(q, timeout=8, gl="", hl="en"):
                 if st in ("LIVE", "UPCOMING"): live = True
             ch = _it_txt(v.get("ownerText")) or _it_txt(v.get("longBylineText"))
             lt = _it_txt(v.get("lengthText"))
+            ago = _it_txt(v.get("publishedTimeText"))
+            vct = _it_txt(v.get("viewCountText")) or _it_txt(v.get("shortViewCountText"))
             out.append({"id": vid, "title": _it_txt(v.get("title")) or "?", "duration": _it_dur(lt) if lt else None, "channel": ch,
+                        "view_count": _parse_views(vct), "views_t": vct, "ago": ago,
                         "live_status": ("is_upcoming" if v.get("upcomingEventData") else "is_live") if live else None})
             continue
         lk = it.get("lockupViewModel")
@@ -518,16 +560,16 @@ def search(q, n=8):
     q = (q or "").strip()
     if not q:
         return []
-    return _single(("s", q.lower(), n), lambda: _search(q, n))
+    return _single(("s2", q.lower(), n), lambda: _search(q, n))
 def _search(q, n=8):
     """Videos + mixes/playlists from the real YouTube results page (cached 30 min). n<=1 -> fast single-video resolve."""
     q = (q or "").strip()
     if not q:
         return []
-    key = (q.lower(), n); c = _scache.get(key)
+    key = ("s2", q.lower(), n); c = _scache.get(key)
     if c and time.time() - c[1] < 1800:
         _search_warm(c[0]); return c[0]
-    _d = _sdisk_get(key)  # speed-20261110
+    _d = _sdisk_get(key)  # speed-20261110 s2: include date/views
     if _d: _scache[key] = (_d, time.time()); _search_warm(_d); return _d
     if n <= 1: args = [f"ytsearch1:{q}", "--flat-playlist", "-J", "--no-warnings"]
     else: args = ["https://www.youtube.com/results?" + urllib.parse.urlencode({"search_query": q}), "--flat-playlist", "-J", "--no-warnings", "--playlist-end", str(max(n, 8) + 6)]
@@ -555,12 +597,76 @@ def _search(q, n=8):
         elif VID.match(i):
             ls = _live_status(e); _live_note(i, ls)
             if ls in _LIVE_BAD: continue  # ms-v77: live/upcoming streams are not playable here
-            res.append({"id": i, "title": e.get("title", "?"), "dur": e.get("duration"), "channel": e.get("channel") or e.get("uploader") or ""})
+            row = {"id": i, "title": e.get("title", "?"), "dur": e.get("duration") or e.get("dur"), "channel": e.get("channel") or e.get("uploader") or ""}
+            row.update(_entry_meta(e))
+            res.append(row)
     res = res[:max(n, 1) + 4] if n > 1 else res[:1]
     if len(_scache) > 300: _scache.clear()
     if res: _scache[key] = (res, time.time()); _sdisk_put(key, res)  # speed-20261110
     _search_warm(res)
     return res
+
+_SMETA, _SMETA_LK = {}, threading.Lock()
+_SMETA_TTL = 86400
+def _it_next_meta(vid, timeout=2.2):
+    """Cheap InnerTube /next lookup for views + publish date. No format extraction."""
+    body = json.dumps({"context": {"client": {"clientName": "WEB", "clientVersion": _ITV, "hl": "en"}}, "videoId": vid}).encode()
+    j = json.loads(_yti_post("/youtubei/v1/next?prettyPrint=false", body, timeout).decode("utf-8", "replace") or "{}")
+    contents = (((((j.get("contents") or {}).get("twoColumnWatchNextResults") or {}).get("results") or {}).get("results") or {}).get("contents") or [])
+    pri = {}
+    for it in contents:
+        if isinstance(it, dict) and it.get("videoPrimaryInfoRenderer"):
+            pri = it["videoPrimaryInfoRenderer"]; break
+    if not pri:
+        return {}
+    vwr = (pri.get("viewCount") or {}).get("videoViewCountRenderer") or {}
+    vct = _it_txt(vwr.get("viewCount")) or _it_txt(vwr.get("shortViewCount")) or _it_txt(pri.get("viewCount"))
+    ago = _it_txt(pri.get("relativeDateText")) or ""
+    date_t = _it_txt(pri.get("dateText")) or ""
+    meta = _entry_meta({"views_t": vct, "view_count": _parse_views(vct), "ago": ago})
+    # dateText is often "Premiered Apr 12, 2023" or "Apr 12, 2023"
+    m = re.search(r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+(\d{1,2}),?\s+(\d{4})", date_t, re.I)
+    if m:
+        try:
+            import datetime as _dt
+            mon = {k.lower(): i for i, k in enumerate(["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], 1)}
+            mo = mon[m.group(1)[:3].lower()]
+            d = _dt.datetime(int(m.group(3)), mo, int(m.group(2)), tzinfo=_dt.timezone.utc)
+            meta["uploaded"] = d.strftime("%Y-%m-%d")
+            meta["ts"] = int(d.timestamp())
+        except Exception:
+            pass
+    if date_t and not meta.get("ago"):
+        meta["ago"] = date_t
+    if vct and not meta.get("views_t"):
+        meta["views_t"] = vct
+    return meta
+def search_meta(ids, budget=2.0):
+    """Lazy-fill views/date for search rows. Cached. Never does full yt-dlp extraction."""
+    out, t0 = {}, time.time()
+    ids = [i for i in ids if isinstance(i, str) and VID.match(i)][:12]
+    need = []
+    now = time.time()
+    with _SMETA_LK:
+        for i in ids:
+            c = _SMETA.get(i)
+            if c and now - c[1] < _SMETA_TTL:
+                out[i] = c[0]
+            else:
+                need.append(i)
+    for i in need:
+        if time.time() - t0 >= budget:
+            break
+        try:
+            m = _it_next_meta(i, max(0.6, budget - (time.time() - t0)))
+        except Exception:
+            m = {}
+        if m:
+            with _SMETA_LK:
+                if len(_SMETA) > 4000: _SMETA.clear()
+                _SMETA[i] = (m, time.time())
+            out[i] = m
+    return out
 def search_shorts(q, n=15):
     """Short-form only. Does not change regular search or radio."""
     q = (q or "").strip()
@@ -3482,7 +3588,7 @@ _RL_EXEMPT_EXACT = frozenset({
 _RL_EXEMPT_PREFIX = ("/audio", "/video", "/stream", "/dl", "/skins/", "/viz-demo", "/art", "/vendor/", "/assets/")
 # Heavy endpoints — per authenticated client (radio/search cached → allow household fan-out).
 _RL_HEAVY = frozenset({
-    "/api/search", "/api/radio", "/api/warm", "/api/prefetch", "/api/list", "/api/home",
+    "/api/search", "/api/search_meta", "/api/radio", "/api/warm", "/api/prefetch", "/api/list", "/api/home",
     "/api/similar", "/api/chips", "/api/suggest", "/api/playable",
 })
 # Per-client budgets (10 users behind one Wi‑Fi / one public IP).
@@ -4947,6 +5053,12 @@ class H(BaseHTTPRequestHandler):
                 if (qs.get("shorts") or "") in ("1", "true", "yes"):
                     return self.send(200, json.dumps(search_shorts(qs.get("q", ""), _n)), "application/json")
                 return self.send(200, json.dumps(search(qs.get("q", ""), _n)), "application/json")
+            if u.path == "/api/search_meta":
+                ids = [x.strip() for x in (qs.get("ids") or "").split(",") if x.strip()][:12]
+                try:
+                    return self.send(200, json.dumps(search_meta(ids)), "application/json")
+                except Exception:
+                    return self.send(200, "{}", "application/json")
             if u.path == "/api/shorts":
                 _n = int(qs.get("n", "20") or 20)
                 _pgno = int(qs.get("page", "0") or 0)
