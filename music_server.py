@@ -2879,6 +2879,64 @@ def _ly_sort(r, t, d):
 lyrics_l = _dc_ly("ly3", lyrics_l)
 # ---- /lyrics2-20261111 ----
 
+
+# ms-v97: public build id (from sw.js) + short UA for clog; never logs tokens or full UA.
+def _app_build():
+    try:
+        t = (ROOT / "sw.js").read_text(encoding="utf-8", errors="replace")[:400]
+        m = re.search(r"const V='([^']+)'", t)
+        if m:
+            return m.group(1)
+    except Exception:
+        pass
+    return "unknown"
+
+def _ua_short(ua):
+    """Compact browser/OS label for clog (no full User-Agent string)."""
+    if not ua:
+        return ""
+    ua = str(ua)[:400]
+    s = []
+    m = re.search(r"Android[\s/]?([\d.]+)", ua)
+    if m:
+        s.append("Android " + m.group(1))
+    elif "iPhone" in ua or "iPad" in ua:
+        m = re.search(r"OS (\d+[._\d]*)", ua)
+        s.append("iOS " + ((m.group(1).replace("_", ".")) if m else ""))
+    elif "Windows" in ua:
+        s.append("Windows")
+    elif "Mac OS X" in ua or "Macintosh" in ua:
+        s.append("macOS")
+    elif "Linux" in ua:
+        s.append("Linux")
+    if "SamsungBrowser/" in ua:
+        m = re.search(r"SamsungBrowser/([\d.]+)", ua)
+        s.append("Samsung " + (m.group(1) if m else ""))
+    elif "Edg/" in ua or "Edge/" in ua:
+        m = re.search(r"Edg(?:e)?/([\d.]+)", ua)
+        s.append("Edge " + (m.group(1) if m else ""))
+    elif "FxiOS/" in ua:
+        m = re.search(r"FxiOS/([\d.]+)", ua)
+        s.append("Firefox iOS " + (m.group(1) if m else ""))
+    elif "Firefox/" in ua:
+        m = re.search(r"Firefox/([\d.]+)", ua)
+        s.append("Firefox " + (m.group(1) if m else ""))
+    elif "CriOS/" in ua:
+        m = re.search(r"CriOS/([\d.]+)", ua)
+        s.append("Chrome iOS " + (m.group(1) if m else ""))
+    elif "Chrome/" in ua:
+        m = re.search(r"Chrome/([\d.]+)", ua)
+        s.append("Chrome " + (m.group(1) if m else ""))
+    elif "Safari/" in ua:
+        m = re.search(r"Version/([\d.]+)", ua)
+        s.append("Safari " + (m.group(1) if m else ""))
+    joined = " ".join(s)
+    if any(x in ua for x in ("Mobile", "Android", "iPhone", "iPad")) and "Mobile" not in joined and "iOS" not in joined:
+        s.append("Mobile")
+    return " ".join(s).strip()[:80]
+
+_MS_RESET_HTML = '<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=robots content=noindex><title>Updating Music Stream</title><style>body{font:16px/1.45 system-ui,sans-serif;background:#0b0b10;color:#eee;padding:2.5rem 1.4rem;max-width:28rem}</style></head><body><p>Updating Music Stream&hellip; removing old app copies.</p><p style="opacity:.7">Your login, likes, settings and saved songs stay.</p><script>\n(async()=>{\n  try{\n    const ks=await caches.keys();\n    await Promise.all(ks.filter(k=>k!==\'off\').map(k=>caches.delete(k)));\n  }catch(_){}\n  try{\n    const regs=await navigator.serviceWorker.getRegistrations();\n    await Promise.all(regs.map(r=>r.unregister()));\n  }catch(_){}\n  location.replace(\'/?fresh=\'+Date.now());\n})();\n</script></body></html>'
+
 PWA = {"/manifest.webmanifest", "/sw.js", "/icon-192.png", "/icon-512.png", "/favicon.ico", "/icon.svg", "/famkey.js", "/famlang.js"}  # server3-20261111 (no /game.js)
 _kc = {}
 def _ta(t, a):
@@ -3417,7 +3475,7 @@ def _limit_bucket_keys(handler):
 
 # Stream/chunk + static assets: never rate-limit (auth still applies downstream).
 _RL_EXEMPT_EXACT = frozenset({
-    "/health", "/favicon.ico", "/manifest.webmanifest", "/sw.js",
+    "/health", "/api/version", "/reset", "/favicon.ico", "/manifest.webmanifest", "/sw.js",
     "/icon-192.png", "/icon-512.png", "/icon.svg", "/famkey.js", "/famlang.js",
 })
 _RL_EXEMPT_PREFIX = ("/audio", "/video", "/stream", "/dl", "/skins/", "/viz-demo", "/art", "/vendor/", "/assets/")
@@ -4252,6 +4310,8 @@ class H(BaseHTTPRequestHandler):
         if "no-store" in _cc0 or "no-cache" in _cc0:
             self.send_header("CDN-Cache-Control", "no-store")
             self.send_header("Cloudflare-CDN-Cache-Control", "no-store")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Expires", "0")
         super().end_headers()
     def guard(self):
         # sec-20261110: decide network trust for THIS request first (thread-local; keep-alive safe)
@@ -4478,7 +4538,10 @@ class H(BaseHTTPRequestHandler):
                 ln = []
                 for e in evs[:40]:
                     if not isinstance(e, dict): continue
+                    ua = _ua_short(self.headers.get("User-Agent") or "")
+                    swv = str(j.get("sw") or "")[:16]
                     ln.append(json.dumps({"ts": time.strftime("%Y-%m-%d %H:%M:%S"), "u": who, "dev": str(j.get("dev", ""))[:12], "b": str(j.get("b", ""))[:16],
+                                          "sw": swv, "ua": ua,
                                           **{k: (v if isinstance(v, (int, float, bool)) or v is None else str(v)[:80]) for k, v in list(e.items())[:12]}}))
                 try:
                     lf = ROOT / "clog.log"
@@ -4532,6 +4595,14 @@ class H(BaseHTTPRequestHandler):
                     body = json.dumps({"ok": _ytdlp_state.get("ok", True), "ver": _ytdlp_state.get("ver", ""), "heal": _ytdlp_state.get("heal", ""), "heal_ts": _ytdlp_state.get("heal_ts", 0)})
                     return self.send(200, body, "application/json")
                 return self.send(200, "ok", "text/plain")
+        if u.path == "/api/version":  # unauthenticated build probe so a stale PWA can force a reload
+            self._cc = "no-store, no-cache, must-revalidate"
+            return self.send(200, json.dumps({"v": _app_build()}), "application/json")
+        if u.path == "/reset":  # ms-v98: drop stale app caches + unregister SW; keep cookies, localStorage, and Cache Storage "off"
+            self._cc = "no-store, no-cache, must-revalidate"
+            # Not sending Clear-Site-Data: "cache" — browsers treat that as HTTP cache AND Cache Storage, which would delete saved songs in "off".
+            # Targeted JS on this page deletes every cache except "off", then unregisters the service worker.
+            return self.send(200, _MS_RESET_HTML, "text/html; charset=utf-8")
         if u.path in _AUTH_PATHS:  # login-20261110
             return _MSU.handle_get(self, u.path, qs, getattr(_REQ, "user", None), getattr(_REQ, "trusted", False))
         if u.path in ("/THEMES.md", "/themes.md"):
