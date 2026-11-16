@@ -5,7 +5,7 @@ import json, os, time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
-BASE = os.environ.get("MS_BASE", "https://tunestream.dpdns.org")
+BASE = os.environ.get("MS_BASE", "http://127.0.0.1:8128")
 CHROME = os.environ.get("CHROME", "/usr/bin/google-chrome")
 ROOM = os.environ.get("MS_ROOM", "CHILL")
 R = []

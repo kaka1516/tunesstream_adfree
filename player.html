@@ -1,4 +1,4 @@
-<!doctype html><html lang=en><head><!-- adult-viz-20261111 --><!-- ms-v108-swap-keep --><meta charset=utf-8><meta name=ms-build content=ms-v108><script>/* login-20261110: session expired / signed out -> login page */(function(){const F=window.fetch;if(!F)return;window.fetch=function(){return F.apply(this,arguments).then(r=>{try{if(r.status===401&&!window.__msLogin&&!(window.__msListen&&window.__msListen.guest)&&location.pathname!=='/listen'&&location.pathname!=='/together'&&(r.headers.get('content-type')||'').indexOf('json')>=0&&new URL(r.url,location.href).origin===location.origin){window.__msLogin=1;location.href='/login?next='+encodeURIComponent(location.pathname+location.search)}}catch(_){}return r})}})()</script><script>/* login-state-20261110: apply the signed-in user's saved state before the player reads localStorage */(function(){
+<!doctype html><html lang=en><head><!-- adult-viz-20261111 --><!-- ms-v109-rooms --><meta charset=utf-8><meta name=ms-build content=ms-v109><script>/* login-20261110: session expired / signed out -> login page */(function(){const F=window.fetch;if(!F)return;window.fetch=function(){return F.apply(this,arguments).then(r=>{try{if(r.status===401&&!window.__msLogin&&!(window.__msListen&&window.__msListen.guest)&&location.pathname!=='/listen'&&location.pathname!=='/together'&&(r.headers.get('content-type')||'').indexOf('json')>=0&&new URL(r.url,location.href).origin===location.origin){window.__msLogin=1;location.href='/login?next='+encodeURIComponent(location.pathname+location.search)}}catch(_){}return r})}})()</script><script>/* login-state-20261110: apply the signed-in user's saved state before the player reads localStorage */(function(){
 const B=window.__msBoot;if(!B||!B.keys)return;if(new URLSearchParams(location.search).get('u'))return;
 const LS=window.localStorage,K=/* audit-20261111 */(window.__msKeysOf=function(B,x){const D=new Set(B.deny||[]),ok=k=>typeof k==='string'&&/^[A-Za-z0-9_.:-]{1,64}$/.test(k)&&!D.has(k)&&!/^(__|local\.|dev\.)/.test(k);const s=new Set(B.keys||[]);if(B.generic){try{Object.keys(x||{}).forEach(k=>{if(ok(k))s.add(k)});for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(ok(k))s.add(k)}}catch(e){}}return [...s]})(B,(B.state&&B.state.ls)||{}),H=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)+'.'+s.length};
 const gm=()=>{try{return JSON.parse(LS.getItem('__msSync')||'{}')||{}}catch(e){return{}}},sm=m=>{try{LS.setItem('__msSync',JSON.stringify(m))}catch(e){}};
@@ -305,6 +305,7 @@ html.ms-guest{padding-top:28px}
 <button type=button id=rmvc class=ghost>Join voice</button>
 <button type=button id=rmmic class=ghost style="display:none">Unmute mic</button>
 </div>
+<div id=rmvcst class=s style="display:none;margin:6px 0 0" role="status" aria-live="polite"></div>
 <div id=rmchat aria-live=polite style="display:none"></div>
 <form id=rmform style="display:none"><input id=rmin maxlength=200 placeholder="Message…" autocomplete=off aria-label="Room chat"><button type=submit id=rmsend>Send</button></form>
 <div class=hint style="margin-top:14px">Rooms — tap to join any time</div>
@@ -557,7 +558,7 @@ _msStartMedia(M,t0||window.__resumeAt||0,+$('vol').value,xfS()?Math.max(1500,(+x
 clearTimeout(window.__playStall);window.__playStall=setTimeout(()=>{if(g!==playGen)return;const a=AUD;if(!a||a.dataset.wantPlay!='1'||a.currentTime>0.05)return;life('play-stall',r.id,{fb:a.dataset.fb});toast('Taking too long — trying another format…');try{onErr({target:a})}catch(e){}
   clearTimeout(window.__playStall2);window.__playStall2=setTimeout(()=>{if(g!==playGen)return;if(AUD.dataset.wantPlay!='1'||AUD.currentTime>0.05)return;const hold=window.__holdPick&&r&&(r.id===window.__holdPick||r.title===window.__holdPick);if(hold&&!window.__holdRetry){window.__holdRetry=1;toast('Still starting your song…');try{play()}catch(e){}return}__msRetry(r,AUD,'start-stall')/* play-20261110 */},8000);
 },12000);
-roomPush(1);loadLyrics(r);try{shWarm()}catch(_){};__msDefer(g,r)/* play4-20261111 */;segs=[];loadSb(r.id);save();if(view=='queue'||!document.querySelector('#list li'))render();else hl();try{if(typeof msArmPreload==='function')setTimeout(()=>msArmPreload(),800)}catch(_){}}
+try{if(!window.__msRoomPullPlay){window.__msRoomPlayPush=1;if(RM){rmApplying=0;rmNeedPush=0;rmApplyHit=0}}}catch(_){};loadLyrics(r);try{shWarm()}catch(_){};__msDefer(g,r)/* play4-20261111 */;segs=[];loadSb(r.id);save();if(view=='queue'||!document.querySelector('#list li'))render();else hl();try{if(typeof msArmPreload==='function')setTimeout(()=>msArmPreload(),800)}catch(_){}}
 function hl(){const c=cur(),L=LV();document.querySelectorAll('#list li').forEach((li,i)=>li.classList.toggle('cur',!!(c&&L[i]&&L[i].id&&L[i].id==c.id)))}
 const _skCh=c=>{let s=(c||'').toLowerCase();for(const j of[' - topic',' topic','vevo',' official audio',' official'])s=s.split(j).join(' ');return s.replace(/\s+/g,' ').trim()};
 const next=()=>{window.__nextAt={g:playGen,t:Date.now()};if(rmode==2){try{M.currentTime=0;const p=M.play();if(p&&p.catch)p.catch(()=>{});life('repeat-one',cur()&&cur().id)}catch(e){}return}try{const c=cur();if(c&&c.channel&&!M.ended&&M.currentTime<30){const ch=_skCh(c.channel);if(ch){const k=JSON.parse(localStorage.sk||'[]');const n=k.filter(x=>_skCh(x)==ch).length;k.push(c.channel);localStorage.sk=JSON.stringify(k.slice(-60));const nn=n+1;if(nn==2)toast('Hearing less of '+(c.channel||ch));if(nn==3)toast('Muted '+(c.channel||ch)+' for a while');if(nn>=2){const keep=qi;queue=queue.filter((x,i)=>i<=keep||_skCh(x.channel)!=ch);save();render()}}}}catch(e){}if(slpEnd&&M.ended){slpEnd=false;$('slp').value=0;return}if(rmode==2){M.currentTime=0;M.play();return}if(shuf&&queue.length>1){let n;do n=Math.floor(Math.random()*queue.length);while(n==qi);qi=n;play()}else if(qi<queue.length-1){qi++;if(!(typeof msTrySwap==='function'&&msTrySwap()))play()}
@@ -647,7 +648,7 @@ window.msTrySwap=function(){try{
     try{nxt.muted=false;if(!xfms)nxt.volume=vol;nxt.dataset.wantPlay='1'}catch(_){}
     try{meta(r)}catch(_){}
     try{life('swap',r.id,{buf:+buf(nxt).toFixed(1),xf:xfms})}catch(_){}
-    try{roomPush(1)}catch(_){}
+    try{if(!window.__msRoomPullPlay){window.__msRoomPlayPush=1;if(RM){rmApplying=0;rmNeedPush=0;rmApplyHit=0}}}catch(_){}
     try{loadLyrics(r)}catch(_){}
     try{segs=[];loadSb(r.id)}catch(_){}
     try{save()}catch(_){}
@@ -846,7 +847,7 @@ const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);return fetch(u,{sig
    until the new track's first timeupdate, 12-15s on slow starts) and the NP title/channel switch immediately, even while the id is
    still being looked up. Duration/clock then come only from the CURRENT media element's metadata. Async lyrics/karaoke/segments
    already drop results when cur()!==r / id mismatch. */
-const APP_BUILD='ms-v108';
+const APP_BUILD='ms-v109';
 function _msParseVer(v){const m=String(v||'').match(/ms-v(\d+)/i);return m?+m[1]:0}
 function _msScheduleReload(why){try{const key='msReloaded-'+APP_BUILD;if(sessionStorage[key])return false;sessionStorage[key]='1';try{life('build-reload',null,{why:why||'stale',have:APP_BUILD,want:window.__msServerV||window.__swV||''})}catch(_){};location.replace('/reset');return true}catch(_){return false}}
 function _msMaybeReload(){try{if(!window.__msPendingReload)return;if(typeof _msMediaBusy==='function'&&_msMediaBusy())return;_msScheduleReload(window.__msPendingReload)}catch(_){}}
@@ -1251,7 +1252,7 @@ function LV(){return view=='res'?res:view=='shorts'?shRes:view=='saved'?offList(
 window.__swReg={state:'not started',err:'',claim:''};
 if(!window.isSecureContext)window.__swReg.state='blocked: not a secure context';
 else if(!('serviceWorker'in navigator))window.__swReg.state='unsupported in this browser/mode';
-else{window.__swReg.state='registering';navigator.serviceWorker.register('/sw.js?v=ms-v108',{scope:'/',updateViaCache:'none'}).then(reg=>{window.__swReg.state='registered';window.__swReg.scope=new URL(reg.scope).pathname;try{reg.update()}catch(_){}try{diagSync('sw-registered')}catch(_){}try{setInterval(()=>{try{reg.update()}catch(_){}try{_msCheckServerBuild()}catch(_){}},5*60*1000)}catch(_){}try{document.addEventListener('visibilitychange',()=>{if(!document.hidden){try{reg.update()}catch(_){}try{_msCheckServerBuild()}catch(_){}try{_msMaybeReload()}catch(_){}}})}catch(_){}try{_msCheckServerBuild()}catch(_){}
+else{window.__swReg.state='registering';navigator.serviceWorker.register('/sw.js?v=ms-v109',{scope:'/',updateViaCache:'none'}).then(reg=>{window.__swReg.state='registered';window.__swReg.scope=new URL(reg.scope).pathname;try{reg.update()}catch(_){}try{diagSync('sw-registered')}catch(_){}try{setInterval(()=>{try{reg.update()}catch(_){}try{_msCheckServerBuild()}catch(_){}},5*60*1000)}catch(_){}try{document.addEventListener('visibilitychange',()=>{if(!document.hidden){try{reg.update()}catch(_){}try{_msCheckServerBuild()}catch(_){}try{_msMaybeReload()}catch(_){}}})}catch(_){}try{_msCheckServerBuild()}catch(_){}
   return navigator.serviceWorker.ready}).then(reg=>{window.__swReg.state='ready';if(!navigator.serviceWorker.controller&&reg&&reg.active){window.__swReg.claim='requested';const ch=new MessageChannel();ch.port1.onmessage=e=>{window.__swReg.claim=e.data&&e.data.ok?'granted':'refused ('+((e.data&&e.data.err)||'?')+')';try{diagSync('sw-claim')}catch(_){}};reg.active.postMessage({type:'ms-claim'},[ch.port2]);try{life('sw-claim-requested',null,{nav:_navType()})}catch(_){}}try{diagSync('sw-ready')}catch(_){}try{const w=reg.active;if(w){const ch=new MessageChannel();ch.port1.onmessage=e=>{const v=e.data&&e.data.v;window.__swV=v||'';if(v&&_msParseVer(v)>_msParseVer(APP_BUILD))_msScheduleReload('sw-version')};w.postMessage({type:'ms-version'},[ch.port2])}}catch(_){}})
   .catch(err=>{window.__swReg.state='registration failed';window.__swReg.err=String(err&&err.name||'Error')+': '+String(err&&err.message||'').replace(/https?:\/\/\S+/g,'[url]').replace(/[?&]k=[^&\s]*/g,'').slice(0,140);try{diagSync('sw-error')}catch(_){}});
   navigator.serviceWorker.addEventListener('controllerchange',()=>{window.__swReg.ctrlChanged=Date.now();_swB='checking…';try{swBuild().then(v=>{_swB=v;diagSync('controllerchange')})}catch(_){}try{life('sw-controllerchange',null,{})}catch(_){}})}
@@ -1314,36 +1315,60 @@ msOnAud('timeupdate',()=>{if(!('mediaSession'in navigator)||!isFinite(AUD.durati
 try{navigator.mediaSession.setActionHandler('seekforward',()=>M.currentTime+=10);navigator.mediaSession.setActionHandler('seekbackward',()=>M.currentTime-=10)}catch(e){}
 /* share + deep link (?play=ID) */
 $('shr').onclick=async()=>{const r=cur();if(!r||!r.id)return;const u=`${location.origin}/?k=${K}&play=${r.id}`;try{if(navigator.share)await navigator.share({title:r.title,url:u});else{await navigator.clipboard.writeText(u);toast('Link copied')}}catch(e){}};
-/* listen together: shared control, permanent rooms, chat, optional voice. Call failures never touch AUD. */
-const SP=new URLSearchParams(location.search);let RM=JSON.parse(sessionStorage.rm||'null'),rmT=null,rmApplying=0,rmNeedPush=0,rmV=0,rmPushV=0,rmChatAt=0,rmPanelOn=0,rmListAt=0;
+/* listen together: shared control, permanent rooms, chat, optional voice. Call failures never touch AUD. ms-v109 */
+const SP=new URLSearchParams(location.search);let RM=JSON.parse(sessionStorage.rm||'null'),rmT=null,rmApplying=0,rmNeedPush=0,rmV=0,rmPushV=0,rmChatAt=0,rmPanelOn=0,rmListAt=0,rmNewBusy=0,rmApplyUntil=0,rmApplyT=0,rmApplyId='',rmApplyHit=0,rmApplyP=1,rmBeatAt=0;
 const L0=window.__msListen||{};
-const ME=(L0.gid?('g'+L0.gid):Math.random().toString(36).slice(2,10)).slice(0,16);
+let ME=(L0.gid?('g'+L0.gid):Math.random().toString(36).slice(2,10)).slice(0,16);
 function rmName(){try{return (window.__msBoot&&window.__msBoot.user)||(window.__msListen&&window.__msListen.name)||ME}catch(e){return ME}}
 function rmIsGuest(){try{return !!(window.__msListen&&window.__msListen.guest)}catch(e){return false}}
-function rmApi(op,extra){const post=/^(chat|set|guest|sig|leave|new|get)$/.test(op||'');const q=new URLSearchParams(post?{k:K||'',op:op,_:String(Date.now())}:{k:K||'',op:op||'get',_:String(Date.now()),...(extra||{})});return fetch('/api/room?'+q,{method:post?'POST':'GET',credentials:'same-origin',headers:{'Content-Type':'application/json','Cache-Control':'no-cache'},body:post?JSON.stringify(Object.assign({op:op||'get'},extra||{})):undefined,cache:'no-store'}).then(r=>r.json()).catch(()=>null)}
+function rmAud(){try{return window.AUD||window.M||$('aud')}catch(_){return $('aud')}}
+function rmApi(op,extra){
+  const post=/^(chat|set|guest|sig|leave|new|touch)$/.test(op||'');
+  const body=Object.assign({op:op||'get'},extra||{});
+  const q=new URLSearchParams(post?{k:K||'',op:op,_:String(Date.now())}:{k:K||'',op:op||'get',_:String(Date.now())});
+  if(!post){Object.keys(extra||{}).forEach(k=>{const v=(extra||{})[k];if(v==null)return;q.set(k,String(v))})}
+  return fetch('/api/room?'+q,{method:post?'POST':'GET',credentials:'same-origin',headers:{'Content-Type':'application/json','Cache-Control':'no-cache'},body:post?JSON.stringify(body):undefined,cache:'no-store'}).then(async r=>{
+    const txt=await r.text();
+    let j=null;try{j=txt?JSON.parse(txt):null}catch(_){j=null}
+    if(r.status===429||(j&&j.error==='slow down')){try{toast('Room is busy, retrying…')}catch(_){}return {error:'slow down',status:429}}
+    if(r.status===401){return Object.assign({error:(j&&j.error)||'login required',status:401},j&&typeof j==='object'?j:{})}
+    return j
+  }).catch(()=>null)}
+function rmSetMe(j){try{const id=(j&&(j.me||(j.gid?('g'+j.gid):'')))||'';if(id){ME=String(id).slice(0,16)}}catch(_){}}
 function rmUi(n,by){const el=$('rmb');if(!el)return;if(!RM){el.innerHTML='&#128101; Together';el.title='Listen together';tog('rmb',false);return}
 el.innerHTML='&#128101; '+(RM.name?esc(RM.name):('Room '+esc(RM.r)))+(n!=null?' · '+n:'')+(by?' · '+esc(by):'');
 el.title='Anyone in the room can control playback';tog('rmb',true)}
 function rmOpen(){const p=$('rmp');if(!p)return;p.classList.add('open');rmPanelOn=1;roomList();if(RM)roomPull()}
 function rmClose(){const p=$('rmp');if(p)p.classList.remove('open');rmPanelOn=0}
 function rmShowName(on,code){const b=$('rmnm');if(!b)return;b.classList.toggle('on',!!on);b.dataset.r=code||'';if(on)try{$('rmnmi').focus()}catch(_){}}
-async function roomPush(){if(!RM||!RM.r)return;if(rmApplying){rmNeedPush=1;return}const r=cur();if(!r||!r.id)return;try{
-const j=await rmApi('set',{r:RM.r,id:r.id,t:AUD.currentTime.toFixed(1),p:AUD.paused?0:1,title:r.title||'',channel:r.channel||'',me:ME,by:rmName()});
-if(!j)return;if(j.error==='no room'){toast('Room closed');roomLeave();return}if(j.error)return;
+async function roomLeavePrev(next){try{if(RM&&RM.r&&(!next||RM.r!==next))await rmApi('leave',{r:RM.r,me:ME})}catch(_){}}
+function rmEndApply(){const a=rmAud(),c=(typeof cur==='function'&&cur())||null;
+  const right=!rmApplyId||(c&&c.id===rmApplyId);
+  const ct=a?(a.currentTime||0):0;
+  const tOk=rmApplyT==null||!a||Math.abs(ct-rmApplyT)<2.5;
+  if(right&&tOk)rmApplyHit=1;
+  const stateOk=right&&a&&((!rmApplyP&&a.paused)||(rmApplyP&&!a.paused));
+  if((right&&rmApplyHit)||(stateOk&&rmApplyHit)||Date.now()>rmApplyUntil){rmApplying=0;rmApplyId='';rmApplyHit=0;if(rmNeedPush){rmNeedPush=0;roomPush()}return}
+  setTimeout(rmEndApply,200)}
+async function roomPush(){if(!RM||!RM.r)return;if(rmApplying){rmNeedPush=1;return}const r=cur();if(!r||!r.id)return;const a=rmAud();if(!a)return;try{
+const j=await rmApi('set',{r:RM.r,id:r.id,t:(a.currentTime||0).toFixed(1),p:a.paused?0:1,title:r.title||'',channel:r.channel||'',me:ME,by:rmName(),sv:rmV});
+if(!j)return;if(j.error==='stale'){if(j.v)rmV=j.v;try{await roomPull()}catch(_){}return}
+if(j.error==='no room'){toast('Room closed');roomLeave();return}if(j.error==='login required'||j.error==='join first'){rmRejoin(j);return}if(j.error)return;
 if(j.v){rmPushV=j.v;rmV=j.v}rmUi(j.listeners,j.by);if(rmPanelOn)rmPaintNow(j)}catch(e){}}
+function rmRejoin(j){if(rmIsGuest()){rmShowName(1,(RM&&RM.r)||'');rmOpen();toast('Rejoin the room to keep listening');return}toast('Join the room to listen')}
 async function roomPull(){if(!RM||!RM.r)return;try{
 const j=await rmApi('get',{r:RM.r,me:ME,vc:VC.on?1:0});
-if(!j)return;if(j.error==='join first'){if(rmIsGuest()&&!rmNameok()){rmShowName(1,RM.r);rmOpen();return}toast('Join the room to listen');return}
+if(!j)return;if(j.error==='join first'||j.error==='login required'||j.status===401){rmRejoin(j);return}
 if(j.error==='no room'){toast('Room closed');roomLeave();return}if(j.error)return;
 RM.name=j.name||RM.name;rmUi(j.listeners,j.by);if($('rmp')&&$('rmp').classList.contains('open'))rmPanelOn=1;if(rmPanelOn){rmPaintNow(j);rmPaintChat(j.chat)}else if(j.chat)$('rmchat')&&rmPaintChat(j.chat)
 try{await vcOnSignals(j)}catch(_){}
 if(!j.id)return;
 if(j.v&&j.v<=rmV)return;
 if(j.v&&j.v===rmPushV){rmV=j.v;return}
-rmV=j.v||rmV;rmApplying=1;
-try{const c=cur();if(!c||c.id!=j.id){queue=[{id:j.id,title:j.title,channel:j.channel}];qi=0;await play(j.t);return}
-if(Math.abs(AUD.currentTime-j.t)>2.5)AUD.currentTime=j.t;if(j.p&&AUD.paused){AUD.dataset.wantPlay='1';AUD.play().catch(()=>toast('Tap play to join audio'))}if(!j.p&&!AUD.paused){AUD.dataset.wantPlay='0';AUD.pause()}}
-finally{setTimeout(()=>{rmApplying=0;if(rmNeedPush){rmNeedPush=0;roomPush()}},600)}
+rmV=j.v||rmV;rmApplying=1;rmNeedPush=0;rmApplyHit=0;rmApplyP=j.p?1:0;rmApplyId=j.id||'';rmApplyT=(j.t!=null?+j.t:null);rmApplyUntil=Date.now()+10000;try{window.__msRoomPlayPush=0}catch(_){};
+try{const a=rmAud();const c=cur();if(!c||c.id!=j.id){queue=[{id:j.id,title:j.title,channel:j.channel}];qi=0;window.__msRoomPullPlay=1;try{await play(j.t)}finally{window.__msRoomPullPlay=0;window.__msRoomPlayPush=0}return}
+if(a&&Math.abs(a.currentTime-j.t)>2.5)a.currentTime=j.t;if(j.p&&a&&a.paused){a.dataset.wantPlay='1';a.play().catch(()=>toast('Tap play to join audio'))}if(!j.p&&a&&!a.paused){a.dataset.wantPlay='0';a.pause()}}
+finally{setTimeout(rmEndApply,200)}
 }catch(e){}}
 function rmPaintNow(j){const el=$('rmnow'),acts=$('rmacts'),ch=$('rmchat'),fo=$('rmform');if(!el)return;
 if(!RM){el.style.display=acts.style.display=ch.style.display=fo.style.display='none';return}
@@ -1362,39 +1387,61 @@ el.querySelectorAll('button.rmr').forEach(b=>b.onclick=()=>roomJoin(b.dataset.r)
 function rmNameok(){const n=rmName();return n&&n!==ME&&String(n).length>=2}
 async function roomJoin(code,fromName){code=(code||'').toUpperCase();if(!code)return;
 if(rmIsGuest()&&!fromName&&!rmNameok()){rmShowName(1,code);return}
-if(rmIsGuest()){const name=rmName();const j=await rmApi('guest',{r:code,name:name});if(!j||j.error){toast((j&&j.error)||'Could not join');return}
+if(RM&&RM.r&&RM.r!==code){try{await roomLeavePrev(code)}catch(_){}}
+if(rmIsGuest()){const name=rmName();const j=await rmApi('guest',{r:code,name:name});if(!j||j.error){toast((j&&(j.error==='slow down'?'Room is busy, retrying…':j.error))||'Could not join');return}
+rmSetMe(j);
 try{if(window.__msListen){window.__msListen.name=name;window.__msListen.room=code}}catch(_){}
 RM={r:code,name:j.name||code};rmShowName(0);roomStart();toast('Joined '+(j.name||code)+' — anyone can control');if(rmPanelOn){rmPaintNow(j);rmPaintChat(j.chat);roomList()}return}
 if(RM&&RM.r===code)return;RM={r:code};roomStart();toast('Joined room '+code+' — anyone can control');roomList()}
-function roomStart(){clearInterval(rmT);rmT=setInterval(()=>{if(!RM)return;roomPull();if(rmPanelOn&&Date.now()-rmListAt>4000){rmListAt=Date.now();roomList()}},2000);
+function rmTouch(){if(!RM||!RM.r)return;const now=Date.now();if(now-rmBeatAt<20000)return;rmBeatAt=now;
+try{const q=new URLSearchParams({op:'touch',r:RM.r,me:ME,k:K||''});if(navigator.sendBeacon)navigator.sendBeacon('/api/room?'+q,'');else rmApi('touch',{r:RM.r,me:ME})}catch(_){}}
+function roomStart(){clearInterval(rmT);rmT=setInterval(()=>{if(!RM)return;if(document.hidden){rmTouch();return}roomPull();if(rmPanelOn&&Date.now()-rmListAt>4000){rmListAt=Date.now();roomList()}},2000);
 sessionStorage.rm=JSON.stringify(RM);rmUi();roomPull()}
-function roomLeave(){try{if(RM)rmApi('leave',{r:RM.r,me:ME})}catch(_){}try{vcHang()}catch(_){}clearInterval(rmT);RM=null;sessionStorage.rm='null';rmV=0;rmPushV=0;rmChatAt=0;rmUi();rmPaintNow({});try{$('rmchat').innerHTML='';$('rmchat').dataset.ready=''}catch(_){};if(rmPanelOn)roomList()}
-['play','pause','seeked'].forEach(ev=>msOnAud(ev,()=>{if(!rmApplying)roomPush()}));
+function roomLeave(){try{if(RM)rmApi('leave',{r:RM.r,me:ME})}catch(_){}try{vcHang()}catch(_){}clearInterval(rmT);RM=null;sessionStorage.rm='null';rmV=0;rmPushV=0;rmChatAt=0;rmUi();rmPaintNow({});try{$('rmchat').innerHTML='';$('rmchat').dataset.ready=''}catch(_){};try{vcSetSt('')}catch(_){};if(rmPanelOn)roomList()}
+function rmUserCtl(){try{rmApplying=0;rmNeedPush=0;rmApplyHit=0;rmApplyId='';if(RM&&RM.r)roomPush()}catch(_){}}
+['play','pause','seeked'].forEach(ev=>msOnAud(ev,e=>{if(rmApplying){if(e&&e.isTrusted)rmNeedPush=1;return}roomPush()}));
+msOnAud('playing',()=>{if(!RM||rmApplying)return;if(window.__msRoomPlayPush){window.__msRoomPlayPush=0;roomPush()}});
+try{const _pp=$('pp')&&$('pp').onclick;if(_pp)$('pp').onclick=function(){const r=_pp.apply(this,arguments);rmUserCtl();return r}}catch(_){}
+try{const _mpp=$('mpp')&&$('mpp').onclick;if(_mpp)$('mpp').onclick=function(){const r=_mpp.apply(this,arguments);rmUserCtl();return r}}catch(_){}
+try{const _sk=$('seek')&&$('seek').onchange;$('seek').onchange=function(e){if(_sk)_sk.call(this,e);rmUserCtl()}}catch(_){}
+msOnAud('timeupdate',()=>{if(RM&&!document.hidden)rmTouch()});
+document.addEventListener('visibilitychange',()=>{if(!RM)return;if(document.hidden){rmBeatAt=0;rmTouch()}else{roomPull()}});
+window.addEventListener('pagehide',()=>{if(RM){rmBeatAt=0;rmTouch()}});
 $('rmb').onclick=()=>{const p=$('rmp');if(p&&p.classList.contains('open'))rmClose();else rmOpen()};
 if($('rmtab'))$('rmtab').onclick=()=>{try{rmOpen()}catch(_){}};
 $('rmx').onclick=rmClose;$('rmp').addEventListener('click',e=>{if(e.target===$('rmp'))rmClose()});
 $('rmleave').onclick=()=>{if(RM&&confirm('Leave '+(RM.name||RM.r)+'?'))roomLeave()};
-$('rmpriv').onclick=async()=>{if(rmIsGuest()){toast('Sign in to create a private room');return}const j=await rmApi('new');if(!j||j.error){toast((j&&j.error)||'Could not create room');return}
-RM=j;roomStart();roomPush();const u=location.origin+'/listen?room='+j.r;try{if(navigator.share)await navigator.share({title:'Listen with me',url:u});else{await navigator.clipboard.writeText(u);toast('Private room link copied')}}catch(e){toast('Room code: '+j.r)}roomList()};
+$('rmpriv').onclick=async()=>{if(rmNewBusy)return;if(rmIsGuest()){toast('Sign in to create a private room');return}rmNewBusy=1;try{
+const j=await rmApi('new');if(!j||j.error){toast((j&&j.error)||'Could not create room');return}
+await roomLeavePrev(j.r);RM=j;roomStart();window.__msRoomPlayPush=1;const u=location.origin+'/listen?room='+j.r;try{if(navigator.share)await navigator.share({title:'Listen with me',url:u});else{await navigator.clipboard.writeText(u);toast('Private room link copied')}}catch(e){toast('Room code: '+j.r)}roomList()}finally{rmNewBusy=0}};
 $('rmnmf').onsubmit=async ev=>{ev.preventDefault();const n=($('rmnmi').value||'').trim();if(n.length<2){toast('Enter a display name');return}
 try{if(window.__msListen)window.__msListen.name=n}catch(_){}await roomJoin($('rmnm').dataset.r||(window.__msListen&&window.__msListen.room)||'',true)};
 $('rmform').onsubmit=async ev=>{ev.preventDefault();if(!RM)return;const m=($('rmin').value||'').trim();if(!m)return;$('rmin').value='';
 const j=await rmApi('chat',{r:RM.r,m:m,me:ME,by:rmName()});if(j&&j.error){toast(j.error==='slow down'?'Easy on the chat':'Message not sent');return}if(j&&j.chat)rmPaintChat(j.chat)};
 $('rmpriv').style.display=rmIsGuest()?'none':'inline-block';
-if(SP.get('room')||(L0.room)){const code=(SP.get('room')||L0.room||'').toUpperCase();if(code){if(rmIsGuest()&&!rmNameok()){RM=null;rmShowName(1,code);rmOpen()}else{RM={r:code};roomStart();if(location.pathname==='/listen')rmOpen()}}}
+if(SP.get('room')||(L0.room)){const code=(SP.get('room')||L0.room||'').toUpperCase();if(code){if(rmIsGuest()&&!rmNameok()){RM=null;rmShowName(1,code);rmOpen()}else{if(RM&&RM.r&&RM.r!==code){try{roomLeavePrev(code)}catch(_){}}RM={r:code};roomStart();if(location.pathname==='/listen')rmOpen()}}}
 else if(RM)roomStart();
 if(location.pathname==='/listen'){try{$('np').classList.add('open')}catch(_){};setTimeout(rmOpen,200)}
 
-/* voice: mesh WebRTC, public STUN, mic only after Unmute. Isolated from AUD. */
-const VC={on:false,mute:true,stream:null,pcs:{},aud:{},pendIce:{}};
+/* voice: mesh WebRTC, public STUN, mic only after Unmute. Isolated from AUD. No TURN unless the owner adds one. */
+const VC={on:false,mute:true,stream:null,pcs:{},aud:{},pendIce:{},waitT:0};
 const ICE={iceServers:[{urls:'stun:stun.cloudflare.com:3478'},{urls:'stun:stun.l.google.com:19302'}]};
 function vcToast(m){try{toast(m)}catch(_){}}
+function vcSetSt(msg){const el=$('rmvcst');if(!el){if(msg)vcToast(msg);return}if(!msg){el.style.display='none';el.textContent='';return}el.style.display='block';el.textContent=msg}
+function vcCheckConn(){if(!VC.on){vcSetSt('');return}
+  const peers=Object.keys(VC.pcs||{});
+  const live=peers.filter(id=>{try{const st=VC.pcs[id].connectionState||VC.pcs[id].iceConnectionState;return st==='connected'||st==='completed'}catch(_){return false}});
+  if(live.length){vcSetSt('');return}
+  if(!peers.length){vcSetSt('Waiting for someone else to join voice…');clearTimeout(VC.waitT);VC.waitT=setTimeout(vcCheckConn,4000);return}
+  vcSetSt("Can't connect voice right now. The other person's network may block calls.");
+}
 async function vcJoin(){if(VC.on)return;if(!RM){vcToast('Join a room first');return}
 try{if(!window.RTCPeerConnection){vcToast('Voice is not supported in this browser');return}
 VC.on=true;VC.mute=true;$('rmvc').textContent='Leave voice';$('rmvc').classList.add('on');$('rmmic').style.display='inline-block';$('rmmic').textContent='Unmute mic';
-vcToast('Voice on — you can hear others. Tap Unmute mic to talk');await roomPull()}
-catch(e){VC.on=false;vcToast('Voice unavailable');}}
-async function vcHang(){VC.on=false;try{Object.keys(VC.pcs).forEach(vcClose)}catch(_){}
+vcSetSt('Waiting for someone else to join voice…');vcToast('Voice on — you can hear others. Tap Unmute mic to talk');await roomPull();
+clearTimeout(VC.waitT);VC.waitT=setTimeout(vcCheckConn,8000)}
+catch(e){VC.on=false;vcSetSt('');vcToast('Voice unavailable');}}
+async function vcHang(){VC.on=false;clearTimeout(VC.waitT);vcSetSt('');try{Object.keys(VC.pcs).forEach(vcClose)}catch(_){}
 try{if(VC.stream)VC.stream.getTracks().forEach(t=>t.stop())}catch(_){}
 VC.stream=null;VC.mute=true;VC.pcs={};VC.aud={};
 try{$('rmvc').textContent='Join voice';$('rmvc').classList.remove('on');$('rmmic').style.display='none';$('rmmic').textContent='Unmute mic'}catch(_){}}
@@ -1412,7 +1459,7 @@ async function vcEnsure(id,offer){if(!VC.on||id===ME)return null;
 let pc=VC.pcs[id];
 try{if(!pc||pc.signalingState==='closed'){pc=new RTCPeerConnection(ICE);try{pc.addTransceiver('audio',{direction:'sendrecv'})}catch(_){}VC.pcs[id]=pc;
 pc.onicecandidate=e=>{if(e.candidate)rmApi('sig',{r:RM.r,me:ME,to:id,typ:'ice',data:JSON.stringify(e.candidate)}).catch(()=>{})};
-pc.onconnectionstatechange=()=>{try{if(pc.connectionState==='failed'||pc.connectionState==='disconnected'){/* music keeps playing */}}catch(_){}};
+pc.onconnectionstatechange=()=>{try{const st=pc.connectionState;if(st==='connected'||st==='completed')vcSetSt('');else if(st==='failed'||st==='disconnected')vcCheckConn()}catch(_){}};
 pc.ontrack=ev=>{try{let a=VC.aud[id];if(!a){a=new Audio();a.autoplay=true;a.playsInline=true;a.setAttribute('data-room-voice','1');VC.aud[id]=a}
 a.srcObject=ev.streams[0]||new MediaStream(ev.track?[ev.track]:[]);a.play().catch(()=>{})}catch(_){}};
 if(VC.stream&&!VC.mute)await vcAddMic(id)}
@@ -1434,6 +1481,7 @@ const pc=VC.pcs[s.fr]||await vcEnsure(s.fr);
 if(!pc)continue;
 if(s.typ==='answer'){if(!pc.remoteDescription){await pc.setRemoteDescription({type:'answer',sdp:s.data});await vcFlushIce(s.fr,pc)}}
 else if(s.typ==='ice'){try{const c=JSON.parse(s.data);if(pc.remoteDescription)await pc.addIceCandidate(c);else{VC.pendIce[s.fr]=VC.pendIce[s.fr]||[];VC.pendIce[s.fr].push(c)}}catch(_){}}}catch(_){}}
+if(peers.filter(id=>id!==ME).length){clearTimeout(VC.waitT);VC.waitT=setTimeout(vcCheckConn,8000)}else vcCheckConn()
 async function vcFlushIce(id,pc){const L=VC.pendIce[id]||[];delete VC.pendIce[id];for(const c of L){try{await pc.addIceCandidate(c)}catch(_){}}}}
 $('rmvc').onclick=()=>{try{VC.on?vcHang():vcJoin()}catch(e){try{vcHang()}catch(_){};vcToast('Voice unavailable')}};
 $('rmmic').onclick=()=>{try{vcMic()}catch(e){vcToast('Microphone blocked')}};

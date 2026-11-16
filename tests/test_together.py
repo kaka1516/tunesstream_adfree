@@ -224,3 +224,58 @@ def test_guest_name_sanitized():
     assert "error" not in j or j.get("ok") == 1
     if j.get("ok"):
         assert "<" not in j.get("n","") and ">" not in j.get("n","")
+
+
+def test_stale_set_rejected():
+    fresh(); p = _mk(); s = sess_of(login("alice", p)); ms._hits.clear()
+    a = req("POST", "/api/room", EXT(), {"op": "set", "r": "MAIN", "id": "dQw4w9WgXcQ", "t": 11, "p": 1, "title": "A", "sv": 0}, cookie=s)
+    assert a.status == 200 and a.json().get("ok") == 1
+    v = int(a.json()["v"])
+    stale = req("POST", "/api/room", EXT(), {"op": "set", "r": "MAIN", "id": "oHg5SJYRHA0", "t": 1, "p": 0, "title": "old", "sv": v - 1}, cookie=s)
+    j = stale.json()
+    assert j.get("error") == "stale" and int(j.get("v") or 0) == v
+    got = req("GET", "/api/room?op=get&r=MAIN", EXT(), cookie=s).json()
+    assert got.get("id") == "dQw4w9WgXcQ" and got.get("title") == "A"
+
+def test_idle_private_room_only_visible_to_creator():
+    fresh(); pa = _mk("alice"); sa = sess_of(login("alice", pa))
+    pb = _mk("bob", "user"); sb = sess_of(login("bob", pb))
+    n = req("POST", "/api/room", EXT(), {"op": "new"}, cookie=sa).json()
+    code = n["r"]
+    assert n.get("own") == "alice"
+    alice_list = req("GET", "/api/room?op=list", EXT(), cookie=sa).json()
+    bob_list = req("GET", "/api/room?op=list", EXT(), cookie=sb).json()
+    anon = req("GET", "/api/room?op=list", EXT()).json()
+    assert code in [x["r"] for x in alice_list["rooms"]]
+    assert code not in [x["r"] for x in bob_list["rooms"]]
+    assert code not in [x["r"] for x in anon["rooms"]]
+
+def test_guest_join_returns_gid_and_me():
+    fresh()
+    g = guest_of(req("POST", "/api/room", EXT("198.51.100.21"), {"op": "guest", "r": "CHILL", "name": "Pat"}))
+    j = req("POST", "/api/room", EXT("198.51.100.21"), {"op": "guest", "r": "CHILL", "name": "Pat"}, cookie=g).json()
+    # first call already issued cookie; use the JSON of a fresh join
+    fresh()
+    r = req("POST", "/api/room", EXT("198.51.100.22"), {"op": "guest", "r": "CHILL", "name": "Pat"})
+    j = r.json()
+    assert j.get("ok") == 1 and j.get("guest") == 1
+    assert j.get("gid") and j.get("me") == ("g" + j["gid"])[:16]
+
+def test_unauth_post_get_is_join_first_not_login_required():
+    fresh()
+    r = req("POST", "/api/room", EXT(), {"op": "get", "r": "MAIN"})
+    assert r.status == 200, r.body
+    assert r.json().get("error") == "join first"
+
+def test_joining_one_room_leaves_the_previous():
+    fresh(); p = _mk(); s = sess_of(login("alice", p))
+    req("GET", "/api/room?op=get&r=MAIN", EXT(), cookie=s)
+    req("GET", "/api/room?op=get&r=CHILL", EXT(), cookie=s)
+    store = json.loads(ms._ROOMS_F.read_text())
+    main_n = store["MAIN"].get("n") or {}
+    chill_n = store["CHILL"].get("n") or {}
+    assert len(chill_n) >= 1
+    # same mid should no longer be live in MAIN
+    now = time.time()
+    live_main = [k for k, v in main_n.items() if now - (v.get("t") if isinstance(v, dict) else 0) < 90]
+    assert live_main == []

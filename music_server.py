@@ -3130,12 +3130,19 @@ def _n_touch(r, mid, name, now, vc=None):
     r["n"][mid] = ent
     for k in [k for k, v in list(r["n"].items()) if now - _n_ts(v) > 180]:
         r["n"].pop(k, None)
-def _n_live(r, now, win=15):
+def _n_live(r, now, win=90):
     out = []
     for mid, v in (r.get("n") or {}).items():
         if now - _n_ts(v) < win:
             out.append({"id": mid, "u": _n_name(v), "vc": 1 if isinstance(v, dict) and v.get("vc") else 0})
     return out
+def _n_leave_others(ROOMS, mid, keep_code):
+    """Drop this member from every other room so joining one room leaves the last."""
+    if not mid: return
+    for c, r in list((ROOMS or {}).items()):
+        if c == keep_code or not isinstance(r, dict): continue
+        n = r.get("n") or {}
+        if mid in n: n.pop(mid, None)
 def _room_activity(r):
     last = float(r.get("ts") or 0)
     for v in (r.get("n") or {}).values():
@@ -3148,7 +3155,7 @@ def _room_activity(r):
 def _blank_room(code, name, perm=False, now=None):
     now = now or time.time()
     return {"hk": secrets.token_urlsafe(8), "ts": now, "id": None, "t": 0, "p": False, "title": "", "channel": "",
-            "n": {}, "v": 0, "by": "", "name": name, "perm": 1 if perm else 0, "chat": [], "sig": [], "qids": [], "cid": 0}
+            "n": {}, "v": 0, "by": "", "own": "", "name": name, "perm": 1 if perm else 0, "chat": [], "sig": [], "qids": [], "cid": 0}
 def _seed_perm(R, now=None):
     now = now or time.time()
     for code, name in _PERM_ROOMS:
@@ -3158,7 +3165,7 @@ def _seed_perm(R, now=None):
         else:
             r["perm"] = 1
             if not r.get("name"): r["name"] = name
-            r.setdefault("v", 0); r.setdefault("by", ""); r.setdefault("chat", []); r.setdefault("sig", [])
+            r.setdefault("v", 0); r.setdefault("by", ""); r.setdefault("own", ""); r.setdefault("chat", []); r.setdefault("sig", [])
             r.setdefault("qids", []); r.setdefault("n", {}); r.setdefault("cid", 0)
 def _expire_adhoc(R, now):
     for c in [c for c, r in R.items() if isinstance(r, dict) and not r.get("perm") and now - _room_activity(r) > 7200]:
@@ -3169,6 +3176,14 @@ def _room_public(r, code, now):
             "listeners": len(live), "members": [x["u"] for x in live], "id": r.get("id"),
             "title": r.get("title") or "", "channel": r.get("channel") or "", "p": bool(r.get("p")),
             "by": r.get("by") or "", "v": int(r.get("v") or 0)}
+def _room_list_visible(r, code, who, now):
+    """Permanent rooms always list. Active private rooms list. Idle private rooms only list for their creator."""
+    if r.get("perm"): return True
+    if _n_live(r, now): return True
+    owner = (r.get("own") or "").strip()
+    if who and who.get("kind") == "user" and owner and who.get("u") == owner:
+        return True
+    return False
 def _cookie_val(handler, name):
     try: raw = handler.headers.get("Cookie") or ""
     except Exception: return ""
@@ -3337,6 +3352,7 @@ def _room(qs, ROOMS, handler=None):
         other = []
         for c, r in ROOMS.items():
             if not isinstance(r, dict) or r.get("perm"): continue
+            if not _room_list_visible(r, c, who, now): continue
             other.append(_room_public(r, c, now))
         me = None
         if who:
@@ -3355,17 +3371,21 @@ def _room(qs, ROOMS, handler=None):
         _set_guest_cookie(handler, _guest_issue(gid, code, name, now + _GUEST_TTL), _GUEST_TTL)
         r = ROOMS[code]
         r.setdefault("gst", {}); r["gst"][gid] = now + _GUEST_TTL
-        _n_touch(r, ("g" + gid)[:16], name, now)
+        gmid = ("g" + gid)[:16]
+        _n_leave_others(ROOMS, gmid, code)
+        _n_touch(r, gmid, name, now)
         st = _room_state(r, code, now, chat=True)
-        st.update(ok=1, n=name, guest=1)
+        st.update(ok=1, n=name, guest=1, gid=gid, me=gmid)
         return st
     if op == "new":
         if not authed:
             return {"error": "login required"}
         code = secrets.token_hex(3).upper()
         r = _blank_room(code, "Private", False, now)
+        if who and who.get("kind") == "user" and who.get("u"):
+            r["own"] = who["u"]
         ROOMS[code] = r
-        return {"r": code, "hk": r["hk"], "v": 0, "shared": 1, "name": "Private"}
+        return {"r": code, "hk": r["hk"], "v": 0, "shared": 1, "name": "Private", "own": r.get("own") or ""}
     r = ROOMS.get(code)
     if not r: return {"error": "no room"}
     guest_here = bool(who and who.get("kind") == "guest" and who.get("r") == code)
@@ -3375,6 +3395,12 @@ def _room(qs, ROOMS, handler=None):
     mid_c = re.sub(r"[^A-Za-z0-9_]", "", str(qs.get("me") or ""))[:16]
     mid = mid_c or (who["id"] if who else "x")
     uname = (who["u"] if who else _clean_name(qs.get("by") or qs.get("me") or "") or "listener")
+    if op != "leave":
+        _n_leave_others(ROOMS, mid, code)
+    if op == "touch":
+        _n_touch(r, mid, uname, now)
+        _slide_guest(handler, who, now, r)
+        return {"ok": 1, "listeners": len(_n_live(r, now)), "v": int(r.get("v") or 0), "r": code}
     if op == "leave":
         (r.get("n") or {}).pop(mid, None)
         if who and who.get("kind") == "guest":
@@ -3411,6 +3437,14 @@ def _room(qs, ROOMS, handler=None):
     if op == "set":
         if handler and limited("roomset:" + code + ":" + mid, n=30, win=10):
             return {"error": "slow down"}
+        if qs.get("sv") not in (None, ""):
+            try: sv = int(float(qs.get("sv")))
+            except Exception: sv = None
+            cur_v = int(r.get("v") or 0)
+            if sv is not None and sv < cur_v:
+                st = _room_state(r, code, now, chat=True)
+                st.update(error="stale", ok=0, v=cur_v)
+                return st
         vid = qs.get("id") if VID.match(qs.get("id") or "") else r.get("id")
         try: t = float(qs.get("t", 0) or 0)
         except Exception: t = 0.0
@@ -3607,10 +3641,13 @@ def _rate_limit_exempt(path):
         if path == pref.rstrip("/"): return True
     return False
 
+_RL_ROOM_N, _RL_ROOM_WIN = 240, 60
 def _rate_limit_budget(path, method="GET"):
     """Return (class, n, win). Classes are separate buckets so a burst of
     GETs (search, playlist polls, extract) cannot 429 a later POST
-    (playlist delete, /api/state) — same idea as the v69 radio split."""
+    (playlist delete, /api/state) — same idea as the v69 radio split.
+    /api/room has its own bucket so 2s polls + chat/voice are not starved by the POST cap."""
+    if path == "/api/room": return "room", _RL_ROOM_N, _RL_ROOM_WIN
     if method == "POST": return "post", _RL_POST_N, _RL_POST_WIN
     if path in _RL_HEAVY: return "heavy", _RL_HEAVY_N, _RL_HEAVY_WIN
     return "std", _RL_DEFAULT_N, _RL_DEFAULT_WIN
@@ -4518,6 +4555,17 @@ class H(BaseHTTPRequestHandler):
         cls, n, win = _rate_limit_budget(path, method)
         if path == "/api/radio":
             pass  # already isolated above
+        elif path == "/api/room":
+            g = _guest_read(self)
+            gid = (g or {}).get("g") or ""
+            ru = getattr(_REQ, "user", None)
+            un = (ru.get("u") if isinstance(ru, dict) else "") or ""
+            if un:
+                client_key = f"{ip_key}|u:{un}:room"
+            elif gid:
+                client_key = f"{ip_key}|g:{gid}:room"
+            else:
+                client_key = f"{ip_key}:room"
         else:
             client_key = f"{client_key}:{cls}"
         # Global per-IP ceiling first (shared Wi‑Fi still protected from stampede/abuse).
@@ -4692,7 +4740,7 @@ class H(BaseHTTPRequestHandler):
                 if "data" in bodyj and bodyj["data"] is not None:
                     qs["data"] = bodyj["data"] if isinstance(bodyj["data"], str) else json.dumps(bodyj["data"])
             op = (qs.get("op") or "get").lower()
-            if op in ("list", "guest") or _req_authok(self) or _guest_ok(self):
+            if op in ("list", "guest", "get", "touch") or _req_authok(self) or _guest_ok(self):
                 return self.send(200, json.dumps(room(qs, self)), "application/json")
             return _MSU.deny(self)
         if not _req_authok(self): return _MSU.deny(self)  # login-20261110
