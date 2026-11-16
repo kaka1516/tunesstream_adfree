@@ -145,6 +145,7 @@ _MSU.init(ROOT, is_local=_is_local_client, ipkey=lambda h: _public_ip_key(h), ht
           origins=str(cfg.get("MUSIC_ORIGINS", os.environ.get("MUSIC_ORIGINS", ""))))
 _AUTH_PATHS = ("/login", "/setup", "/users", "/api/auth/me", "/api/users", "/api/state")  # login-state-20261110
 _AUTH_PATHS = _AUTH_PATHS + ("/recover",)  # recover-20261111 (server3-20261111)
+_AUTH_PATHS = _AUTH_PATHS + ("/api/playlists",)  # playlists-20261116
 _MSU.HOOKS["lan_trusted"] = lambda h: bool(TRUST_LAN and _is_local_client(h))  # recover-20261111: home LAN counts as trusted only when MUSIC_TRUST_LAN is on
 def _rc_local(h):  # recover-20261111: this device, no tunnel/proxy header
     try: return _MSU._loopback_only(h)
@@ -4500,7 +4501,7 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.guard(): return
         u = urllib.parse.urlparse(self.path); qs = {k: v[0] for k, v in urllib.parse.parse_qs(u.query).items()}
-        if u.path.startswith("/api/auth/") or u.path in ("/api/users", "/api/state"):  # login-20261110 / login-state-20261110
+        if u.path.startswith("/api/auth/") or u.path in ("/api/users", "/api/state", "/api/playlists"):  # login-20261110 / playlists-20261116
             return _MSU.handle_post(self, u.path, getattr(_REQ, "user", None), getattr(_REQ, "trusted", False))
         if u.path == "/api/room":
             n = min(int(self.headers.get("Content-Length", 0) or 0), 16384)

@@ -511,6 +511,246 @@ class Store:
                 j["rev"] = int(j["rev"]) + 1; j["ts"] = time.time()
                 self.udir(); _atomic_write(path, j, secure=False)
                 return True, j["rev"]
+
+    def list_playlists(self, u):
+        path = self.state_path(u)
+        with _FileLock(str(path) + ".lock"):
+            return _pl_parse(self.get_state(u))
+
+    def _write_playlists(self, u, pls, path, j=None):
+        if j is None:
+            j = self.get_state(u)
+        if norm_user(u) not in self._users():
+            return False, "no such user"
+        if len(pls) > _PL_MAX:
+            return False, "too many playlists"
+        ls = j.setdefault("ls", {})
+        blob = _pl_dump(pls)
+        if len(blob) > KEY_MAX:
+            return False, "playlist too large"
+        ls["lpl"] = blob
+        if sum(len(k) + len(v) for k, v in ls.items() if isinstance(v, str)) > STATE_MAX:
+            return False, "state too large"
+        j["rev"] = int(j.get("rev") or 0) + 1
+        j["ts"] = time.time()
+        self.udir()
+        _atomic_write(path, j, secure=False)
+        return True, pls
+
+    def playlist_op(self, u, body):
+        """Locked create/rename/delete/add/remove/reorder/replace. Returns (ok, payload_or_error)."""
+        body = body if isinstance(body, dict) else {}
+        op = str(body.get("op") or "").lower().strip()
+        path = self.state_path(u)
+        with _FileLock(str(path) + ".lock"):
+            with self.lock:
+                if norm_user(u) not in self._users():
+                    return False, "no such user"
+                j = self.get_state(u)
+                pls = _pl_parse(j)
+
+                def find(pid):
+                    for i, p in enumerate(pls):
+                        if p["id"] == pid:
+                            return i
+                    return -1
+
+                def ok(pl=None):
+                    st, rv = self._write_playlists(u, pls, path, j)
+                    if not st:
+                        return False, rv
+                    out = {"ok": True, "playlists": pls, "rev": j["rev"]}
+                    if pl is not None:
+                        out["playlist"] = pl
+                    return True, out
+
+                if op in ("", "list"):
+                    return True, {"ok": True, "playlists": pls, "rev": j.get("rev") or 0}
+
+                if op == "replace":
+                    raw = body.get("playlists")
+                    if not isinstance(raw, list):
+                        return False, "playlists required"
+                    nxt, seen = [], set()
+                    for p in raw:
+                        n = _pl_norm_one(p)
+                        if not n:
+                            continue
+                        if n["id"] in seen:
+                            n["id"] = _pl_new_id()
+                        seen.add(n["id"]); nxt.append(n)
+                        if len(nxt) >= _PL_MAX:
+                            break
+                    pls = nxt
+                    return ok()
+
+                if op == "create":
+                    name = str(body.get("name") or "").strip()[:_PL_NAME] or "Playlist"
+                    if len(pls) >= _PL_MAX:
+                        return False, "too many playlists"
+                    songs, seen = [], set()
+                    for s in (body.get("songs") if isinstance(body.get("songs"), list) else []):
+                        t = _pl_song(s)
+                        if t and t["id"] not in seen:
+                            seen.add(t["id"]); songs.append(t)
+                        if len(songs) >= _PL_SONGS:
+                            break
+                    pl = {"id": _pl_new_id(), "name": name, "songs": songs, "ts": time.time()}
+                    pls.append(pl)
+                    return ok(pl)
+
+                pid = str(body.get("id") or "")
+                i = find(pid)
+                if i < 0:
+                    return False, "playlist not found"
+                pl = pls[i]
+
+                if op == "rename":
+                    name = str(body.get("name") or "").strip()[:_PL_NAME]
+                    if not name:
+                        return False, "name required"
+                    pl["name"] = name
+                    pl["ts"] = time.time()
+                    return ok(pl)
+
+                if op == "delete":
+                    pls.pop(i)
+                    return ok()
+
+                if op == "add":
+                    added = 0
+                    have = {s["id"] for s in pl["songs"]}
+                    src = body.get("songs") if isinstance(body.get("songs"), list) else [body.get("song")]
+                    for s in src:
+                        t = _pl_song(s)
+                        if not t or t["id"] in have:
+                            continue
+                        if len(pl["songs"]) >= _PL_SONGS:
+                            return False, "playlist is full"
+                        pl["songs"].append(t); have.add(t["id"]); added += 1
+                    if not added:
+                        return False, "already in playlist" if have else "no songs"
+                    pl["ts"] = time.time()
+                    return ok(pl)
+
+                if op == "remove":
+                    sid = str(body.get("song") or body.get("song_id") or "")
+                    try:
+                        idx = int(body.get("index")) if body.get("index") is not None else -1
+                    except Exception:
+                        idx = -1
+                    if 0 <= idx < len(pl["songs"]):
+                        pl["songs"].pop(idx)
+                    elif sid:
+                        pl["songs"] = [s for s in pl["songs"] if s["id"] != sid]
+                    else:
+                        return False, "song required"
+                    pl["ts"] = time.time()
+                    return ok(pl)
+
+                if op == "reorder":
+                    n = len(pl["songs"])
+                    order = body.get("order")
+                    if isinstance(order, list) and order:
+                        pos = {s["id"]: i2 for i2, s in enumerate(pl["songs"])}
+                        used, nxt = set(), []
+                        for vid in order:
+                            vid = str(vid or "")
+                            if vid in used or vid not in pos:
+                                continue
+                            nxt.append(pl["songs"][pos[vid]]); used.add(vid)
+                        for s in pl["songs"]:
+                            if s["id"] not in used:
+                                nxt.append(s)
+                        pl["songs"] = nxt
+                    else:
+                        try:
+                            a, b = int(body.get("from")), int(body.get("to"))
+                        except Exception:
+                            return False, "from/to required"
+                        if not (0 <= a < n and 0 <= b < n):
+                            return False, "bad index"
+                        s = pl["songs"].pop(a)
+                        pl["songs"].insert(b, s)
+                    pl["ts"] = time.time()
+                    return ok(pl)
+
+                return False, "unknown op"
+
+
+# playlists-20261116: first-party per-user playlists (locked, multi-worker safe)
+_PL_MAX, _PL_SONGS, _PL_NAME = 80, 200, 80
+_PL_ID_RE = re.compile(r"^p_[A-Za-z0-9]{8,20}$")
+
+def _pl_song(x):
+    if isinstance(x, str):
+        x = {"id": x}
+    if not isinstance(x, dict):
+        return None
+    vid = str(x.get("id") or "")
+    if not _VID_RE.match(vid):
+        return None
+    def f(v):
+        try:
+            n = float(v)
+            return n if n == n and 0 <= n < 1e7 else 0.0
+        except Exception:
+            return 0.0
+    return {"id": vid, "title": str(x.get("title") or "")[:200],
+            "channel": str(x.get("channel") or "")[:120], "dur": f(x.get("dur"))}
+
+def _pl_new_id():
+    return "p_" + secrets.token_urlsafe(10).replace("-", "").replace("_", "")[:12]
+
+def _pl_norm_one(p):
+    if not isinstance(p, dict):
+        return None
+    name = str(p.get("name") or "").strip()[:_PL_NAME] or "Playlist"
+    pid = str(p.get("id") or "")
+    if not _PL_ID_RE.match(pid):
+        pid = _pl_new_id()
+    songs, seen = [], set()
+    raw = p.get("songs")
+    if not isinstance(raw, list):
+        raw = [{"id": i} for i in (p.get("ids") or [])] if isinstance(p.get("ids"), list) else []
+    for s in raw:
+        t = _pl_song(s)
+        if t and t["id"] not in seen:
+            seen.add(t["id"]); songs.append(t)
+        if len(songs) >= _PL_SONGS:
+            break
+    try:
+        ts = float(p.get("ts") or 0) or time.time()
+    except Exception:
+        ts = time.time()
+    return {"id": pid, "name": name, "songs": songs, "ts": ts}
+
+def _pl_parse(j):
+    ls = (j or {}).get("ls") or {}
+    raw = ls.get("lpl")
+    arr = []
+    if isinstance(raw, str):
+        try:
+            arr = json.loads(raw)
+        except Exception:
+            arr = []
+    if not isinstance(arr, list):
+        arr = []
+    out, seen = [], set()
+    for p in arr:
+        n = _pl_norm_one(p)
+        if not n:
+            continue
+        if n["id"] in seen:
+            n["id"] = _pl_new_id()
+        seen.add(n["id"]); out.append(n)
+        if len(out) >= _PL_MAX:
+            break
+    return out
+
+def _pl_dump(pls):
+    return json.dumps(pls, separators=(",", ":"), ensure_ascii=False)
+
 def clean_now(n, now=None):
     if not isinstance(n, dict) or not _VID_RE.match(str(n.get("id") or "")): return None
     f = lambda x, d=0.0: float(x) if isinstance(x, (int, float)) and x == x and abs(x) < 1e7 else d
@@ -669,6 +909,9 @@ def handle_get(handler, path, qs, user, trusted):
         if not user: return _json(handler, 401, {"error": "login required", "login": "/login"})
         return _json(handler, 200, {"sessions": STORE.sessions_of(user["u"], _cookie_tok(handler))})
     if path == "/api/state": return state_get(handler, user, qs)
+    if path == "/api/playlists":  # playlists-20261116
+        if not user: return _json(handler, 401, {"error": "login required", "login": "/login"})
+        return _json(handler, 200, {"ok": True, "playlists": STORE.list_playlists(user["u"])})
     if path == "/api/users":
         if not user: return _json(handler, 401, {"error": "login required", "login": "/login"})
         if user["role"] != "admin": return _json(handler, 403, {"error": "Admins only."})
@@ -685,7 +928,7 @@ def _same_origin(handler):
 
 def handle_post(handler, path, user, trusted):
     user = _full(handler, user)
-    try: n = min(int(handler.headers.get("Content-Length", 0) or 0), STATE_MAX + 65536 if path in ("/api/state", "/api/auth/setup") else 16384)
+    try: n = min(int(handler.headers.get("Content-Length", 0) or 0), STATE_MAX + 65536 if path in ("/api/state", "/api/auth/setup", "/api/playlists") else 16384)
     except Exception: n = 0
     raw = handler.rfile.read(n) if n > 0 else b""
     if not _same_origin(handler): return _json(handler, 403, {"error": "Bad origin."})
@@ -735,6 +978,13 @@ def handle_post(handler, path, user, trusted):
                                  clean_now(j.get("now")) if j.get("now") is not None else None)
         if not ok: return _json(handler, 413 if "large" in str(rv) else 400, {"error": rv})
         return _json(handler, 200, {"ok": True, "rev": rv})
+    if path == "/api/playlists":  # playlists-20261116: signed-in users only (guests already 401 above)
+        ok, rv = STORE.playlist_op(user["u"], j)
+        if not ok:
+            msg = str(rv)
+            code = 404 if "not found" in msg else 409 if "already" in msg or "full" in msg or "too many" in msg else 400
+            return _json(handler, code, {"error": msg})
+        return _json(handler, 200, rv)
     if path == "/api/auth/sessions":  # users2-20261111: my devices (POST: every /api/auth/* POST reaches this module)
         return _json(handler, 200, {"sessions": STORE.sessions_of(user["u"], _cookie_tok(handler))})
     if path == "/api/auth/name":  # users2-20261111
