@@ -3608,9 +3608,12 @@ def _rate_limit_exempt(path):
     return False
 
 def _rate_limit_budget(path, method="GET"):
-    if method == "POST": return _RL_POST_N, _RL_POST_WIN
-    if path in _RL_HEAVY: return _RL_HEAVY_N, _RL_HEAVY_WIN
-    return _RL_DEFAULT_N, _RL_DEFAULT_WIN
+    """Return (class, n, win). Classes are separate buckets so a burst of
+    GETs (search, playlist polls, extract) cannot 429 a later POST
+    (playlist delete, /api/state) — same idea as the v69 radio split."""
+    if method == "POST": return "post", _RL_POST_N, _RL_POST_WIN
+    if path in _RL_HEAVY: return "heavy", _RL_HEAVY_N, _RL_HEAVY_WIN
+    return "std", _RL_DEFAULT_N, _RL_DEFAULT_WIN
 
 _RAD_JUNK = re.compile(r"\b(full (hd |length |action |telugu |tamil |hindi )*movie|full film|dubb(ed|ing)|documentary|motivational|attacks?|facts|explained|full album|greatest hits|best songs of|best of .* collection|songs collection|collection #|non ?stop|1 hour|2 hours?|10 hours?)\b", re.I)
 _SK_JUNK = re.compile(r"\b(official|music|video|videos|audio|lyrics?|lyrical|hd|4k|8d|remaster(?:ed)?|live|full(?:\s+song)?|song|songs|with|slowed|reverb(?:ed)?|remix|cover|version|feat(?:uring)?|ft|visualizer|visualiser|mv|hq|1080p|720p|topic|vevo)\b", re.I)
@@ -4512,7 +4515,11 @@ class H(BaseHTTPRequestHandler):
             # rapid skipping can't 429 the Next refill (root cause of the v68 "silent Next" stalls).
             client_key += ":radio:" + ("pre" if "phase=prewarm" in (self.path or "") else "q")
         method = (self.command or "GET").upper()
-        n, win = _rate_limit_budget(path, method)
+        cls, n, win = _rate_limit_budget(path, method)
+        if path == "/api/radio":
+            pass  # already isolated above
+        else:
+            client_key = f"{client_key}:{cls}"
         # Global per-IP ceiling first (shared Wi‑Fi still protected from stampede/abuse).
         if limited("ipceil:" + ip_key, n=_RL_IP_CEIL_N, win=_RL_IP_CEIL_WIN):
             self.send(429, "slow down", "text/plain"); return False

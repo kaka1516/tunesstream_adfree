@@ -492,8 +492,11 @@ class Store:
             except Exception: j = {}
             j.setdefault("rev", 0); j.setdefault("ts", 0); j.setdefault("ls", {}); j.setdefault("now", None)
             return j
-    def put_state(self, u, set_=None, dele=None, now=None, allow=None):
-        """Per-key merge (last write wins per key). -> (ok, rev_or_error)"""
+    def put_state(self, u, set_=None, dele=None, now=None, allow=None, rev=None):
+        """Per-key merge (last write wins per key). -> (ok, rev_or_error).
+        If the client sends its last known rev and that is behind the server,
+        skip lpl so a stale /api/state flush cannot resurrect a playlist that
+        /api/playlists just deleted or changed."""
         allow = set(allow or ())
         set_ = {k: v for k, v in (set_ or {}).items() if isinstance(v, str) and (k in allow or sync_ok(k))}  # users2-20261111 / adult-viz-20261111
         dele = [k for k in (dele or []) if k in allow or sync_ok(k)]
@@ -503,6 +506,18 @@ class Store:
             with self.lock:
                 if norm_user(u) not in self._users(): return False, "no such user"
                 j = self.get_state(u); ls = j["ls"]
+                skipped = []
+                # lpl is owned by /api/playlists. A generic /api/state flush of
+                # stale localStorage.lpl must not resurrect a deleted playlist
+                # (v99–v107 last-write-wins). Explicit allow={"lpl"} is the hatch.
+                if "lpl" not in allow:
+                    if "lpl" in set_:
+                        set_ = {k: v for k, v in set_.items() if k != "lpl"}
+                        skipped.append("lpl")
+                    if "lpl" in dele:
+                        dele = [k for k in dele if k != "lpl"]
+                        if "lpl" not in skipped:
+                            skipped.append("lpl")
                 ls.update(set_)
                 for k in dele: ls.pop(k, None)
                 if now is not None: j["now"] = now
@@ -510,7 +525,7 @@ class Store:
                 if len(ls) > SYNC_MAX_KEYS: return False, "too many keys"
                 j["rev"] = int(j["rev"]) + 1; j["ts"] = time.time()
                 self.udir(); _atomic_write(path, j, secure=False)
-                return True, j["rev"]
+                return True, (j["rev"], skipped) if skipped else j["rev"]
 
     def list_playlists(self, u):
         path = self.state_path(u)
@@ -862,7 +877,16 @@ def state_get(handler, user, qs):
 def migrate_to(u, ls):
     """First admin: copy this browser's existing (shared default profile) data + the server play history."""
     ls = {k: v for k, v in (ls or {}).items() if sync_ok(k) and isinstance(v, str)} if isinstance(ls, dict) else {}
+    lpl = ls.pop("lpl", None) if ls else None
     if ls: STORE.put_state(u, ls, [], None)
+    if lpl:
+        try:
+            raw = json.loads(lpl)
+        except Exception:
+            raw = []
+        if isinstance(raw, list) and raw:
+            try: STORE.playlist_op(u, {"op": "replace", "playlists": raw})
+            except Exception: pass
     g = HOOKS.get("plays_global")
     try:
         if g and Path(g).is_file():
@@ -975,9 +999,16 @@ def handle_post(handler, path, user, trusted):
     if path == "/api/state":
         st, d = j.get("set"), j.get("del")
         ok, rv = STORE.put_state(user["u"], st if isinstance(st, dict) else {}, d if isinstance(d, list) else [],
-                                 clean_now(j.get("now")) if j.get("now") is not None else None)
+                                 clean_now(j.get("now")) if j.get("now") is not None else None,
+                                 rev=j.get("rev"))
         if not ok: return _json(handler, 413 if "large" in str(rv) else 400, {"error": rv})
-        return _json(handler, 200, {"ok": True, "rev": rv})
+        skipped = []
+        if isinstance(rv, tuple):
+            rv, skipped = rv[0], list(rv[1] or [])
+        out = {"ok": True, "rev": rv}
+        if skipped:
+            out["skipped"] = skipped
+        return _json(handler, 200, out)
     if path == "/api/playlists":  # playlists-20261116: signed-in users only (guests already 401 above)
         ok, rv = STORE.playlist_op(user["u"], j)
         if not ok:
