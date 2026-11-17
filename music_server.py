@@ -1185,6 +1185,64 @@ def _url_itag_h(url):
     except Exception:
         return None
     return _ITAG_H.get(str(itag)) if itag else None
+
+def _media_kind(buf, ctype=""):
+    """Classify the first bytes of an audio/video payload, or None if it is not media.
+    skip-storm-20261118: never treat HTML/JSON/XML error bodies as playable audio."""
+    if not buf:
+        return None
+    if buf.startswith(b"\x1a\x45\xdf\xa3"):
+        return "webm"
+    if len(buf) >= 8 and buf[4:8] == b"ftyp":
+        return "mp4"
+    if buf.startswith(b"ID3") or (len(buf) >= 2 and buf[0] == 0xFF and (buf[1] & 0xE0) == 0xE0):
+        return "mp3"
+    if buf.startswith(b"OggS"):
+        return "ogg"
+    ls = buf.lstrip()
+    if ls.startswith((b"<", b"{", b"[")):
+        return None
+    ct = (ctype or "").split(";")[0].strip().lower()
+    if ct.startswith(("text/", "application/json", "application/xml", "application/javascript")):
+        return None
+    return None
+
+def _media_bytes_ok(buf, ctype=""):
+    return _media_kind(buf, ctype) is not None
+
+def _stream_force_mp3(qs):
+    v = (str((qs or {}).get("fmt") or (qs or {}).get("compat") or "")).lower()
+    return v in ("mp3", "mpeg", "1", "true", "yes")
+
+def _stream_rewrite_to_audio(range_header, qs, have_ffmpeg=None):
+    """True when /stream should be rewritten to /audio?q=std (seekable m4a).
+    Chrome always sends Range, so the old rule rewrote every /stream fallback into the same std request.
+    fmt=mp3 keeps the transcode pipe even with Range, as a last-resort compatible format."""
+    if have_ffmpeg is None:
+        have_ffmpeg = HAVE_FFMPEG
+    if _stream_force_mp3(qs) and have_ffmpeg:
+        return False
+    return bool(range_header or not have_ffmpeg)
+
+
+def _ff_source(vid):
+    """Prefer a local blob so /stream?fmt=mp3 does not depend on a live googlevideo URL."""
+    cands = []
+    for fq in ("std", "hi"):
+        try:
+            p = CACHE / f"{vid}_{fq}.bin"
+            if not (p.exists() and p.stat().st_size > 64 * 1024):
+                continue
+            ok = _blob_ok_path(vid, fq).exists()
+            cands.append((0 if ok else 1, str(p)))
+        except Exception:
+            pass
+    if cands:
+        cands.sort()
+        return cands[0][1]
+    return audio_url(vid)
+
+
 def _headc_get(vid, fq, url=None):
     """Intro cache only when itag + Content-Length still match the current stream URL."""
     if not url:
@@ -1194,6 +1252,9 @@ def _headc_get(vid, fq, url=None):
         return None
     return _HC.get(vid, fq, itag=itag, size=clen or None)
 def _headc_put(vid, fq, data, size, ctype="application/octet-stream", url=None, itag=""):
+    if data and len(data) >= 12 and not _media_bytes_ok(data, ctype):
+        print(f"headc skip-non-media {vid} {fq} ctype={ctype}", flush=True)
+        return False
     itag = itag or _url_itag(url or "")
     return _HC.put(vid, fq, data, size, ctype, itag=itag)
 def _url_too_low(url, q):
@@ -2644,11 +2705,20 @@ class Blob:
         # Small head probe: first bytes reach the player sooner; workers fill chunk 0. On 403/expired: singleflight refresh BEFORE any response headers.
         # head-20261113: serve a cached intro instantly; any miss/error falls through to _rget.
         _hc0 = None if str(fq).startswith("v") else _headc_get(vid, fq, url)
+        if _hc0 and not _media_bytes_ok(_hc0.get("data") or b"", _hc0.get("ctype") or ""):
+            print(f"blob drop-bad-headc {vid} {fq}", flush=True)
+            _hc0 = None
         if _hc0:
             rh, d0, fin = {"Content-Type": _hc0["ctype"], "Content-Range": f"bytes 0-{_hc0['n']-1}/{_hc0['size']}"}, _hc0["data"], url
         else:
             for _hp in range(3):  # play3-20261111: cached URL -> fresh -> fresh from the other client
-                try: fin, rh, d0 = _rget(url, 0, HEAD_B - 1, hdrs=uh); break
+                try:
+                    fin, rh, d0 = _rget(url, 0, HEAD_B - 1, hdrs=uh)
+                    try: _ct0 = rh.get("Content-Type") or ""
+                    except Exception: _ct0 = ""
+                    if len(d0 or b"") >= 12 and not _media_bytes_ok(d0, _ct0):
+                        raise OSError("non-media-head")
+                    break
                 except Exception as e:
                     if _fu and url == _fu:  # lat-20261111: stale redirect target -> plain URL, no re-extraction
                         ent.pop("furl", None); url = ent["url"]; _fu = None
@@ -2656,7 +2726,9 @@ class Blob:
                         except Exception as e2: e = e2
                     # 403/expired/DNS/TLS: invalidate + singleflight refresh BEFORE any response headers leave the server
                     http = isinstance(e, urllib.error.HTTPError) and getattr(e, "code", 0) in (401, 403, 410)
-                    print(f"blob head {vid} {fq} try={_hp} {type(e).__name__} {getattr(e, 'code', '')}", flush=True)
+                    if isinstance(e, OSError) and "non-media-head" in str(e):
+                        http = True
+                    print(f"blob head {vid} {fq} try={_hp} {type(e).__name__} {getattr(e, 'code', '') or str(e)}", flush=True)
                     _ucache_invalidate(vid, fq, bad=http)
                     if _hp == 2: raise
                     ent = cached_entry(vid, fq, force=True); url, uh = ent["url"], ent.get("headers") or {}
@@ -2674,7 +2746,9 @@ class Blob:
         if s.head and len(d0) >= min(s.size, CH):
             s.f.seek(0); s.f.write(d0); s.have.add(0)
         if s.head and not str(fq).startswith("v"):
-            try: _headc_put(vid, fq, s.head, s.size, s.ctype, url=getattr(s, "url", None))
+            try:
+                if _media_bytes_ok(s.head, s.ctype):
+                    _headc_put(vid, fq, s.head, s.size, s.ctype, url=getattr(s, "url", None))
             except Exception: pass
             if not _hc0 and len(s.head) < min(s.size, HEADC_B):
                 threading.Thread(target=_headc_fill, args=(vid, fq), daemon=True).start()
@@ -5055,7 +5129,7 @@ class H(BaseHTTPRequestHandler):
                     except Exception: pass
                 return self.send(200, json.dumps(data), "application/json")
             _noff_dl = False
-            if u.path == "/stream" and (self.headers.get("Range") or not HAVE_FFMPEG):  # seekable fallback: serve the ranged m4a blob instead of a non-seekable mp3 pipe
+            if u.path == "/stream" and _stream_rewrite_to_audio(self.headers.get("Range"), qs):  # seekable fallback: ranged m4a, unless fmt=mp3 forces the transcode pipe
                 u = u._replace(path="/audio"); qs["q"] = "std"                      # ms-v75: also the no-ffmpeg path (direct m4a/AAC, no transcode)
             elif u.path == "/dl" and not HAVE_FFMPEG:  # ms-v75: no ffmpeg -> download the original m4a/AAC (or webm) instead of an mp3
                 u = u._replace(path="/audio"); qs["q"] = "std"; _noff_dl = True
@@ -5078,6 +5152,11 @@ class H(BaseHTTPRequestHandler):
                             _url = ((_ent or {}).get("furl") or (_ent or {}).get("url") or "") if _ent else ""
                             _hc = _headc_get(vid, fq, _url) if _url else None
                         except Exception:
+                            _hc = None
+                    if _hc:
+                        _sz, _ct, _hd = _hc["size"], _hc["ctype"], _hc["data"]
+                        if not _media_bytes_ok(_hd or b"", _ct or ""):
+                            print(f"audio drop-bad-headc {vid} {fq}", flush=True)
                             _hc = None
                     if _hc:
                         _sz, _ct, _hd = _hc["size"], _hc["ctype"], _hc["data"]
@@ -5296,37 +5375,48 @@ class H(BaseHTTPRequestHandler):
                     self.wfile.write(c); left -= len(c)
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, OSError): pass
     def _ffstream(self, u, vid):
-                if not HAVE_FFMPEG:  # ms-v75: honest 501 instead of a 200 with an empty body when ffmpeg is absent
-                    return self.send(501, json.dumps({"error": "ffmpeg not installed on this server: mp3 transcode (/stream, /dl) unavailable; direct /audio playback still works"}), "application/json")
-                # Respond with headers immediately so Range/HEAD clients and UAT don't hang on yt-dlp/title resolve.
-                self.send_response(200); self.send_header("Content-Type", "audio/mpeg")
-                if u.path == "/dl":
-                    _q = urllib.parse.parse_qs(u.query); _t = (_q.get("t") or [""])[0]
-                    fn = (re.sub(r'[^\w\- .()]', '_', _dl_name(_t, (_q.get("ar") or [""])[0]))[:100] if _t else re.sub(r'[^\w\- .]', '_', (vid or "track"))[:80]) + ".mp3"
-                    self.send_header("Content-Disposition", f'attachment; filename="{fn}"')
-                self.send_header("X-Accel-Buffering", "no")
-                self.end_headers()
-                try:
-                    src = audio_url(vid)
-                except Exception as e:
-                    print(f"dl audio_url fail {vid}: {type(e).__name__}", flush=True)
-                    return
-                if not src:
-                    print(f"dl empty url {vid}", flush=True); return
-                p = subprocess.Popen([FFMPEG, "-loglevel", "quiet", "-i", src, "-vn", "-c:a", "libmp3lame", "-b:a", "192k", "-f", "mp3", "-"],
-                                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, creationflags=NOFLAGS)
-                try:
-                    # Hard wall clock so a stuck upstream can't pin a worker forever
-                    deadline = time.time() + 1200   # dancefix: was 90 s, which truncated songs on ~50-70 KB/s Wi-Fi
-                    while time.time() < deadline:
-                        c = p.stdout.read(16384)
-                        if not c: break
-                        self.wfile.write(c)
-                except (BrokenPipeError, ConnectionResetError): pass
-                finally:
-                    try: p.kill()
-                    except Exception: pass
-                return
+        if not HAVE_FFMPEG:  # ms-v75: honest 501 instead of a 200 with an empty body when ffmpeg is absent
+            return self.send(501, json.dumps({"error": "ffmpeg not installed on this server: mp3 transcode (/stream, /dl) unavailable; direct /audio playback still works"}), "application/json")
+        # skip-storm-20261118: resolve the source and first mp3 bytes BEFORE 200, so we never
+        # advertise audio/mpeg and then hang or close with an empty body (MEDIA_ERR_SRC_NOT_SUPPORTED).
+        try:
+            src = _ff_source(vid)
+        except Exception as e:
+            print(f"dl audio_url fail {vid}: {type(e).__name__}", flush=True)
+            return self.send(502, "transcode source unavailable", "text/plain")
+        if not src:
+            print(f"dl empty url {vid}", flush=True)
+            return self.send(502, "transcode source unavailable", "text/plain")
+        p = subprocess.Popen([FFMPEG, "-loglevel", "quiet", "-i", src, "-vn", "-c:a", "libmp3lame", "-b:a", "192k", "-f", "mp3", "-"],
+                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, creationflags=NOFLAGS)
+        try:
+            first = p.stdout.read(16384)
+            if not first or not _media_bytes_ok(first, "audio/mpeg"):
+                try: p.kill()
+                except Exception: pass
+                print(f"dl ffmpeg empty/non-media {vid} n={0 if not first else len(first)}", flush=True)
+                return self.send(502, "transcode failed", "text/plain")
+            self.send_response(200); self.send_header("Content-Type", "audio/mpeg")
+            if u.path == "/dl":
+                _q = urllib.parse.parse_qs(u.query); _t = (_q.get("t") or [""])[0]
+                fn = (re.sub(r'[^\w\- .()]', '_', _dl_name(_t, (_q.get("ar") or [""])[0]))[:100] if _t else re.sub(r'[^\w\- .]', '_', (vid or "track"))[:80]) + ".mp3"
+                self.send_header("Content-Disposition", f'attachment; filename="{fn}"')
+            self.send_header("X-Accel-Buffering", "no")
+            self.end_headers()
+            self.wfile.write(first)
+            try: self.wfile.flush()
+            except Exception: pass
+            # Hard wall clock so a stuck upstream can't pin a worker forever
+            deadline = time.time() + 1200   # dancefix: was 90 s, which truncated songs on ~50-70 KB/s Wi-Fi
+            while time.time() < deadline:
+                c = p.stdout.read(16384)
+                if not c: break
+                self.wfile.write(c)
+        except (BrokenPipeError, ConnectionResetError): pass
+        finally:
+            try: p.kill()
+            except Exception: pass
+        return
 # ---- Telegram (only if a DEDICATED MUSIC_BOT_TOKEN is set; never polls the V10 bot token) ----
 def tg_loop(tok, allowed):
     api = f"https://api.telegram.org/bot{tok}/"; off = 0

@@ -54,6 +54,8 @@ def snap(page):
             endbar:!!(document.getElementById('endbar')&&document.getElementById('endbar').classList.contains('on')),
             life:(window.__msLife||[]).slice(-8).map(e=>e.ev).join(','),
             mid:(a&&(a.id||'')),
+            src:(()=>{try{return (a&&a.getAttribute('src')||'').replace(/([?&]k=)[^&]*/,'$1***')}catch(_){return ''}})(),
+            fb:(a&&a.dataset&&a.dataset.fb)||'',
             stId:(window.__msSt&&window.__msSt.id)||'',
             stReady:!!(window.__msSt&&window.__msSt.ready),
             stErr:!!(window.__msSt&&window.__msSt.err),
@@ -234,9 +236,29 @@ def main():
                     page.context.unroute("**/*", _dead_route)
                 except Exception: pass
             ids.append(nxt["id"])
-            # confirm real audio on the new track (or a later unique track if the next one was skipped as dead/slow)
-            okp=wait_until(lambda: snap(page), 40, lambda s: s and s.get("id") and s.get("ct",0)>0.15 and not s.get("paused") and (s["id"]==ids[-1] or s["id"] not in ids))
+            # confirm real audio on the new track (or a later unique track if the next one was skipped as dead/slow).
+            # radio-lead updates cur().id before the <audio> src swaps, so currentTime can still be
+            # the previous song's end (e.g. 281s). Treating that as a start made wait_until return
+            # immediately, and the 1.5s resnap then caught the emptied new src (ct=0, rs=0).
+            def _started(s):
+                if not (s and s.get("id") and not s.get("paused") and s.get("rs", 0) >= 2 and s.get("dur", 0) > 12):
+                    return False
+                ct = s.get("ct", 0) or 0
+                if ct <= 0.15:
+                    return False
+                life = str(s.get("life") or "")
+                recovered = any(k in life for k in ("sb-skip", "stall-swap", "stall-skip", "ended-watchdog", "media-onErr"))
+                if ct > 20 and not recovered:
+                    return False  # leftover previous-song clock
+                src = s.get("src") or ""
+                if src and s["id"] not in src and "blob:" not in src and "/off/" not in src:
+                    return False
+                return s["id"] == ids[-1] or s["id"] not in ids
+            okp=wait_until(lambda: snap(page), 40, _started)
             time.sleep(1.5); okp=snap(page)
+            if not _started(okp):
+                okp=wait_until(lambda: snap(page), 25, _started)
+            okp=okp or snap(page) or {}
             if okp and okp.get("id") and okp["id"] not in ids[:-1] and okp.get("ct",0)>0.15 and not okp.get("paused") and okp["id"]!=ids[-1]:
                 ev.append((f"stall_skip_{n}", {"from":ids[-1], "to":okp.get("id"), "ct":okp.get("ct"), "life":okp.get("life"), "title":okp.get("title")}))
                 ids[-1]=okp["id"]
