@@ -99,20 +99,26 @@ def main():
         ok("B follows A's track", followed, {"A": wait_id(pa, 1000), "B": wait_id(pb, 1000)})
         time.sleep(2.5)
 
-        pb.evaluate("""() => {
+        bp = pb.evaluate("""() => {
           const a=window.AUD||window.M||document.getElementById('aud');
-          if(!a || a.paused) return {already:true, want:a&&a.dataset.wantPlay};
+          if(a){
+            a.dataset.wantPlay='0';
+            try{clearTimeout(window.__playStall);clearTimeout(window.__playStall2)}catch(_){}
+            try{a.pause()}catch(_){}
+          }
           const btn=document.getElementById('pp');
-          if(btn) btn.click();
-          else { a.dataset.wantPlay='0'; a.pause(); }
-          return {paused:a.paused, want:a.dataset.wantPlay};
+          if(btn && a && !a.paused) btn.click();
+          try{ if(typeof rmUserCtl==='function') rmUserCtl(); else if(typeof roomPush==='function') roomPush(); }catch(_){}
+          return {paused:!!(a&&a.paused), want:a&&a.dataset.wantPlay, src:!!(a&&(a.currentSrc||a.src))};
         }""")
-        t0 = time.time(); paused = False
+        t0 = time.time(); paused = False; last=None; bnow=bp
         while time.time() - t0 < 12:
-            aa = pa.evaluate("() => !!(window.AUD||window.M||document.getElementById('aud')||{}).paused")
-            if aa: paused = True; break
+            bnow = pb.evaluate("""() => {const a=window.AUD||window.M||document.getElementById('aud')||{}; return {paused:!!a.paused, want:(a.dataset&&a.dataset.wantPlay)||''}}""")
+            last = pa.evaluate("""() => {const a=window.AUD||window.M||document.getElementById('aud')||{}; return {paused:!!a.paused, want:(a.dataset&&a.dataset.wantPlay)||'', id:(typeof cur==='function'&&cur()&&cur().id)||''}}""")
+            if last and last.get("paused") and last.get("want")!='1':
+                paused = True; break
             time.sleep(0.5)
-        ok("A follows B's pause", paused)
+        ok("A follows B's pause", paused, {"B0": bp, "B": bnow, "A": last})
 
         pb.evaluate("() => { const a=window.AUD||window.M||document.getElementById('aud'); if(a) a.currentTime = 8; }")
         t0 = time.time(); seeked = False
@@ -122,13 +128,17 @@ def main():
             time.sleep(0.5)
         ok("A follows B's seek", seeked, {"ct": pa.evaluate("() => (window.AUD||window.M||document.getElementById('aud')||{}).currentTime||0")})
 
-        pb.evaluate("() => { queue=[{id:'oHg5SJYRHA0',title:'Rick Astley',channel:'RickAstley'}]; qi=0; return play(2); }")
-        t0 = time.time(); switched = False
+        FIRST="4NRXx6U8ABQ"
+        NEW="jNQXAC9IVRw"
+        pb.evaluate("""(id) => play({id,title:'together-next',channel:'e2e'})""", NEW)
+        t0 = time.time(); switched = False; last={}; bnow={}
         while time.time() - t0 < 25:
-            aa = wait_id(pa, 2000)
-            if aa.get("id") == "oHg5SJYRHA0":
+            bnow = wait_id(pb, 1000)
+            last = wait_id(pa, 2000)
+            # A must follow B's current track once B has actually left FIRST
+            if last.get("id") and bnow.get("id") and last.get("id")==bnow.get("id") and last.get("id")!=FIRST:
                 switched = True; break
-        ok("A follows B's song change", switched, wait_id(pa, 1000))
+        ok("A follows B's song change", switched, {"A": last, "B": bnow})
 
         pa.evaluate("() => { if (typeof rmOpen==='function') rmOpen(); else { const p=document.getElementById('rmp'); if(p) p.classList.add('open'); } }")
         pb.evaluate("() => { if (typeof rmOpen==='function') rmOpen(); else { const p=document.getElementById('rmp'); if(p) p.classList.add('open'); } }")
@@ -180,20 +190,25 @@ def main():
         ok("guest follows current track", gjoin, {"id": gid, "join": jn})
         st = pg.evaluate("async () => (await fetch('/api/search?q=hello',{credentials:'same-origin'})).status")
         ok("guest search denied", st in (401, 403), {"status": st})
-        pg.evaluate("""() => {
+        gp = pg.evaluate("""() => {
           const a=window.AUD||window.M||document.getElementById('aud');
-          if(!a || a.paused) return {already:true, want:a&&a.dataset.wantPlay};
+          if(a){
+            a.dataset.wantPlay='0';
+            try{clearTimeout(window.__playStall);clearTimeout(window.__playStall2)}catch(_){}
+            try{a.pause()}catch(_){}
+          }
           const btn=document.getElementById('pp');
-          if(btn) btn.click();
-          else { a.dataset.wantPlay='0'; a.pause(); }
-          return {paused:a.paused, want:a.dataset.wantPlay};
+          if(btn && a && !a.paused) btn.click();
+          try{ if(typeof rmUserCtl==='function') rmUserCtl(); else if(typeof roomPush==='function') roomPush(); }catch(_){}
+          return {paused:!!(a&&a.paused), want:a&&a.dataset.wantPlay};
         }""")
-        t0 = time.time(); gpaused = False
+        t0 = time.time(); gpaused = False; last=None
         while time.time() - t0 < 12:
-            if pa.evaluate("() => !!(window.AUD||window.M||document.getElementById('aud')||{}).paused"):
+            last = pa.evaluate("""() => {const a=window.AUD||window.M||document.getElementById('aud')||{}; return {paused:!!a.paused, want:(a.dataset&&a.dataset.wantPlay)||''}}""")
+            if last and last.get("paused") and last.get("want")!='1':
                 gpaused = True; break
             time.sleep(0.5)
-        ok("logged-in follows guest pause", gpaused)
+        ok("logged-in follows guest pause", gpaused, {"guest": gp, "A": last})
 
         for pgx in (pa, pb):
             pgx.evaluate("""async () => {

@@ -3,7 +3,7 @@
 import json, time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
-BASE="https://tunestream.dpdns.org"; R=[]
+import os as _os_ms; BASE=_os_ms.environ.get("MS_BASE","https://tunestream.dpdns.org"); R=[]
 def ok(name,cond,info=None):
     R.append((("PASS" if cond else "FAIL"),name,info)); print(("PASS " if cond else "FAIL ")+name, json.dumps(info)[:600] if info is not None else "")
 def main():

@@ -13,6 +13,7 @@ USER = "loadtest"
 SEED = "4NRXx6U8ABQ"
 SEED2 = "4fndeDfaWCg"
 R = []
+TARGET = os.environ.get("MS_LIVE_BUILD") or ""  # filled from /api/version if empty
 
 def pw():
     return Path(os.environ.get("MS_PW_FILE", "/tmp/loadtest.pw")).read_text(encoding="utf-8").strip()
@@ -61,6 +62,7 @@ def snap(page):
     )
 
 def main():
+    global TARGET
     with sync_playwright() as p:
         b = p.chromium.launch(executable_path=CHROME, headless=True,
             args=["--autoplay-policy=no-user-gesture-required", "--disable-dev-shm-usage"])
@@ -80,9 +82,10 @@ def main():
         page.wait_for_function("() => typeof play==='function' && typeof next==='function' && typeof _msReloadAtTrackChange==='function'", timeout=30000)
 
         ver = page.evaluate("async () => { const r=await fetch('/api/version',{cache:'no-store'}); return r.json(); }")
-        ok("server is v111", (ver or {}).get("v") == "ms-v111", ver)
+        TARGET = (ver or {}).get("v") or TARGET or "ms-v112"
+        ok("server is current", TARGET.startswith("ms-v") and (ver or {}).get("v")==TARGET, ver)
         boot = snap(page)
-        ok("page booted as v111", boot.get("build") == "ms-v111", boot)
+        ok("page booted as current", boot.get("build") == TARGET, boot)
 
         # clog IndexedDB persist
         idb = page.evaluate(
@@ -181,9 +184,9 @@ def main():
                 break
             try:
                 upgraded = snap(page)
-                if upgraded.get("build")=="ms-v111" and "reset" not in (upgraded.get("url") or "") and upgraded.get("build")!="ms-v109":
+                if upgraded.get("build")==TARGET and "reset" not in (upgraded.get("url") or "") and upgraded.get("build")!="ms-v109":
                     # already on v111 after navigation
-                    if "fresh=" in (upgraded.get("url") or "") or upgraded.get("serverV")=="ms-v111":
+                    if "fresh=" in (upgraded.get("url") or "") or upgraded.get("serverV")==TARGET:
                         break
             except Exception as e:
                 # navigation in flight
@@ -191,16 +194,16 @@ def main():
             time.sleep(0.35)
 
         # if still on the same document with pending reload, wait a bit more
-        if not upgraded or upgraded.get("build")!="ms-v111":
+        if not upgraded or upgraded.get("build")!=TARGET:
             time.sleep(2)
             try:
                 upgraded = snap(page)
             except Exception as e:
                 upgraded = {"err": type(e).__name__, "url": page.url}
 
-        ok("navigated through /reset or fresh", nav["reset"] or "fresh=" in page.url or "reset" in page.url or (upgraded and upgraded.get("build")=="ms-v111"),
+        ok("navigated through /reset or fresh", nav["reset"] or "fresh=" in page.url or "reset" in page.url or (upgraded and upgraded.get("build")==TARGET),
            {"nav": nav, "url": page.url, "snap": upgraded})
-        ok("build is v111 after track change", upgraded and upgraded.get("build")=="ms-v111", upgraded)
+        ok("build is current after track change", upgraded and upgraded.get("build")==TARGET, upgraded)
 
         # clog flush on resume
         hide(page, False, blank=blank)

@@ -1,7 +1,7 @@
 import json,time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
-B="https://tunestream.dpdns.org";R=[]
+import os as _os_ms;B=_os_ms.environ.get("MS_BASE","https://tunestream.dpdns.org");R=[]
 def ok(n,c,i=None): R.append((n,c));print(("PASS " if c else "FAIL ")+n, json.dumps(i)[:400] if i is not None else "")
 with sync_playwright() as p:
   b=p.chromium.launch(executable_path="/usr/bin/google-chrome",headless=True,args=["--autoplay-policy=no-user-gesture-required"])

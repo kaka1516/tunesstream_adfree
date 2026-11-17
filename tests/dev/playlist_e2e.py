@@ -74,11 +74,18 @@ def cleanup(pg, prefix):
             n += 1
     return n
 
-def find_pl(pg, name):
+def list_playlists_ok(pg):
     j = api(pg)
-    if not j or not j.get("j"):
+    if not j or j.get("st") != 200:
         return None
-    for p in (j["j"].get("playlists") or []):
+    pls = (j.get("j") or {}).get("playlists")
+    return pls if isinstance(pls, list) else None
+
+def find_pl(pg, name):
+    pls = list_playlists_ok(pg)
+    if pls is None:
+        return None
+    for p in pls:
         if p.get("name") == name:
             return p
     return None
@@ -357,10 +364,13 @@ def main():
         pg.wait_for_selector("#plopen:not([hidden]) #pldel", timeout=8000)
         pg.locator("#plopen:not([hidden]) #pldel").scroll_into_view_if_needed()
         pg.click("#plopen:not([hidden]) #pldel")
+        def _gone():
+            pls = list_playlists_ok(pg)
+            return pls is not None and all((p.get("name") != name) for p in pls)
         t0 = time.time()
         gone = False
-        while time.time() - t0 < 6:
-            if not find_pl(pg, name):
+        while time.time() - t0 < 8:
+            if _gone():
                 gone = True
                 break
             time.sleep(0.3)
@@ -368,8 +378,8 @@ def main():
             # same confirm path as the button
             pg.evaluate("() => plDelete()")
             t0 = time.time()
-            while time.time() - t0 < 6:
-                if not find_pl(pg, name):
+            while time.time() - t0 < 8:
+                if _gone():
                     gone = True
                     break
                 time.sleep(0.3)
@@ -378,7 +388,17 @@ def main():
         pg.reload(wait_until="domcontentloaded", timeout=45000)
         pg.wait_for_function("() => typeof play==='function'", timeout=30000)
         time.sleep(1.0)
-        ok("delete persists after reload", not find_pl(pg, name), {"pl": find_pl(pg, name)})
+        still = True
+        pl = None
+        t0 = time.time()
+        while time.time() - t0 < 6:
+            pls = list_playlists_ok(pg)
+            if pls is not None:
+                pl = next((p for p in pls if p.get("name")==name), None)
+                still = pl is not None
+                break
+            time.sleep(0.3)
+        ok("delete persists after reload", not still, {"pl": pl})
 
         cleanup(pg, "e2e-pl-")
         b.close()

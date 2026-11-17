@@ -279,3 +279,34 @@ def test_joining_one_room_leaves_the_previous():
     now = time.time()
     live_main = [k for k, v in main_n.items() if now - (v.get("t") if isinstance(v, dict) else 0) < 90]
     assert live_main == []
+
+
+def test_sv_fence_late_play_does_not_clobber_pause():
+    """hunt-20261117: a late set from the previous version must not undo a peer pause."""
+    fresh(); pa = _mk("alice", "admin"); pb = _mk("bob", "user")
+    sa, sb = sess_of(login("alice", pa)), sess_of(login("bob", pb))
+    a = req("POST", "/api/room", EXT(), {"op": "set", "r": "MAIN", "id": "dQw4w9WgXcQ", "t": 11, "p": 1, "title": "A", "sv": 0}, cookie=sa)
+    assert a.json().get("ok") == 1 and a.json()["v"] == 1
+    # Bob pauses against v=1
+    b = req("POST", "/api/room", EXT(), {"op": "set", "r": "MAIN", "id": "dQw4w9WgXcQ", "t": 11, "p": 0, "title": "A", "sv": 1}, cookie=sb)
+    assert b.json().get("ok") == 1 and b.json()["v"] == 2 and b.json().get("error") is None
+    # Alice's in-flight play push still carries sv=1
+    late = req("POST", "/api/room", EXT(), {"op": "set", "r": "MAIN", "id": "dQw4w9WgXcQ", "t": 12, "p": 1, "title": "A", "sv": 1}, cookie=sa)
+    j = late.json()
+    assert j.get("error") == "stale" and j.get("v") == 2
+    g = req("GET", "/api/room?op=get&r=MAIN", EXT(), cookie=sb).json()
+    assert g["v"] == 2 and g["p"] is False and g["id"] == "dQw4w9WgXcQ", g
+
+
+def test_sv_fence_late_song_does_not_clobber_track_change():
+    """hunt-20261117: a late set of the previous track must not replace a peer's song change."""
+    fresh(); pa = _mk("alice", "admin"); pb = _mk("bob", "user")
+    sa, sb = sess_of(login("alice", pa)), sess_of(login("bob", pb))
+    a = req("POST", "/api/room", EXT(), {"op": "set", "r": "FOCUS", "id": "dQw4w9WgXcQ", "t": 20, "p": 1, "title": "Old", "sv": 0}, cookie=sa)
+    assert a.json()["v"] == 1
+    b = req("POST", "/api/room", EXT(), {"op": "set", "r": "FOCUS", "id": "4fndeDfaWCg", "t": 2, "p": 1, "title": "New", "sv": 1}, cookie=sb)
+    assert b.json().get("ok") == 1 and b.json()["v"] == 2
+    late = req("POST", "/api/room", EXT(), {"op": "set", "r": "FOCUS", "id": "dQw4w9WgXcQ", "t": 24, "p": 1, "title": "Old", "sv": 1}, cookie=sa)
+    assert late.json().get("error") == "stale" and late.json().get("v") == 2
+    g = req("GET", "/api/room?op=get&r=FOCUS", EXT(), cookie=sa).json()
+    assert g["id"] == "4fndeDfaWCg" and g["v"] == 2 and g["title"] == "New", g

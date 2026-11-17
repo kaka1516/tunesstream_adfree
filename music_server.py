@@ -1581,8 +1581,11 @@ def _extract_inproc(vid, q="std"):
             if kind == "vis" and "confirm you" not in str(e): _vis_health(False)  # play5-20261111: bot-check is IP-wide, not a visionos fault
             print(f"xt {vid} q={q} client={kind} ms={int((time.time() - t0) * 1000)} fail {type(e).__name__}: {str(e)[:90]}", flush=True)
             if _UPCOMING_ERR.search(str(e)): break
+            if _dead_until(vid): break  # hunt-20261117: terminal unavailability — skip other clients and CLI
+    if _dead_until(vid):
+        raise RuntimeError(f"extract skipped: {vid} known unavailable") from e1
     if True:
-        if _UPCOMING_ERR.search(str(e1)): _live_note(vid, "is_upcoming"); raise LiveUnsupported("is_upcoming") from e1
+        if e1 is not None and _UPCOMING_ERR.search(str(e1)): _live_note(vid, "is_upcoming"); raise LiveUnsupported("is_upcoming") from e1
         with _xslot():  # perf-20261112: the CLI fallback is a whole new python; same cap
             out = subprocess.run(YTDLP + ["-f", fmt, "-g", "--no-warnings", f"https://www.youtube.com/watch?v={vid}"],
                                  capture_output=True, text=True, timeout=60, creationflags=NOFLAGS)
@@ -1593,21 +1596,77 @@ def _extract_inproc(vid, q="std"):
             raise RuntimeError(f"extract failed: {e1}") from e1
         if _live_url(lines[0]): _live_note(vid, "is_live"); raise LiveUnsupported("is_live")
         return lines[0], {"User-Agent": "Mozilla/5.0"}
-_DEAD = {}  # vid -> unix expiry; "not available" / removed, not bot-checks
-_DEAD_RE = re.compile(r"This video is not available|Video unavailable|Private video|has been removed|is not available", re.I)
+_DEAD = {}  # vid -> unix expiry; "not available" / removed / paid, not bot-checks
+_DEAD_LK = threading.Lock()
+# YouTube says both "Video unavailable" and "This video is unavailable" (with "is").
+# Also treat payment / members-only as terminal — retries cannot fix them without cookies.
+_DEAD_RE = re.compile(
+    r"This video is not available|This video is unavailable|Video unavailable|"
+    r"Private video|has been removed|is not available|"
+    r"requires payment|members?-?only|Join this channel|"
+    r"not made this video available",
+    re.I,
+)
+def _dead_file():
+    d = CACHE if "CACHE" in globals() and CACHE is not None else Path("cache")
+    try:
+        Path(d).mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+    return Path(d) / "dead-vids.json"
+def _dead_load_file():
+    try:
+        p = _dead_file()
+        if not p.is_file(): return
+        data = json.loads(p.read_text(encoding="utf-8") or "{}")
+        if not isinstance(data, dict): return
+        now = time.time()
+        with _DEAD_LK:
+            for k, exp in data.items():
+                try: exp = float(exp)
+                except Exception: continue
+                if exp > now:
+                    cur = _DEAD.get(k) or 0
+                    if exp > cur: _DEAD[k] = exp
+    except Exception:
+        pass
+def _dead_save_file(vid, exp):
+    try:
+        p = _dead_file()
+        try: data = json.loads(p.read_text(encoding="utf-8") or "{}")
+        except Exception: data = {}
+        if not isinstance(data, dict): data = {}
+        now = time.time()
+        data = {k: float(v) for k, v in data.items() if float(v) > now}
+        data[vid] = exp
+        if len(data) > 2000:
+            data = dict(sorted(data.items(), key=lambda kv: kv[1], reverse=True)[:1500])
+        tmp = p.with_name(p.name + ".tmp")
+        tmp.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
+        os.replace(tmp, p)
+    except Exception:
+        pass
+_dead_load_file()
 def _dead_until(vid):
     t = _DEAD.get(vid or "")
+    if not t:
+        _dead_load_file()
+        t = _DEAD.get(vid or "")
     if not t: return 0
     if time.time() >= t:
         _DEAD.pop(vid, None); return 0
     return t
 def _mark_dead(vid, why="", ttl=1800):
     if not vid: return
-    _DEAD[vid] = time.time() + ttl
-    if len(_DEAD) > 2000:
-        now = time.time()
-        for k, exp in list(_DEAD.items()):
-            if exp < now: _DEAD.pop(k, None)
+    exp = time.time() + ttl
+    with _DEAD_LK:
+        _DEAD[vid] = exp
+        if len(_DEAD) > 2000:
+            now = time.time()
+            for k, e in list(_DEAD.items()):
+                if e < now: _DEAD.pop(k, None)
+    try: _dead_save_file(vid, exp)
+    except Exception: pass
     for q in ("std", "hi"):
         try: _ucache_invalidate(vid, q)
         except Exception: pass
